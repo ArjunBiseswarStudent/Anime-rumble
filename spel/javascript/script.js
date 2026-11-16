@@ -510,7 +510,7 @@ function addCelOutline(mesh, scale = 1.06) {
     return mesh;
 }
 
-function create3DAnimeCharacter(charData) {
+function create3DAnimeCharacter(charData, onExternalModelLoaded = null) {
     const root = new THREE.Group();
     const isHeavy = (charData.id === 'bowser' || charData.id === 'dk');
     const isCompact = ['sonic', 'shadow', 'knuckles', 'mario', 'nezuko'].includes(charData.id);
@@ -600,6 +600,7 @@ function create3DAnimeCharacter(charData) {
         root.add(glbModel);
         rig.isExternalGLB = true;
         rig.externalModel = glbModel;
+        if (onExternalModelLoaded) onExternalModelLoaded(rig);
     });
 
     return rig;
@@ -629,6 +630,8 @@ function animate3DCharacter(rig, animTick, state) {
 // 4. PREVIEW VIEWERS & UI ROUTINES
 // =========================================================================
 const previewViewers = {};
+const rosterThumbnailRigs = {};
+let rosterThumbnailViewer = null;
 
 function setup3DPreviewViewer(canvasId, interactive = true) {
     const c = document.getElementById(canvasId);
@@ -673,8 +676,66 @@ function setPreviewCharacter3D(canvasId, charData) {
     viewer.renderer.render(viewer.scene, viewer.camera);
 }
 
+function setupRosterThumbnailViewer() {
+    if (rosterThumbnailViewer) return rosterThumbnailViewer;
+
+    const canvas = document.createElement('canvas');
+    canvas.width = 54;
+    canvas.height = 54;
+    const renderer = new THREE.WebGLRenderer({
+        canvas,
+        alpha: true,
+        antialias: true,
+        preserveDrawingBuffer: true
+    });
+    renderer.setSize(canvas.width, canvas.height, false);
+
+    const scene = new THREE.Scene();
+    const camera = new THREE.PerspectiveCamera(36, 1, 0.1, 30);
+    camera.position.set(0, 1.15, 3.65);
+    camera.lookAt(0, 1.0, 0);
+
+    scene.add(new THREE.HemisphereLight(0xffffff, 0x1e293b, 1.1));
+    const dir = new THREE.DirectionalLight(0xffffff, 1.15);
+    dir.position.set(2.5, 4, 3);
+    scene.add(dir);
+
+    rosterThumbnailViewer = { renderer, scene, camera };
+    return rosterThumbnailViewer;
+}
+
+function drawRosterThumbnail(canvasEl, rig) {
+    const context = canvasEl.getContext('2d');
+    if (!context) return;
+
+    const viewer = setupRosterThumbnailViewer();
+    viewer.scene.add(rig.root);
+    viewer.renderer.render(viewer.scene, viewer.camera);
+    context.clearRect(0, 0, canvasEl.width, canvasEl.height);
+    context.drawImage(viewer.renderer.domElement, 0, 0, canvasEl.width, canvasEl.height);
+    viewer.scene.remove(rig.root);
+}
+
+function renderRosterThumbnail(canvasEl, charData) {
+    let rig = rosterThumbnailRigs[charData.id];
+    if (!rig) {
+        rig = create3DAnimeCharacter(charData, (loadedRig) => {
+            rosterThumbnailRigs[charData.id] = loadedRig;
+            const currentCanvas = document.getElementById(`roster-portrait-${charData.id}`);
+            if (currentCanvas) drawRosterThumbnail(currentCanvas, loadedRig);
+        });
+        rosterThumbnailRigs[charData.id] = rig;
+    }
+
+    drawRosterThumbnail(canvasEl, rig);
+}
+
 function renderPortrait(canvasEl, charData) {
     if (!canvasEl) return;
+    if (canvasEl.id && canvasEl.id.startsWith('roster-portrait-')) {
+        renderRosterThumbnail(canvasEl, charData);
+        return;
+    }
     if (canvasEl.id && (canvasEl.id.includes('portrait') || canvasEl.id.includes('hud-'))) {
         setPreviewCharacter3D(canvasEl.id, charData);
         return;
@@ -722,6 +783,7 @@ function buildRosterUI() {
         btn.dataset.index = idx;
 
         const miniCanvas = document.createElement('canvas');
+        miniCanvas.id = `roster-portrait-${char.id}`;
         miniCanvas.width = 54; miniCanvas.height = 54;
         miniCanvas.className = 'rounded-lg bg-slate-950 pointer-events-none';
         renderPortrait(miniCanvas, char);
