@@ -1,0 +1,262 @@
+[
+  {
+    "id": "naruto",
+    "name": "Naruto Uzumaki",
+    "franchise": "Naruto",
+    "skin": "#f3bf8f",
+    "primary": "#f97316",
+    "secondary": "#1e293b",
+    "hair": "#facc15",
+    "aura": "#f59e0b"
+  },
+  {
+    "id": "sasuke",
+    "name": "Sasuke Uchiha",
+    "franchise": "Naruto",
+    "skin": "#f3c5a5",
+    "primary": "#64748b",
+    "secondary": "#312e81",
+    "hair": "#171717",
+    "aura": "#8b5cf6"
+  },
+  {
+    "id": "sakura",
+    "name": "Sakura Haruno",
+    "franchise": "Naruto",
+    "skin": "#f4c4a3",
+    "primary": "#ec4899",
+    "secondary": "#991b1b",
+    "hair": "#f9a8d4",
+    "aura": "#22c55e"
+  },
+  {
+    "id": "itachi",
+    "name": "Itachi Uchiha",
+    "franchise": "Naruto",
+    "skin": "#e8b899",
+    "primary": "#18181b",
+    "secondary": "#991b1b",
+    "hair": "#111827",
+    "aura": "#dc2626"
+  },
+  {
+    "id": "kakashi",
+    "name": "Kakashi Hatake",
+    "franchise": "Naruto",
+    "skin": "#eac4a4",
+    "primary": "#334155",
+    "secondary": "#64748b",
+    "hair": "#cbd5e1",
+    "aura": "#38bdf8"
+  },
+  {
+    "id": "jiraiya",
+    "name": "Jiraiya",
+    "franchise": "Naruto",
+    "skin": "#e8c5a4",
+    "primary": "#991b1b",
+    "secondary": "#64748b",
+    "hair": "#f8fafc",
+    "aura": "#ef4444"
+  },
+  {
+    "id": "gaara",
+    "name": "Gaara",
+    "franchise": "Naruto",
+    "skin": "#efc3a4",
+    "primary": "#7f1d1d",
+    "secondary": "#92400e",
+    "hair": "#991b1b",
+    "aura": "#d97706"
+  },
+  {
+    "id": "shikamaru",
+    "name": "Shikamaru Nara",
+    "franchise": "Naruto",
+    "skin": "#e8bc99",
+    "primary": "#4b5563",
+    "secondary": "#14532d",
+    "hair": "#1f2937",
+    "aura": "#64748b"
+  },
+  {
+    "id": "kiba",
+    "name": "Kiba Inuzuka",
+    "franchise": "Naruto",
+    "skin": "#e8bc99",
+    "primary": "#64748b",
+    "secondary": "#292524",
+    "hair": "#422006",
+    "aura": "#ef4444"
+  },
+  {
+    "id": "luffy",
+    "name": "Monkey D. Luffy",
+    "franchise": "One Piece",
+    "skin": "#eeb88b",
+    "primary": "#dc2626",
+    "secondary": "#2563eb",
+    "hair": "#171717",
+    "aura": "#f59e0b"
+  },
+  {
+    "id": "zoro",
+    "name": "Roronoa Zoro",
+    "franchise": "One Piece",
+    "skin": "#eac09a",
+    "primary": "#15803d",
+    "secondary": "#111827",
+    "hair": "#22c55e",
+    "aura": "#22c55e"
+  },
+  {
+    "id": "sanji",
+    "name": "Sanji",
+    "franchise": "One Piece",
+    "skin": "#f0c5a3",
+    "primary": "#171717",
+    "secondary": "#1e293b",
+    "hair": "#facc15",
+    "aura": "#f59e0b"
+  },
+  {
+    "id": "usopp",
+    "name": "Usopp",
+    "franchise": "One Piece",
+    "skin": "#b77c54",
+    "primary": "#92400e",
+    "secondary": "#eab308",
+    "hair": "#1f2937",
+    "aura": "#f59e0b"
+  },
+  {
+    "id": "chopper",
+    "name": "Tony Tony Chopper",
+    "franchise": "One Piece",
+    "skin": "#b7835d",
+    "primary": "#ec4899",
+    "secondary": "#7c3aed",
+    "hair": "#78350f",
+    "aura": "#f472b6"
+  },
+  {
+    "id": "nami",
+    "name": "Nami",
+    "franchise": "One Piece",
+    "skin": "#f2c09c",
+    "primary": "#16a34a",
+    "secondary": "#2563eb",
+    "hair": "#f97316",
+    "aura": "#38bdf8"
+  },
+  {
+    "id": "robin",
+    "name": "Nico Robin",
+    "franchise": "One Piece",
+    "skin": "#e9b795",
+    "primary": "#4c1d95",
+    "secondary": "#1f2937",
+    "hair": "#111827",
+    "aura": "#a855f7"
+  },
+  {
+    "id": "brook",
+    "name": "Brook",
+    "franchise": "One Piece",
+    "skin": "#f8fafc",
+    "primary": "#111827",
+    "secondary": "#f8fafc",
+    "hair": "#09090b",
+    "aura": "#e2e8f0"
+  },
+  {
+    "id": "goku",
+    "name": "Goku",
+    "franchise": "Dragon Ball",
+    "skin": "#eeb88b",
+    "primary": "#f97316",
+    "secondary": "#2563eb",
+    "hair": "#171717",
+    "aura": "#facc15"
+  },
+  {
+    "id": "vegeta",
+    "name": "Vegeta",
+    "franchise": "Dragon Ball",
+    "skin": "#eeb88b",
+    "primary": "#1d4ed8",
+    "secondary": "#f8fafc",
+    "hair": "#171717",
+    "aura": "#facc15"
+  },
+  {
+    "id": "gohan",
+    "name": "Gohan",
+    "franchise": "Dragon Ball",
+    "skin": "#eeb88b",
+    "primary": "#7c3aed",
+    "secondary": "#ef4444",
+    "hair": "#171717",
+    "aura": "#facc15"
+  },
+  {
+    "id": "piccolo",
+    "name": "Piccolo",
+    "franchise": "Dragon Ball",
+    "skin": "#65a30d",
+    "primary": "#7c3aed",
+    "secondary": "#db2777",
+    "hair": "#365314",
+    "aura": "#a3e635"
+  },
+  {
+    "id": "trunks",
+    "name": "Trunks",
+    "franchise": "Dragon Ball",
+    "skin": "#eeb88b",
+    "primary": "#1d4ed8",
+    "secondary": "#64748b",
+    "hair": "#c4b5fd",
+    "aura": "#facc15"
+  },
+  {
+    "id": "hit",
+    "name": "Hit",
+    "franchise": "Dragon Ball",
+    "skin": "#a78bfa",
+    "primary": "#4c1d95",
+    "secondary": "#312e81",
+    "hair": "#6d28d9",
+    "aura": "#a78bfa"
+  },
+  {
+    "id": "frieza",
+    "name": "Frieza",
+    "franchise": "Dragon Ball",
+    "skin": "#f8fafc",
+    "primary": "#f8fafc",
+    "secondary": "#7e22ce",
+    "hair": "#f8fafc",
+    "aura": "#c084fc"
+  },
+  {
+    "id": "beerus",
+    "name": "Beerus",
+    "franchise": "Dragon Ball",
+    "skin": "#a78bfa",
+    "primary": "#1e293b",
+    "secondary": "#38bdf8",
+    "hair": "#7c3aed",
+    "aura": "#a78bfa"
+  },
+  {
+    "id": "jiren",
+    "name": "Jiren",
+    "franchise": "Dragon Ball",
+    "skin": "#9ca3af",
+    "primary": "#dc2626",
+    "secondary": "#171717",
+    "hair": "#9ca3af",
+    "aura": "#ef4444"
+  }
+]
