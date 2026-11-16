@@ -852,6 +852,11 @@ let activeArenaData = null;
 let maxStocks = 3;
 let cpuDifficulty = 'normal';
 let keysDown = {};
+let keysPressed = {};
+
+const platformWorldX = (p) => (p.x + p.w / 2 - 480) / 65;
+const platformWorldLeft = (p) => (p.x - 480) / 65;
+const platformWorldRight = (p) => (p.x + p.w - 480) / 65;
 
 function startMatch() {
     const selectScreen = document.getElementById('select-screen');
@@ -873,8 +878,11 @@ function startMatch() {
     const arenaKey = arenaEl ? arenaEl.value : 'dojo';
     activeArenaData = ARENAS[arenaKey] || ARENAS.dojo;
 
+    keysDown = {};
+    keysPressed = {};
     initBattleScene();
     battleRunning = true;
+    lastFrameTime = performance.now();
     requestAnimationFrame(battleLoop);
 }
 
@@ -902,7 +910,7 @@ function initBattleScene() {
         const platGeo = new THREE.BoxGeometry(p.w / 65, 0.4, 1.8);
         const platMat = makeToonMat(activeArenaData.accentColor);
         const platMesh = addCelOutline(new THREE.Mesh(platGeo, platMat));
-        platMesh.position.set((p.x - 400) / 65, -(p.y - 250) / 65, 0);
+        platMesh.position.set(platformWorldX(p), -(p.y - 250) / 65, 0);
         battleScene.add(platMesh);
     });
 
@@ -910,11 +918,12 @@ function initBattleScene() {
     const c1 = ROSTER[selectedP1Index];
     const c2 = ROSTER[selectedP2Index];
 
-    p1Fighter = createFighterObject(c1, -3.5, 3.0, 0);
-    p2Fighter = createFighterObject(c2, 3.5, 3.0, 1);
+    p1Fighter = createFighterObject(c1, -2.5, 3.5, 0);
+    p2Fighter = createFighterObject(c2, 2.5, 3.5, 1);
 
     battleScene.add(p1Fighter.rig.root);
     battleScene.add(p2Fighter.rig.root);
+    updateBattleHud();
 }
 
 function createFighterObject(charData, x, y, playerIndex) {
@@ -928,12 +937,17 @@ function createFighterObject(charData, x, y, playerIndex) {
         y: y,
         vx: 0,
         vy: 0,
+        knockbackX: 0,
         percent: 0,
         stocks: maxStocks,
         facing: playerIndex === 0 ? 1 : -1,
         isGrounded: false,
         isMoving: false,
         isAttacking: false,
+        attackTimer: 0,
+        attackCooldown: 0,
+        attackHasHit: false,
+        jumpWasDown: false,
         shieldActive: false,
         isFrozen: false,
         auraBoost: 0,
@@ -942,69 +956,114 @@ function createFighterObject(charData, x, y, playerIndex) {
     };
 }
 
-function updateFighter(f, opponent, controls) {
+function updateFighter(f, opponent, controls, dt) {
     if (f.isFrozen) return;
 
-    f.animTick += 0.2;
-    if (f.auraBoost > 0) f.auraBoost--;
+    f.animTick += dt * 12;
+    f.auraBoost = Math.max(0, f.auraBoost - dt * 60);
+    f.attackCooldown = Math.max(0, f.attackCooldown - dt);
+    f.attackTimer = Math.max(0, f.attackTimer - dt);
+    f.isAttacking = f.attackTimer > 0;
 
     // Basis beweging
     let moveDir = 0;
     if (controls.left) { moveDir = -1; f.facing = -1; }
     if (controls.right) { moveDir = 1; f.facing = 1; }
 
-    f.vx = moveDir * (f.data.speed * 0.12);
-    f.x += f.vx;
+    f.vx = moveDir * (f.data.speed * 0.65);
+    f.x += (f.vx + f.knockbackX) * dt;
+    f.knockbackX *= Math.exp(-5 * dt);
     f.isMoving = moveDir !== 0;
 
-    // Zwaartekracht & Jump
-    f.vy -= 0.38;
-    f.y += f.vy * 0.1;
+    // Gravity and jumping use seconds so movement stays consistent across frame rates.
+    const previousY = f.y;
+    f.vy -= 24 * dt;
+    f.y += f.vy * dt;
 
     // Platform botsing
     f.isGrounded = false;
     activeArenaData.platforms.forEach(p => {
-        const px = (p.x - 400) / 65;
         const py = -(p.y - 250) / 65;
-        const halfW = (p.w / 65) / 2;
-        if (f.x >= px - halfW && f.x <= px + halfW && f.y <= py + 0.3 && f.y >= py - 0.4 && f.vy <= 0) {
-            f.y = py + 0.3;
+        const platformTop = py + 0.2;
+        const overlapsPlatform = f.x + 0.35 >= platformWorldLeft(p)
+            && f.x - 0.35 <= platformWorldRight(p);
+        if (overlapsPlatform && f.vy <= 0 && previousY >= platformTop && f.y <= platformTop) {
+            f.y = platformTop;
             f.vy = 0;
             f.isGrounded = true;
         }
     });
 
-    if (controls.jump && f.isGrounded) {
-        f.vy = f.data.jump * 0.9;
+    if (controls.jump && !f.jumpWasDown && f.isGrounded) {
+        f.vy = f.data.jump * 0.8;
         f.isGrounded = false;
     }
+    f.jumpWasDown = controls.jump;
 
-    // Grenscheck arena
-    if (f.y < -5.0) {
+    if (controls.attack && f.attackCooldown <= 0) {
+        f.attackTimer = 0.18;
+        f.attackCooldown = 0.48;
+        f.attackHasHit = false;
+        f.isAttacking = true;
+    }
+
+    if (f.isAttacking && !f.attackHasHit) {
+        const dx = opponent.x - f.x;
+        const dy = opponent.y - f.y;
+        if (Math.abs(dx) <= 1.45 && Math.abs(dy) <= 1.25 && Math.sign(dx) === f.facing) {
+            opponent.percent = Math.min(999, opponent.percent + 10);
+            opponent.knockbackX += f.facing * (3.2 + opponent.percent * 0.035) / opponent.data.weight;
+            opponent.vy = Math.max(opponent.vy, 4.8 + opponent.percent * 0.025);
+            opponent.isGrounded = false;
+            f.attackHasHit = true;
+        }
+    }
+
+    // Falling off the stage costs a stock and respawns the fighter.
+    if (f.y < -6 || Math.abs(f.x) > 7) {
         f.stocks--;
         f.percent = 0;
-        f.x = f.playerIndex === 0 ? -3.5 : 3.5;
-        f.y = 5.0;
+        f.x = f.playerIndex === 0 ? -2.5 : 2.5;
+        f.y = 3.5;
         f.vy = 0;
+        f.knockbackX = 0;
+        f.attackTimer = 0;
+        f.isAttacking = false;
+        f.jumpWasDown = false;
     }
 
     f.rig.root.position.set(f.x, f.y, 0);
     animate3DCharacter(f.rig, f.animTick, f);
 }
 
+function updateBattleHud() {
+    const p1Name = document.getElementById('p1-hud-name');
+    const p2Name = document.getElementById('p2-hud-name');
+    const p2Role = document.getElementById('p2-hud-role');
+    const p1Stats = document.getElementById('p1-hud-stats');
+    const p2Stats = document.getElementById('p2-hud-stats');
+
+    if (p1Name) p1Name.textContent = p1Fighter.data.name;
+    if (p2Name) p2Name.textContent = p2Fighter.data.name;
+    if (p2Role) p2Role.textContent = gameMode === '2p' ? 'PLAYER 2' : 'CPU';
+    if (p1Stats) p1Stats.textContent = `${p1Fighter.percent}% · ${p1Fighter.stocks} levens`;
+    if (p2Stats) p2Stats.textContent = `${p2Fighter.percent}% · ${p2Fighter.stocks} levens`;
+}
+
 let lastFrameTime = performance.now();
 function battleLoop(now) {
     if (!battleRunning) return;
-    const dt = (now - lastFrameTime) / 1000;
+    const dt = Math.min((now - lastFrameTime) / 1000, 0.05);
     lastFrameTime = now;
 
     // Besturing Speler 1
     const p1Controls = {
         left: keysDown['KeyA'] || keysDown['ArrowLeft'],
         right: keysDown['KeyD'] || keysDown['ArrowRight'],
-        jump: keysDown['KeyW'] || keysDown['ArrowUp'] || keysDown['Space']
+        jump: keysDown['KeyW'] || keysDown['ArrowUp'] || keysDown['Space'],
+        attack: keysPressed['KeyF']
     };
-    updateFighter(p1Fighter, p2Fighter, p1Controls);
+    updateFighter(p1Fighter, p2Fighter, p1Controls, dt);
 
     // Besturing Speler 2 of CPU
     let p2Controls = {};
@@ -1012,29 +1071,54 @@ function battleLoop(now) {
         p2Controls = {
             left: keysDown['KeyJ'],
             right: keysDown['KeyL'],
-            jump: keysDown['KeyI']
+            jump: keysDown['KeyI'],
+            attack: keysPressed['KeyO']
         };
     } else {
-        // Eenvoudige CPU AI
         const dx = p1Fighter.x - p2Fighter.x;
+        const attackChance = cpuDifficulty === 'easy' ? 0.015 : (cpuDifficulty === 'hard' ? 0.12 : 0.06);
         p2Controls = {
             left: dx < -0.4,
             right: dx > 0.4,
-            jump: Math.random() < 0.03 && p2Fighter.isGrounded
+            jump: Math.random() < 0.03 && p2Fighter.isGrounded,
+            attack: Math.abs(dx) < 1.45
+                && Math.abs(p1Fighter.y - p2Fighter.y) < 1.25
+                && Math.random() < attackChance
         };
     }
-    updateFighter(p2Fighter, p1Fighter, p2Controls);
+    updateFighter(p2Fighter, p1Fighter, p2Controls, dt);
+    keysPressed = {};
 
     if (battleRenderer && battleScene && battleCamera) {
         battleRenderer.render(battleScene, battleCamera);
+    }
+
+    updateBattleHud();
+    if (p1Fighter.stocks <= 0 || p2Fighter.stocks <= 0) {
+        battleRunning = false;
+        const winner = p1Fighter.stocks > 0 ? p1Fighter.data.name : p2Fighter.data.name;
+        const arenaNote = document.getElementById('arena-note');
+        if (arenaNote) arenaNote.textContent = `${winner} wint! Ga terug naar de selectie voor een nieuw gevecht.`;
+        return;
     }
 
     requestAnimationFrame(battleLoop);
 }
 
 // Event Listeners voor toetsenbord
-window.addEventListener('keydown', (e) => { keysDown[e.code] = true; });
-window.addEventListener('keyup', (e) => { keysDown[e.code] = false; });
+window.addEventListener('keydown', (e) => {
+    if (battleRunning && ['ArrowLeft', 'ArrowRight', 'ArrowUp', 'Space'].includes(e.code)) e.preventDefault();
+    if (!keysDown[e.code]) keysPressed[e.code] = true;
+    keysDown[e.code] = true;
+});
+window.addEventListener('keyup', (e) => {
+    keysDown[e.code] = false;
+    keysPressed[e.code] = false;
+});
+window.addEventListener('blur', () => {
+    keysDown = {};
+    keysPressed = {};
+});
 
 // Event Listeners voor Modus & Start
 document.addEventListener('DOMContentLoaded', () => {
