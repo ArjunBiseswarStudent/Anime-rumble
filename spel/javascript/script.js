@@ -330,7 +330,7 @@ const ROSTER = [
         }
     },
     {
-        id: 'bowser', name: 'Mario', franchise: 'Mario',
+        id: 'bowser', name: 'Bowser', franchise: 'Mario',
         desc: 'Zware drakenkoning met vuuradem en verwoestende klappen.',
         skin: '#facc15', primary: '#15803d', secondary: '#ef4444', hair: '#dc2626', aura: '#f97316',
         speed: 4.6, jump: 11.2, weight: 1.38, scaleW: 48, scaleH: 66,
@@ -428,7 +428,7 @@ const ROSTER = [
 ];
 
 // =========================================================================
-// 3. THREE.JS 3D ANIME CHARACTER BUILDER & ENGINE
+// 3. THREE.JS 3D VOXEL ANIME CHARACTER BUILDER & ENGINE
 // =========================================================================
 const ASSET_PATHS = {
     characters: 'assest/carakters/',
@@ -479,34 +479,24 @@ function loadExternalCharacterGLB(charId, onLoadedCallback) {
     }
 }
 
-const toonGradientMap = (() => {
-    const c = document.createElement('canvas');
-    c.width = 4; c.height = 1;
-    const g = c.getContext('2d');
-    g.fillStyle = '#555555'; g.fillRect(0, 0, 1, 1);
-    g.fillStyle = '#aaaaaa'; g.fillRect(1, 0, 1, 1);
-    g.fillStyle = '#e5e5e5'; g.fillRect(2, 0, 1, 1);
-    g.fillStyle = '#ffffff'; g.fillRect(3, 0, 1, 1);
-    const tex = new THREE.CanvasTexture(c);
-    tex.minFilter = THREE.NearestFilter;
-    tex.magFilter = THREE.NearestFilter;
-    return tex;
-})();
-
-function makeToonMat(hexColor, emissiveHex = null, emissiveInt = 0.25) {
-    const params = { color: new THREE.Color(hexColor), gradientMap: toonGradientMap };
-    if (emissiveHex) {
-        params.emissive = new THREE.Color(emissiveHex);
-        params.emissiveIntensity = emissiveInt;
+const voxelMatCache = {};
+function getVoxelMat(hexColor, emissiveHex = null, emissiveInt = 0.25) {
+    const key = `${hexColor}_${emissiveHex || ''}_${emissiveInt}`;
+    if (!voxelMatCache[key]) {
+        const params = { color: new THREE.Color(hexColor), roughness: 0.75, metalness: 0.08 };
+        if (emissiveHex) {
+            params.emissive = new THREE.Color(emissiveHex);
+            params.emissiveIntensity = emissiveInt;
+        }
+        voxelMatCache[key] = new THREE.MeshStandardMaterial(params);
     }
-    return new THREE.MeshToonMaterial(params);
+    return voxelMatCache[key];
 }
 
-function addCelOutline(mesh, scale = 1.06) {
-    const outlineMat = new THREE.MeshBasicMaterial({ color: 0x090d16, side: THREE.BackSide });
-    const outline = new THREE.Mesh(mesh.geometry, outlineMat);
-    outline.scale.set(scale, scale, scale);
-    mesh.add(outline);
+function addVoxelBox(parent, w, h, d, mat, x, y, z) {
+    const mesh = new THREE.Mesh(new THREE.BoxGeometry(w, h, d), mat);
+    mesh.position.set(x, y, z);
+    parent.add(mesh);
     return mesh;
 }
 
@@ -514,61 +504,206 @@ function create3DAnimeCharacter(charData, onExternalModelLoaded = null) {
     const root = new THREE.Group();
     const isHeavy = (charData.id === 'bowser' || charData.id === 'dk');
     const isCompact = ['sonic', 'shadow', 'knuckles', 'mario', 'nezuko'].includes(charData.id);
+    const scaleMult = isHeavy ? 1.24 : (isCompact ? 0.90 : 1.0);
 
-    const skinMat = makeToonMat(charData.skin);
-    const primaryMat = makeToonMat(charData.primary);
-    const secondaryMat = makeToonMat(charData.secondary);
-    const hairMat = makeToonMat(charData.hair);
-    const auraMat = makeToonMat(charData.aura, charData.aura, 0.65);
-    const darkMat = makeToonMat('#0f172a');
-    const whiteMat = makeToonMat('#f8fafc');
-    const metalMat = makeToonMat('#cbd5e1', '#94a3b8', 0.15);
+    const skinMat = getVoxelMat(charData.skin);
+    const primaryMat = getVoxelMat(charData.primary);
+    const secondaryMat = getVoxelMat(charData.secondary);
+    const hairMat = getVoxelMat(charData.hair);
+    const auraMat = getVoxelMat(charData.aura, charData.aura, 0.7);
+    const blackMat = getVoxelMat('#090d16');
+    const whiteMat = getVoxelMat('#f8fafc');
+    const metalMat = getVoxelMat('#cbd5e1', '#94a3b8', 0.2);
+    const goldMat = getVoxelMat('#facc15', '#f59e0b', 0.2);
+    const redMat = getVoxelMat('#dc2626');
+    const brownMat = getVoxelMat('#451a03');
 
     const bodyPivot = new THREE.Group();
+    bodyPivot.scale.setScalar(scaleMult);
     root.add(bodyPivot);
 
-    const torsoW = isHeavy ? 0.92 : 0.66;
-    const torsoH = isHeavy ? 0.95 : (isCompact ? 0.68 : 0.82);
-    const torsoD = isHeavy ? 0.64 : 0.40;
-    const torsoGeo = new THREE.BoxGeometry(torsoW, torsoH, torsoD);
-    const torsoMesh = addCelOutline(new THREE.Mesh(torsoGeo, charData.id === 'bowser' ? makeToonMat('#facc15') : primaryMat), 1.05);
-    torsoMesh.position.y = 0.92;
-    bodyPivot.add(torsoMesh);
+    // --- 1. VOXEL TORSO & KLEDING DETAILS ---
+    addVoxelBox(bodyPivot, 0.56, 0.64, 0.34, primaryMat, 0, 0.94, 0);
+    // Kraag / sjaal / accenten
+    if (charData.id === 'gojo' || charData.id === 'jinwoo' || charData.id === 'aki') {
+        addVoxelBox(bodyPivot, 0.44, 0.14, 0.36, primaryMat, 0, 1.30, 0);
+        addVoxelBox(bodyPivot, 0.10, 0.52, 0.36, secondaryMat, 0, 0.94, 0);
+    } else if (charData.id === 'mario') {
+        addVoxelBox(bodyPivot, 0.58, 0.38, 0.36, secondaryMat, 0, 0.80, 0);
+        addVoxelBox(bodyPivot, 0.10, 0.24, 0.37, secondaryMat, -0.16, 1.08, 0);
+        addVoxelBox(bodyPivot, 0.10, 0.24, 0.37, secondaryMat, 0.16, 1.08, 0);
+        addVoxelBox(bodyPivot, 0.07, 0.07, 0.39, goldMat, -0.16, 0.98, 0);
+        addVoxelBox(bodyPivot, 0.07, 0.07, 0.39, goldMat, 0.16, 0.98, 0);
+    } else if (charData.id === 'todoroki') {
+        addVoxelBox(bodyPivot, 0.28, 0.65, 0.35, getVoxelMat('#ef4444', '#f97316', 0.35), 0.14, 0.94, 0);
+    } else if (charData.id === 'tanjiro') {
+        addVoxelBox(bodyPivot, 0.60, 0.62, 0.36, primaryMat, 0, 0.94, 0);
+        addVoxelBox(bodyPivot, 0.18, 0.20, 0.37, blackMat, -0.16, 1.08, 0);
+        addVoxelBox(bodyPivot, 0.18, 0.20, 0.37, blackMat, 0.16, 0.82, 0);
+        addVoxelBox(bodyPivot, 0.18, 0.20, 0.37, blackMat, -0.16, 0.72, 0);
+    } else if (charData.id === 'bowser') {
+        addVoxelBox(bodyPivot, 0.60, 0.64, 0.36, goldMat, 0, 0.94, 0.02);
+        addVoxelBox(bodyPivot, 0.64, 0.68, 0.26, primaryMat, 0, 0.95, -0.20);
+        addVoxelBox(bodyPivot, 0.14, 0.14, 0.16, whiteMat, 0, 1.12, -0.36);
+        addVoxelBox(bodyPivot, 0.14, 0.14, 0.16, whiteMat, 0, 0.84, -0.36);
+    } else if (charData.id === 'natsu') {
+        addVoxelBox(bodyPivot, 0.22, 0.56, 0.35, skinMat, 0, 0.96, 0.01);
+        addVoxelBox(bodyPivot, 0.62, 0.16, 0.42, whiteMat, 0, 1.24, 0);
+    } else if (charData.id === 'cloud' || charData.id === 'tifa') {
+        addVoxelBox(bodyPivot, 0.58, 0.14, 0.37, secondaryMat, 0, 0.68, 0);
+    } else if (charData.id === 'denji' || charData.id === 'power' || charData.id === 'aki') {
+        addVoxelBox(bodyPivot, 0.56, 0.64, 0.34, whiteMat, 0, 0.94, 0);
+        addVoxelBox(bodyPivot, 0.10, 0.44, 0.36, charData.id === 'denji' ? secondaryMat : blackMat, 0, 0.98, 0);
+    } else {
+        addVoxelBox(bodyPivot, 0.58, 0.11, 0.36, secondaryMat, 0, 0.68, 0);
+    }
 
+    // Vleugels / Capes op de rug
+    if (charData.id === 'sephiroth') {
+        const wing = addVoxelBox(bodyPivot, 0.12, 1.15, 0.72, blackMat, 0.36, 1.18, -0.35);
+        wing.rotation.x = 0.25;
+        wing.rotation.z = -0.22;
+    } else if (charData.id === 'beru') {
+        addVoxelBox(bodyPivot, 0.18, 0.85, 0.10, getVoxelMat('#4c1d95'), -0.20, 1.10, -0.24);
+        addVoxelBox(bodyPivot, 0.18, 0.85, 0.10, getVoxelMat('#4c1d95'), 0.20, 1.10, -0.24);
+    }
+
+    // --- 2. VOXEL HOOFD, GEZICHT & KENMERKENDE ANIME HAARSTIJL ---
     const headGroup = new THREE.Group();
-    headGroup.position.y = isHeavy ? 1.66 : (isCompact ? 1.52 : 1.62);
+    headGroup.position.set(0, 1.56, 0);
     bodyPivot.add(headGroup);
 
-    const headRadius = isHeavy ? 0.44 : 0.36;
-    const headMesh = addCelOutline(new THREE.Mesh(new THREE.SphereGeometry(headRadius, 16, 16), skinMat), 1.06);
-    headGroup.add(headMesh);
+    addVoxelBox(headGroup, 0.54, 0.52, 0.52, skinMat, 0, 0, 0);
+    addVoxelBox(headGroup, 0.08, 0.14, 0.10, skinMat, -0.30, -0.02, 0);
+    addVoxelBox(headGroup, 0.08, 0.14, 0.10, skinMat, 0.30, -0.02, 0);
+
+    // Gezichtsdetails (Ogen / Blinddoek / Masker / Snor)
+    if (charData.id === 'gojo') {
+        addVoxelBox(headGroup, 0.58, 0.20, 0.56, blackMat, 0, 0.04, 0.01);
+        addVoxelBox(headGroup, 0.14, 0.04, 0.04, getVoxelMat('#d97706'), 0, -0.14, 0.26);
+    } else if (charData.id === 'denji') {
+        addVoxelBox(headGroup, 0.56, 0.54, 0.54, secondaryMat, 0, 0.01, 0);
+        addVoxelBox(headGroup, 0.44, 0.14, 0.10, getVoxelMat('#facc15', '#f59e0b', 0.4), 0, 0.06, 0.26);
+        addVoxelBox(headGroup, 0.08, 0.45, 0.72, metalMat, 0, 0.35, 0.26);
+    } else if (charData.id === 'mario') {
+        addVoxelBox(headGroup, 0.08, 0.11, 0.04, blackMat, -0.12, 0.04, 0.26);
+        addVoxelBox(headGroup, 0.08, 0.11, 0.04, blackMat, 0.12, 0.04, 0.26);
+        addVoxelBox(headGroup, 0.14, 0.10, 0.12, skinMat, 0, -0.03, 0.30);
+        addVoxelBox(headGroup, 0.28, 0.07, 0.06, brownMat, 0, -0.11, 0.28);
+        addVoxelBox(headGroup, 0.58, 0.18, 0.58, redMat, 0, 0.26, 0.02);
+        addVoxelBox(headGroup, 0.54, 0.06, 0.22, redMat, 0, 0.18, 0.32);
+    } else if (charData.id === 'nezuko') {
+        addVoxelBox(headGroup, 0.09, 0.10, 0.04, getVoxelMat('#ec4899'), -0.13, 0.03, 0.26);
+        addVoxelBox(headGroup, 0.09, 0.10, 0.04, getVoxelMat('#ec4899'), 0.13, 0.03, 0.26);
+        addVoxelBox(headGroup, 0.34, 0.09, 0.10, getVoxelMat('#22c55e'), 0, -0.13, 0.28);
+    } else if (charData.id === 'sukuna') {
+        addVoxelBox(headGroup, 0.09, 0.09, 0.04, redMat, -0.13, 0.04, 0.26);
+        addVoxelBox(headGroup, 0.09, 0.09, 0.04, redMat, 0.13, 0.04, 0.26);
+        addVoxelBox(headGroup, 0.06, 0.12, 0.04, blackMat, -0.18, -0.08, 0.26);
+        addVoxelBox(headGroup, 0.06, 0.12, 0.04, blackMat, 0.18, -0.08, 0.26);
+    } else if (charData.id === 'beru') {
+        addVoxelBox(headGroup, 0.56, 0.54, 0.54, primaryMat, 0, 0, 0);
+        addVoxelBox(headGroup, 0.11, 0.08, 0.04, getVoxelMat('#38bdf8', '#38bdf8', 0.8), -0.14, 0.04, 0.27);
+        addVoxelBox(headGroup, 0.11, 0.08, 0.04, getVoxelMat('#38bdf8', '#38bdf8', 0.8), 0.14, 0.04, 0.27);
+    } else {
+        const eyeColor = charData.id === 'jinwoo' ? getVoxelMat('#3b82f6', '#3b82f6', 0.5) : blackMat;
+        addVoxelBox(headGroup, 0.10, 0.11, 0.03, whiteMat, -0.13, 0.03, 0.26);
+        addVoxelBox(headGroup, 0.10, 0.11, 0.03, whiteMat, 0.13, 0.03, 0.26);
+        addVoxelBox(headGroup, 0.06, 0.09, 0.04, eyeColor, -0.12, 0.03, 0.265);
+        addVoxelBox(headGroup, 0.06, 0.09, 0.04, eyeColor, 0.12, 0.03, 0.265);
+    }
+
+    // --- 3. VOXEL HAAR & HOORNS ---
+    if (!['mario', 'denji', 'beru', 'dk'].includes(charData.id)) {
+        addVoxelBox(headGroup, 0.58, 0.18, 0.58, hairMat, 0, 0.28, -0.02);
+        addVoxelBox(headGroup, 0.58, 0.46, 0.16, hairMat, 0, 0.06, -0.24);
+
+        const spikyChars = ['gojo', 'cloud', 'deku', 'bakugo', 'asta', 'natsu', 'yuji', 'sukuna', 'sonic', 'shadow', 'knuckles', 'zenitsu'];
+        if (spikyChars.includes(charData.id)) {
+            addVoxelBox(headGroup, 0.14, 0.22, 0.14, hairMat, -0.18, 0.42, 0.06);
+            addVoxelBox(headGroup, 0.16, 0.26, 0.16, hairMat, 0.02, 0.45, 0.02);
+            addVoxelBox(headGroup, 0.14, 0.22, 0.14, hairMat, 0.20, 0.41, 0.05);
+            addVoxelBox(headGroup, 0.14, 0.20, 0.14, hairMat, -0.10, 0.40, -0.14);
+            addVoxelBox(headGroup, 0.14, 0.20, 0.14, hairMat, 0.12, 0.40, -0.14);
+        }
+
+        if (charData.id === 'todoroki') {
+            addVoxelBox(headGroup, 0.29, 0.20, 0.59, redMat, 0.15, 0.28, -0.02);
+            addVoxelBox(headGroup, 0.29, 0.46, 0.17, redMat, 0.15, 0.06, -0.24);
+        }
+
+        if (['sephiroth', 'nezuko', 'noelle', 'erza', 'tifa'].includes(charData.id)) {
+            addVoxelBox(headGroup, 0.62, 0.78, 0.16, hairMat, 0, -0.24, -0.24);
+        }
+
+        if (charData.id === 'power') {
+            addVoxelBox(headGroup, 0.09, 0.24, 0.09, redMat, -0.18, 0.44, 0.10);
+            addVoxelBox(headGroup, 0.09, 0.24, 0.09, redMat, 0.18, 0.44, 0.10);
+        }
+
+        if (['sonic', 'shadow', 'knuckles'].includes(charData.id)) {
+            addVoxelBox(headGroup, 0.20, 0.18, 0.34, hairMat, 0, 0.12, -0.36);
+            addVoxelBox(headGroup, 0.18, 0.16, 0.30, hairMat, 0, -0.08, -0.34);
+        }
+    }
+
+    // --- 4. VOXEL ARMEN, HANDEN & WAPENS ---
+    const armMat = ['yuji', 'natsu', 'tifa', 'dk', 'bowser'].includes(charData.id) ? skinMat : primaryMat;
+    const handMat = ['sonic', 'shadow', 'knuckles', 'mario'].includes(charData.id) ? whiteMat : skinMat;
 
     const leftArmPivot = new THREE.Group();
-    leftArmPivot.position.set(-(torsoW * 0.5 + 0.10), 1.24, 0);
-    const leftArmMesh = addCelOutline(new THREE.Mesh(new THREE.CylinderGeometry(0.10, 0.09, 0.56, 10), primaryMat), 1.06);
-    leftArmMesh.position.y = -0.28;
-    leftArmPivot.add(leftArmMesh);
+    leftArmPivot.position.set(-0.39, 1.22, 0);
+    addVoxelBox(leftArmPivot, 0.18, 0.42, 0.18, armMat, 0, -0.21, 0);
+    addVoxelBox(leftArmPivot, 0.19, 0.16, 0.19, handMat, 0, -0.48, 0);
     bodyPivot.add(leftArmPivot);
 
     const rightArmPivot = new THREE.Group();
-    rightArmPivot.position.set(torsoW * 0.5 + 0.10, 1.24, 0);
-    const rightArmMesh = leftArmMesh.clone();
-    rightArmPivot.add(rightArmMesh);
+    rightArmPivot.position.set(0.39, 1.22, 0);
+    addVoxelBox(rightArmPivot, 0.18, 0.42, 0.18, armMat, 0, -0.21, 0);
+    addVoxelBox(rightArmPivot, 0.19, 0.16, 0.19, handMat, 0, -0.48, 0);
     bodyPivot.add(rightArmPivot);
 
+    if (charData.id === 'cloud') {
+        addVoxelBox(rightArmPivot, 0.06, 0.24, 0.08, brownMat, 0, -0.52, 0.16);
+        addVoxelBox(rightArmPivot, 0.05, 1.15, 0.28, metalMat, 0, -0.52, 0.72);
+    } else if (charData.id === 'sephiroth') {
+        addVoxelBox(rightArmPivot, 0.04, 0.06, 1.65, metalMat, 0, -0.50, 0.85);
+    } else if (charData.id === 'asta') {
+        addVoxelBox(rightArmPivot, 0.07, 0.32, 1.10, blackMat, 0, -0.50, 0.62);
+        addVoxelBox(rightArmPivot, 0.08, 0.34, 0.08, redMat, 0, -0.50, 0.20);
+    } else if (['tanjiro', 'cha', 'aki', 'erza'].includes(charData.id)) {
+        const bladeColor = charData.id === 'cha' ? goldMat : metalMat;
+        addVoxelBox(rightArmPivot, 0.04, 0.08, 0.95, bladeColor, 0, -0.50, 0.52);
+    } else if (charData.id === 'jinwoo') {
+        addVoxelBox(rightArmPivot, 0.04, 0.09, 0.52, getVoxelMat('#a855f7', '#a855f7', 0.6), 0, -0.50, 0.30);
+        addVoxelBox(leftArmPivot, 0.04, 0.09, 0.52, getVoxelMat('#a855f7', '#a855f7', 0.6), 0, -0.50, 0.30);
+    } else if (charData.id === 'denji') {
+        addVoxelBox(rightArmPivot, 0.07, 0.22, 0.85, metalMat, 0, -0.50, 0.45);
+        addVoxelBox(leftArmPivot, 0.07, 0.22, 0.85, metalMat, 0, -0.50, 0.45);
+    } else if (charData.id === 'power') {
+        addVoxelBox(rightArmPivot, 0.06, 0.06, 0.85, redMat, 0, -0.50, 0.45);
+        addVoxelBox(rightArmPivot, 0.34, 0.34, 0.28, redMat, 0, -0.50, 0.85);
+    }
+
+    // --- 5. VOXEL BENEN & SCHOENEN ---
+    const legMat = ['mario', 'deku', 'cloud', 'denji', 'power', 'aki'].includes(charData.id) ? secondaryMat : primaryMat;
+    const shoeMat = ['sonic', 'shadow', 'mario'].includes(charData.id) ? redMat : blackMat;
+
     const leftLegPivot = new THREE.Group();
-    leftLegPivot.position.set(-torsoW * 0.26, 0.54, 0);
-    const leftLegMesh = addCelOutline(new THREE.Mesh(new THREE.CylinderGeometry(0.11, 0.10, 0.54, 10), primaryMat), 1.06);
-    leftLegMesh.position.y = -0.27;
-    leftLegPivot.add(leftLegMesh);
+    leftLegPivot.position.set(-0.15, 0.62, 0);
+    leftLegPivot.scale.setScalar(scaleMult);
+    addVoxelBox(leftLegPivot, 0.22, 0.46, 0.22, legMat, 0, -0.23, 0);
+    addVoxelBox(leftLegPivot, 0.24, 0.16, 0.30, shoeMat, 0, -0.54, 0.04);
     root.add(leftLegPivot);
 
     const rightLegPivot = new THREE.Group();
-    rightLegPivot.position.set(torsoW * 0.26, 0.54, 0);
-    const rightLegMesh = leftLegMesh.clone();
-    rightLegPivot.add(rightLegMesh);
+    rightLegPivot.position.set(0.15, 0.62, 0);
+    rightLegPivot.scale.setScalar(scaleMult);
+    addVoxelBox(rightLegPivot, 0.22, 0.46, 0.22, legMat, 0, -0.23, 0);
+    addVoxelBox(rightLegPivot, 0.24, 0.16, 0.30, shoeMat, 0, -0.54, 0.04);
     root.add(rightLegPivot);
 
+    // --- 6. AURA, SCHILD & BEVRIEZING EFFECTEN ---
     const auraRing = new THREE.Mesh(new THREE.TorusGeometry(0.68, 0.04, 8, 24), auraMat);
     auraRing.rotation.x = Math.PI / 2;
     auraRing.position.y = 0.08;
@@ -610,12 +745,26 @@ function animate3DCharacter(rig, animTick, state) {
     const walkSwing = state.isMoving && state.isGrounded ? Math.sin(animTick * 0.32) * 0.85 : 0;
     const idleBob = state.isGrounded ? Math.sin(animTick * 0.14) * 0.04 : 0.06;
 
+    if (typeof state.facing === 'number') {
+        rig.root.rotation.y = state.facing === 1 ? Math.PI * 0.42 : -Math.PI * 0.42;
+    }
+
     if (rig.isExternalGLB && rig.externalModel) {
         rig.externalModel.position.y = idleBob;
     } else {
         rig.bodyPivot.position.y = idleBob;
         rig.leftLegPivot.rotation.x = walkSwing;
         rig.rightLegPivot.rotation.x = -walkSwing;
+
+        if (state.isAttacking) {
+            rig.rightArmPivot.rotation.x = -1.65;
+            rig.leftArmPivot.rotation.x = 0.55;
+            rig.bodyPivot.rotation.y = 0.35;
+        } else {
+            rig.rightArmPivot.rotation.x = -walkSwing * 0.75;
+            rig.leftArmPivot.rotation.x = walkSwing * 0.75;
+            rig.bodyPivot.rotation.y = 0;
+        }
     }
 
     rig.auraRing.visible = (state.auraBoost > 0 || state.isAttacking);
@@ -644,8 +793,8 @@ function setup3DPreviewViewer(canvasId, interactive = true) {
     camera.position.set(0, 1.15, 3.65);
     camera.lookAt(0, 1.0, 0);
 
-    scene.add(new THREE.HemisphereLight(0xffffff, 0x1e293b, 1.1));
-    const dir = new THREE.DirectionalLight(0xffffff, 1.15);
+    scene.add(new THREE.HemisphereLight(0xffffff, 0x1e293b, 1.15));
+    const dir = new THREE.DirectionalLight(0xffffff, 1.25);
     dir.position.set(2.5, 4, 3);
     scene.add(dir);
 
@@ -680,8 +829,8 @@ function setupRosterThumbnailViewer() {
     if (rosterThumbnailViewer) return rosterThumbnailViewer;
 
     const canvas = document.createElement('canvas');
-    canvas.width = 54;
-    canvas.height = 54;
+    canvas.width = 70;
+    canvas.height = 70;
     const renderer = new THREE.WebGLRenderer({
         canvas,
         alpha: true,
@@ -695,8 +844,8 @@ function setupRosterThumbnailViewer() {
     camera.position.set(0, 1.15, 3.65);
     camera.lookAt(0, 1.0, 0);
 
-    scene.add(new THREE.HemisphereLight(0xffffff, 0x1e293b, 1.1));
-    const dir = new THREE.DirectionalLight(0xffffff, 1.15);
+    scene.add(new THREE.HemisphereLight(0xffffff, 0x1e293b, 1.15));
+    const dir = new THREE.DirectionalLight(0xffffff, 1.25);
     dir.position.set(2.5, 4, 3);
     scene.add(dir);
 
@@ -709,6 +858,7 @@ function drawRosterThumbnail(canvasEl, rig) {
     if (!context) return;
 
     const viewer = setupRosterThumbnailViewer();
+    rig.root.rotation.y = 0.35;
     viewer.scene.add(rig.root);
     viewer.renderer.render(viewer.scene, viewer.camera);
     context.clearRect(0, 0, canvasEl.width, canvasEl.height);
@@ -742,12 +892,23 @@ function renderPortrait(canvasEl, charData) {
     }
 }
 
+function animatePreviews() {
+    Object.values(previewViewers).forEach(v => {
+        if (v && v.rig && v.renderer && v.scene && v.camera) {
+            if (!v.dragging) v.rotY += 0.012;
+            v.rig.root.rotation.y = v.rotY;
+            v.renderer.render(v.scene, v.camera);
+        }
+    });
+    requestAnimationFrame(animatePreviews);
+}
+requestAnimationFrame(animatePreviews);
+
 let selectedP1Index = 0;
 let selectedP2Index = 1;
 let activeSelectorTarget = 1;
 let activeFranchiseFilter = 'all';
 let gameMode = 'cpu';
-let selectedArenaKey = 'dojo';
 
 const franchiseTabsEl = document.getElementById('franchise-tabs');
 const rosterGrid = document.getElementById('roster-grid');
@@ -758,9 +919,7 @@ function buildFranchiseTabs() {
     FRANCHISES.forEach(f => {
         const btn = document.createElement('button');
         btn.type = 'button';
-        btn.className = activeFranchiseFilter === f.key
-            ? 'px-2.5 py-1 rounded-lg text-[11px] font-black bg-amber-500 text-slate-950 shadow cursor-pointer'
-            : 'px-2.5 py-1 rounded-lg text-[11px] font-bold bg-slate-900 text-slate-300 hover:bg-slate-800 border border-slate-700/80 cursor-pointer';
+        btn.className = activeFranchiseFilter === f.key ? 'active' : '';
         btn.textContent = f.label;
         btn.addEventListener('click', () => {
             activeFranchiseFilter = f.key;
@@ -779,17 +938,15 @@ function buildRosterUI() {
 
         const btn = document.createElement('button');
         btn.type = 'button';
-        btn.className = 'char-card flex flex-col items-center p-1.5 rounded-xl bg-slate-900/95 border border-slate-700/80 hover:border-amber-400 cursor-pointer relative';
+        btn.className = 'char-card';
         btn.dataset.index = idx;
 
         const miniCanvas = document.createElement('canvas');
         miniCanvas.id = `roster-portrait-${char.id}`;
-        miniCanvas.width = 54; miniCanvas.height = 54;
-        miniCanvas.className = 'rounded-lg bg-slate-950 pointer-events-none';
+        miniCanvas.width = 70; miniCanvas.height = 70;
         renderPortrait(miniCanvas, char);
 
         const label = document.createElement('span');
-        label.className = 'mt-1 text-[10px] font-extrabold text-slate-200 truncate w-full text-center';
         label.textContent = char.name.split(' ')[0];
 
         btn.appendChild(miniCanvas);
@@ -811,11 +968,11 @@ function setSelectorTarget(target) {
     const b2 = document.getElementById('target-p2-btn');
     if (!b1 || !b2) return;
     if (target === 1) {
-        b1.className = 'px-2.5 py-1 rounded-md text-xs font-extrabold bg-red-600 text-white cursor-pointer';
-        b2.className = 'px-2.5 py-1 rounded-md text-xs font-extrabold text-slate-400 hover:text-white cursor-pointer';
+        b1.className = 'target-btn target-active-red';
+        b2.className = 'target-btn';
     } else {
-        b2.className = 'px-2.5 py-1 rounded-md text-xs font-extrabold bg-blue-600 text-white cursor-pointer';
-        b1.className = 'px-2.5 py-1 rounded-md text-xs font-extrabold text-slate-400 hover:text-white cursor-pointer';
+        b2.className = 'target-btn target-active-red';
+        b1.className = 'target-btn';
     }
 }
 
@@ -843,20 +1000,92 @@ function updateSelectionCards() {
 }
 
 // =========================================================================
-// 5. 3D BATTLE ARENA ENGINE & GAMEPLAY LOOP
+// 5. 3D BATTLE ARENA ENGINE & SUPER SMASH BROS SPECIAL MOVES
 // =========================================================================
 let battleRunning = false;
 let battleScene, battleCamera, battleRenderer;
 let p1Fighter, p2Fighter;
+let activeProjectiles = [];
 let activeArenaData = null;
 let maxStocks = 3;
 let cpuDifficulty = 'normal';
 let keysDown = {};
 let keysPressed = {};
+let hitstopTimer = 0;
+let screenShake = 0;
 
 const platformWorldX = (p) => (p.x + p.w / 2 - 480) / 65;
 const platformWorldLeft = (p) => (p.x - 480) / 65;
 const platformWorldRight = (p) => (p.x + p.w - 480) / 65;
+
+function spawnProjectile3D(owner, vx, vy, colorHex, size = 0.28, damage = 11, knockback = 5.5, life = 1.6, freeze = false) {
+    const mesh = new THREE.Mesh(
+        new THREE.SphereGeometry(size, 12, 12),
+        getVoxelMat(colorHex, colorHex, 0.85)
+    );
+    mesh.position.set(owner.x + owner.facing * 0.7, owner.y + 1.05, 0);
+    battleScene.add(mesh);
+    activeProjectiles.push({ owner, mesh, vx, vy, damage, knockback, life, freeze });
+}
+
+function triggerSpecialMove(f, opponent, controls) {
+    if (f.specialCooldown > 0) return;
+    f.specialCooldown = 0.65;
+    f.attackTimer = 0.26;
+    f.isAttacking = true;
+    f.auraBoost = 35;
+
+    const dirType = controls.up ? 'up' : (controls.down ? 'down' : ((controls.left || controls.right) ? 'side' : 'neutral'));
+    const moveObj = f.data.moves[dirType];
+    const arenaNote = document.getElementById('arena-note');
+    if (arenaNote && moveObj) {
+        arenaNote.textContent = `${f.data.name} gebruikt ${moveObj.name.toUpperCase()}!`;
+    }
+
+    if (dirType === 'up') {
+        f.vy = f.data.jump * 1.15;
+        f.isGrounded = false;
+        if (Math.abs(opponent.x - f.x) < 1.6 && Math.abs(opponent.y - f.y) < 1.8) {
+            applySmashHit(f, opponent, 12, 6.2, 8.5, false);
+        }
+    } else if (dirType === 'down') {
+        if (['gojo', 'todoroki', 'gray'].includes(f.data.id)) {
+            spawnProjectile3D(f, f.facing * 6.5, 0, '#38bdf8', 0.42, 9, 4.0, 1.2, true);
+        } else if (['natsu', 'denji', 'cha', 'cloud', 'noelle'].includes(f.data.id)) {
+            f.percent = Math.max(0, f.percent - 12);
+            f.auraBoost = 180;
+        } else {
+            spawnProjectile3D(f, f.facing * 8.5, 0, f.data.aura, 0.48, 15, 7.8, 0.65, false);
+            spawnProjectile3D(f, -f.facing * 8.5, 0, f.data.aura, 0.48, 15, 7.8, 0.65, false);
+        }
+    } else if (dirType === 'side') {
+        if (['jinwoo', 'shadow', 'zenitsu'].includes(f.data.id)) {
+            f.x = opponent.x - f.facing * 1.1;
+            f.y = opponent.y;
+            applySmashHit(f, opponent, 14, 7.2, 6.0, false);
+        } else {
+            f.knockbackX += f.facing * 8.5;
+            spawnProjectile3D(f, f.facing * 11.5, 0, f.data.aura, 0.35, 13, 6.8, 1.1, false);
+        }
+    } else {
+        spawnProjectile3D(f, f.facing * 10.5, 0, f.data.aura, 0.34, 11, 5.8, 1.5, false);
+    }
+}
+
+function applySmashHit(attacker, target, damage, kbX, kbY, freeze = false) {
+    if (target.shieldActive) {
+        target.knockbackX += attacker.facing * (kbX * 0.35);
+        return;
+    }
+    target.percent = Math.min(999, target.percent + damage);
+    const scale = (1 + target.percent * 0.014) / target.data.weight;
+    target.knockbackX += attacker.facing * kbX * scale;
+    target.vy = Math.max(target.vy, kbY * scale);
+    target.isGrounded = false;
+    if (freeze) target.frozenTimer = 1.6;
+    hitstopTimer = 0.04;
+    screenShake = Math.min(0.45, 0.12 + target.percent * 0.002);
+}
 
 function startMatch() {
     const selectScreen = document.getElementById('select-screen');
@@ -880,6 +1109,7 @@ function startMatch() {
 
     keysDown = {};
     keysPressed = {};
+    activeProjectiles = [];
     initBattleScene();
     battleRunning = true;
     lastFrameTime = performance.now();
@@ -900,21 +1130,19 @@ function initBattleScene() {
     battleCamera.position.set(0, 5.5, 14.5);
     battleCamera.lookAt(0, 2.5, 0);
 
-    battleScene.add(new THREE.HemisphereLight(0xffffff, 0x0f172a, 1.2));
-    const dirLight = new THREE.DirectionalLight(0xffffff, 1.4);
+    battleScene.add(new THREE.HemisphereLight(0xffffff, 0x0f172a, 1.25));
+    const dirLight = new THREE.DirectionalLight(0xffffff, 1.45);
     dirLight.position.set(5, 10, 7);
     battleScene.add(dirLight);
 
-    // Bouw Arena Platforms in 3D
     activeArenaData.platforms.forEach(p => {
         const platGeo = new THREE.BoxGeometry(p.w / 65, 0.4, 1.8);
-        const platMat = makeToonMat(activeArenaData.accentColor);
-        const platMesh = addCelOutline(new THREE.Mesh(platGeo, platMat));
+        const platMat = getVoxelMat(activeArenaData.accentColor);
+        const platMesh = new THREE.Mesh(platGeo, platMat);
         platMesh.position.set(platformWorldX(p), -(p.y - 250) / 65, 0);
         battleScene.add(platMesh);
     });
 
-    // Initialiseer Vechters
     const c1 = ROSTER[selectedP1Index];
     const c2 = ROSTER[selectedP2Index];
 
@@ -942,14 +1170,17 @@ function createFighterObject(charData, x, y, playerIndex) {
         stocks: maxStocks,
         facing: playerIndex === 0 ? 1 : -1,
         isGrounded: false,
+        jumpsUsed: 0,
         isMoving: false,
         isAttacking: false,
         attackTimer: 0,
         attackCooldown: 0,
+        specialCooldown: 0,
         attackHasHit: false,
         jumpWasDown: false,
         shieldActive: false,
         isFrozen: false,
+        frozenTimer: 0,
         auraBoost: 0,
         playerIndex: playerIndex,
         animTick: Math.random() * 100
@@ -957,30 +1188,37 @@ function createFighterObject(charData, x, y, playerIndex) {
 }
 
 function updateFighter(f, opponent, controls, dt) {
-    if (f.isFrozen) return;
+    if (f.frozenTimer > 0) {
+        f.frozenTimer -= dt;
+        f.isFrozen = true;
+        animate3DCharacter(f.rig, f.animTick, f);
+        return;
+    }
+    f.isFrozen = false;
 
     f.animTick += dt * 12;
     f.auraBoost = Math.max(0, f.auraBoost - dt * 60);
     f.attackCooldown = Math.max(0, f.attackCooldown - dt);
+    f.specialCooldown = Math.max(0, f.specialCooldown - dt);
     f.attackTimer = Math.max(0, f.attackTimer - dt);
     f.isAttacking = f.attackTimer > 0;
+    f.shieldActive = !!controls.shield && f.isGrounded;
 
-    // Basis beweging
     let moveDir = 0;
-    if (controls.left) { moveDir = -1; f.facing = -1; }
-    if (controls.right) { moveDir = 1; f.facing = 1; }
+    if (!f.shieldActive) {
+        if (controls.left) { moveDir = -1; f.facing = -1; }
+        if (controls.right) { moveDir = 1; f.facing = 1; }
+    }
 
-    f.vx = moveDir * (f.data.speed * 0.65);
+    f.vx = moveDir * (f.data.speed * 0.68);
     f.x += (f.vx + f.knockbackX) * dt;
     f.knockbackX *= Math.exp(-5 * dt);
     f.isMoving = moveDir !== 0;
 
-    // Gravity and jumping use seconds so movement stays consistent across frame rates.
     const previousY = f.y;
     f.vy -= 24 * dt;
     f.y += f.vy * dt;
 
-    // Platform botsing
     f.isGrounded = false;
     activeArenaData.platforms.forEach(p => {
         const py = -(p.y - 250) / 65;
@@ -991,18 +1229,24 @@ function updateFighter(f, opponent, controls, dt) {
             f.y = platformTop;
             f.vy = 0;
             f.isGrounded = true;
+            f.jumpsUsed = 0;
         }
     });
 
-    if (controls.jump && !f.jumpWasDown && f.isGrounded) {
-        f.vy = f.data.jump * 0.8;
+    if (controls.jump && !f.jumpWasDown && f.jumpsUsed < 2) {
+        f.vy = f.data.jump * 0.82;
         f.isGrounded = false;
+        f.jumpsUsed++;
     }
     f.jumpWasDown = controls.jump;
 
-    if (controls.attack && f.attackCooldown <= 0) {
-        f.attackTimer = 0.18;
-        f.attackCooldown = 0.48;
+    if (controls.special) {
+        triggerSpecialMove(f, opponent, controls);
+    }
+
+    if (controls.attack && f.attackCooldown <= 0 && !f.shieldActive) {
+        f.attackTimer = 0.20;
+        f.attackCooldown = 0.42;
         f.attackHasHit = false;
         f.isAttacking = true;
     }
@@ -1010,30 +1254,52 @@ function updateFighter(f, opponent, controls, dt) {
     if (f.isAttacking && !f.attackHasHit) {
         const dx = opponent.x - f.x;
         const dy = opponent.y - f.y;
-        if (Math.abs(dx) <= 1.45 && Math.abs(dy) <= 1.25 && Math.sign(dx) === f.facing) {
-            opponent.percent = Math.min(999, opponent.percent + 10);
-            opponent.knockbackX += f.facing * (3.2 + opponent.percent * 0.035) / opponent.data.weight;
-            opponent.vy = Math.max(opponent.vy, 4.8 + opponent.percent * 0.025);
-            opponent.isGrounded = false;
+        const bonusDmg = f.auraBoost > 0 ? 5 : 0;
+        if (Math.abs(dx) <= 1.55 && Math.abs(dy) <= 1.3 && Math.sign(dx) === f.facing) {
+            applySmashHit(f, opponent, 10 + bonusDmg, 4.5, 5.2, false);
             f.attackHasHit = true;
         }
     }
 
-    // Falling off the stage costs a stock and respawns the fighter.
-    if (f.y < -6 || Math.abs(f.x) > 7) {
+    if (f.y < -6 || Math.abs(f.x) > 7.5) {
         f.stocks--;
         f.percent = 0;
         f.x = f.playerIndex === 0 ? -2.5 : 2.5;
         f.y = 3.5;
         f.vy = 0;
         f.knockbackX = 0;
+        f.jumpsUsed = 0;
         f.attackTimer = 0;
         f.isAttacking = false;
         f.jumpWasDown = false;
+        screenShake = 0.35;
     }
 
     f.rig.root.position.set(f.x, f.y, 0);
     animate3DCharacter(f.rig, f.animTick, f);
+}
+
+function updateProjectiles(dt) {
+    for (let i = activeProjectiles.length - 1; i >= 0; i--) {
+        const proj = activeProjectiles[i];
+        proj.life -= dt;
+        proj.mesh.position.x += proj.vx * dt;
+        proj.mesh.position.y += proj.vy * dt;
+
+        const target = proj.owner === p1Fighter ? p2Fighter : p1Fighter;
+        const dist = Math.hypot(proj.mesh.position.x - target.x, proj.mesh.position.y - (target.y + 1.0));
+        if (dist < 0.95) {
+            applySmashHit(proj.owner, target, proj.damage, proj.knockback, 4.8, proj.freeze);
+            battleScene.remove(proj.mesh);
+            activeProjectiles.splice(i, 1);
+            continue;
+        }
+
+        if (proj.life <= 0) {
+            battleScene.remove(proj.mesh);
+            activeProjectiles.splice(i, 1);
+        }
+    }
 }
 
 function updateBattleHud() {
@@ -1046,8 +1312,8 @@ function updateBattleHud() {
     if (p1Name) p1Name.textContent = p1Fighter.data.name;
     if (p2Name) p2Name.textContent = p2Fighter.data.name;
     if (p2Role) p2Role.textContent = gameMode === '2p' ? 'PLAYER 2' : 'CPU';
-    if (p1Stats) p1Stats.textContent = `${p1Fighter.percent}% · ${p1Fighter.stocks} levens`;
-    if (p2Stats) p2Stats.textContent = `${p2Fighter.percent}% · ${p2Fighter.stocks} levens`;
+    if (p1Stats) p1Stats.textContent = `${p1Fighter.percent}% · ${'❤️'.repeat(Math.max(0, p1Fighter.stocks))}`;
+    if (p2Stats) p2Stats.textContent = `${p2Fighter.percent}% · ${'❤️'.repeat(Math.max(0, p2Fighter.stocks))}`;
 }
 
 let lastFrameTime = performance.now();
@@ -1056,40 +1322,69 @@ function battleLoop(now) {
     const dt = Math.min((now - lastFrameTime) / 1000, 0.05);
     lastFrameTime = now;
 
-    // Besturing Speler 1
+    if (hitstopTimer > 0) {
+        hitstopTimer -= dt;
+        requestAnimationFrame(battleLoop);
+        return;
+    }
+
     const p1Controls = {
         left: keysDown['KeyA'] || keysDown['ArrowLeft'],
         right: keysDown['KeyD'] || keysDown['ArrowRight'],
+        up: keysDown['KeyW'] || keysDown['ArrowUp'],
+        down: keysDown['KeyS'] || keysDown['ArrowDown'],
         jump: keysDown['KeyW'] || keysDown['ArrowUp'] || keysDown['Space'],
-        attack: keysPressed['KeyF']
+        shield: keysDown['KeyS'] || keysDown['ArrowDown'],
+        attack: keysPressed['KeyF'],
+        special: keysPressed['KeyG']
     };
     updateFighter(p1Fighter, p2Fighter, p1Controls, dt);
 
-    // Besturing Speler 2 of CPU
     let p2Controls = {};
     if (gameMode === '2p') {
         p2Controls = {
             left: keysDown['KeyJ'],
             right: keysDown['KeyL'],
+            up: keysDown['KeyI'],
+            down: keysDown['KeyK'],
             jump: keysDown['KeyI'],
-            attack: keysPressed['KeyO']
+            shield: keysDown['KeyK'],
+            attack: keysPressed['KeyO'],
+            special: keysPressed['KeyP']
         };
     } else {
         const dx = p1Fighter.x - p2Fighter.x;
-        const attackChance = cpuDifficulty === 'easy' ? 0.015 : (cpuDifficulty === 'hard' ? 0.12 : 0.06);
+        const attackChance = cpuDifficulty === 'easy' ? 0.02 : (cpuDifficulty === 'hard' ? 0.14 : 0.07);
+        const offStage = Math.abs(p2Fighter.x) > 4.2 || p2Fighter.y < -1.0;
         p2Controls = {
-            left: dx < -0.4,
-            right: dx > 0.4,
-            jump: Math.random() < 0.03 && p2Fighter.isGrounded,
-            attack: Math.abs(dx) < 1.45
-                && Math.abs(p1Fighter.y - p2Fighter.y) < 1.25
-                && Math.random() < attackChance
+            left: offStage ? p2Fighter.x > 0 : dx < -0.45,
+            right: offStage ? p2Fighter.x < 0 : dx > 0.45,
+            up: offStage,
+            down: Math.random() < 0.015,
+            jump: (offStage && p2Fighter.vy < 0) || (Math.random() < 0.03 && p2Fighter.isGrounded),
+            attack: Math.abs(dx) < 1.5 && Math.abs(p1Fighter.y - p2Fighter.y) < 1.3 && Math.random() < attackChance,
+            special: Math.random() < (attackChance * 0.45)
         };
     }
     updateFighter(p2Fighter, p1Fighter, p2Controls, dt);
+    updateProjectiles(dt);
     keysPressed = {};
 
     if (battleRenderer && battleScene && battleCamera) {
+        const midX = (p1Fighter.x + p2Fighter.x) * 0.5;
+        const midY = Math.max(1.2, (p1Fighter.y + p2Fighter.y) * 0.5 + 1.8);
+        const dist = Math.hypot(p1Fighter.x - p2Fighter.x, p1Fighter.y - p2Fighter.y);
+        const targetZ = Math.min(18.5, Math.max(11.5, 10.5 + dist * 0.65));
+
+        const shakeX = screenShake > 0 ? (Math.random() - 0.5) * screenShake : 0;
+        const shakeY = screenShake > 0 ? (Math.random() - 0.5) * screenShake : 0;
+        screenShake = Math.max(0, screenShake - dt * 1.8);
+
+        battleCamera.position.x += (midX - battleCamera.position.x) * 0.08 + shakeX;
+        battleCamera.position.y += (midY + 2.4 - battleCamera.position.y) * 0.08 + shakeY;
+        battleCamera.position.z += (targetZ - battleCamera.position.z) * 0.08;
+        battleCamera.lookAt(midX, midY, 0);
+
         battleRenderer.render(battleScene, battleCamera);
     }
 
@@ -1098,7 +1393,7 @@ function battleLoop(now) {
         battleRunning = false;
         const winner = p1Fighter.stocks > 0 ? p1Fighter.data.name : p2Fighter.data.name;
         const arenaNote = document.getElementById('arena-note');
-        if (arenaNote) arenaNote.textContent = `${winner} wint! Ga terug naar de selectie voor een nieuw gevecht.`;
+        if (arenaNote) arenaNote.textContent = `🏆 GAME! ${winner} wint het gevecht!`;
         return;
     }
 
@@ -1107,7 +1402,7 @@ function battleLoop(now) {
 
 // Event Listeners voor toetsenbord
 window.addEventListener('keydown', (e) => {
-    if (battleRunning && ['ArrowLeft', 'ArrowRight', 'ArrowUp', 'Space'].includes(e.code)) e.preventDefault();
+    if (battleRunning && ['ArrowLeft', 'ArrowRight', 'ArrowUp', 'ArrowDown', 'Space'].includes(e.code)) e.preventDefault();
     if (!keysDown[e.code]) keysPressed[e.code] = true;
     keysDown[e.code] = true;
 });
@@ -1131,14 +1426,18 @@ document.addEventListener('DOMContentLoaded', () => {
     const mode2p = document.getElementById('mode-2p-btn');
     if (modeCpu) modeCpu.addEventListener('click', () => {
         gameMode = 'cpu';
+        modeCpu.classList.add('active');
+        if (mode2p) mode2p.classList.remove('active');
         document.getElementById('cpu-diff-wrapper').classList.remove('hidden');
-        document.getElementById('p2-role-label').textContent = 'CPU Tegenstander';
+        document.getElementById('p2-role-label').textContent = 'CPU TEGENSTANDER';
         updateSelectionCards();
     });
     if (mode2p) mode2p.addEventListener('click', () => {
         gameMode = '2p';
+        mode2p.classList.add('active');
+        if (modeCpu) modeCpu.classList.remove('active');
         document.getElementById('cpu-diff-wrapper').classList.add('hidden');
-        document.getElementById('p2-role-label').textContent = 'Speler 2';
+        document.getElementById('p2-role-label').textContent = 'PLAYER 2';
         updateSelectionCards();
     });
 
