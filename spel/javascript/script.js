@@ -1,115 +1,119 @@
-// =========================================================================
-// 1. FRANCHISES, ARENAS & ALL 30 CHARACTERS ROSTER DATA
-// =========================================================================
-const FRANCHISES = [
-    { key: 'all', label: 'Alle 30' },
-    { key: 'Jujutsu Kaisen', label: 'Jujutsu Kaisen' },
-    { key: 'Solo Leveling', label: 'Solo Leveling' },
-    { key: 'My Hero Academia', label: 'My Hero Academia' },
-    { key: 'Black Clover', label: 'Black Clover' },
-    { key: 'Demon Slayer', label: 'Demon Slayer' },
-    { key: 'Fairy Tail', label: 'Fairy Tail' },
-    { key: 'Sonic', label: 'Sonic' },
-    { key: 'Mario', label: 'Mario' },
-    { key: 'Final Fantasy', label: 'Final Fantasy' },
-    { key: 'Chainsaw Man', label: 'Chainsaw Man' }
-];
 
-const ARENAS = {
-    dojo: {
-        name: 'Anime Dojo',
-        bgTop: '#1e1b4b',
-        bgBottom: '#0f172a',
-        accentColor: '#f59e0b',
-        platforms: [
-            { x: 180, y: 420, w: 600, main: true },
-            { x: 230, y: 310, w: 160, main: false },
-            { x: 570, y: 310, w: 160, main: false },
-            { x: 400, y: 215, w: 160, main: false }
-        ]
-    },
-    castle: {
-        name: 'Schaduw Kasteel',
-        bgTop: '#2e1065',
-        bgBottom: '#090d16',
-        accentColor: '#a855f7',
-        platforms: [
-            { x: 160, y: 430, w: 640, main: true },
-            { x: 210, y: 305, w: 180, main: false },
-            { x: 570, y: 305, w: 180, main: false }
-        ]
-    },
-    island: {
-        name: 'Zwevend Eiland',
-        bgTop: '#0369a1',
-        bgBottom: '#0f172a',
-        accentColor: '#38bdf8',
-        platforms: [
-            { x: 210, y: 425, w: 540, main: true },
-            { x: 120, y: 325, w: 140, main: false },
-            { x: 700, y: 325, w: 140, main: false },
-            { x: 410, y: 240, w: 140, main: false }
-        ]
-    },
-    neon: {
-        name: 'Neon Stad',
-        bgTop: '#311042',
-        bgBottom: '#090d16',
-        accentColor: '#f43f5e',
-        platforms: [
-            { x: 150, y: 420, w: 660, main: true },
-            { x: 280, y: 315, w: 400, main: false },
-            { x: 410, y: 210, w: 140, main: false }
-        ]
-    }
-};
+ // =========================================================================
+ // 1. FRANCHISES, ARENAS & ALL 30 CHARACTERS ROSTER DATA
+ // =========================================================================
+ const FRANCHISES = [
+     { key: 'all', label: 'Alle 30' },
+     { key: 'Jujutsu Kaisen', label: 'Jujutsu Kaisen' },
+     { key: 'Solo Leveling', label: 'Solo Leveling' },
+     { key: 'My Hero Academia', label: 'My Hero Academia' },
+     { key: 'Black Clover', label: 'Black Clover' },
+     { key: 'Demon Slayer', label: 'Demon Slayer' },
+     { key: 'Fairy Tail', label: 'Fairy Tail' },
+     { key: 'Sonic', label: 'Sonic' },
+     { key: 'Mario', label: 'Mario' },
+     { key: 'Final Fantasy', label: 'Final Fantasy' },
+     { key: 'Chainsaw Man', label: 'Chainsaw Man' },
+     { key: 'Naruto', label: 'Naruto' },
+     { key: 'One Piece', label: 'One Piece' },
+     { key: 'Dragon Ball', label: 'Dragon Ball' }
+ ];
 
-const ROSTER = [
-    {
-        id: 'gojo', name: 'Satoru Gojo', franchise: 'Jujutsu Kaisen',
-        desc: 'De almachtige leraar met witte haren, blinddoek en Mugen-kracht.',
-        skin: '#fde68a', primary: '#1e293b', secondary: '#0f172a', hair: '#f8fafc', aura: '#38bdf8',
-        speed: 5.8, jump: 12.6, weight: 1.0,
-        moves: {
-            neutral: { name: 'Mugen', desc: 'Onbegrensd schild dat vijanden vertraagt' },
-            side: { name: 'Rode Brief (Aka)', desc: 'Krachtige rode energie-stoot' },
-            up: { name: 'Teleportatie', desc: 'Teleporteert bliksemsnel omhoog' },
-            down: { name: 'Onbegrensde Leegte', desc: 'Domeinuitbreiding die vijanden bevriest' }
-        }
-    },
-    {
-        id: 'sukuna', name: 'Sukuna', franchise: 'Jujutsu Kaisen',
-        desc: 'De legendarische Vloekkoning met dodelijke snij-aanvallen.',
-        skin: '#fed7aa', primary: '#f8fafc', secondary: '#1e1b4b', hair: '#f472b6', aura: '#ef4444',
-        speed: 5.6, jump: 12.2, weight: 1.08,
-        moves: {
-            neutral: { name: 'Cleave', desc: 'Snelle onzichtbare snij-aanval' },
-            side: { name: 'Dismantle', desc: 'Drie scherpe slash-golven naar voren' },
-            up: { name: 'Vloekvlucht', desc: 'Schiet met duivelse snelheid omhoog' },
-            down: { name: 'Vlammenpijl', desc: 'Explosieve vuurschokgolf' }
-        }
-    },
-    {
-        id: 'yuji', name: 'Yuji Itadori', franchise: 'Jujutsu Kaisen',
-        desc: 'Energieke vechter met brute kracht en de Zwarte Flits.',
-        skin: '#fed7aa', primary: '#1e293b', secondary: '#ef4444', hair: '#fda4af', aura: '#dc2626',
-        speed: 6.1, jump: 12.8, weight: 1.0,
-        moves: {
-            neutral: { name: 'Divergent Fist', desc: 'Vervloekte dubbele vuistslag' },
-            side: { name: 'Stormloop van Stoten', desc: 'Snelle voorwaartse combo-rush' },
-            up: { name: 'Jump Power', desc: 'Hoge bovenmenselijke uppercut-sprong' },
-            down: { name: 'Black Flash', desc: 'Counter die een zwarte flits ontketent' }
-        }
-    },
-    {
-        id: 'jinwoo', name: 'Sung Jinwoo', franchise: 'Solo Leveling',
-        desc: 'De Shadow Monarch met koninklijke dolken en schaduwleger.',
-        skin: '#fde68a', primary: '#0f172a', secondary: '#4c1d95', hair: '#1e293b', aura: '#a855f7',
-        speed: 6.3, jump: 12.8, weight: 0.98,
-        moves: {
-            neutral: { name: 'Dagger Rush', desc: 'Gooit snelle schaduwdolken' },
-            side: { name: 'Schaduwstap', desc: 'Teleporteert direct achter de vijand' },
-            up: { name: 'Heerser der Schaduwen', desc: 'Zweeft met schaduwvleugels omhoog' },
+ const ARENAS = {
+     dojo: {
+         name: 'Anime Dojo',
+         bgTop: '#1e1b4b',
+         bgBottom: '#0f172a',
+         accentColor: '#f59e0b',
+         platforms: [
+             { x: 180, y: 420, w: 600, main: true },
+             { x: 230, y: 310, w: 160, main: false },
+             { x: 570, y: 310, w: 160, main: false },
+             { x: 400, y: 215, w: 160, main: false }
+         ]
+     },
+     castle: {
+         name: 'Schaduw Kasteel',
+         bgTop: '#2e1065',
+         bgBottom: '#090d16',
+         accentColor: '#a855f7',
+         platforms: [
+             { x: 160, y: 430, w: 640, main: true },
+             { x: 210, y: 305, w: 180, main: false },
+             { x: 570, y: 305, w: 180, main: false }
+         ]
+     },
+     island: {
+         name: 'Zwevend Eiland',
+         bgTop: '#0369a1',
+         bgBottom: '#0f172a',
+         accentColor: '#38bdf8',
+         platforms: [
+             { x: 210, y: 425, w: 540, main: true },
+             { x: 120, y: 325, w: 140, main: false },
+             { x: 700, y: 325, w: 140, main: false },
+             { x: 410, y: 240, w: 140, main: false }
+         ]
+     },
+     neon: {
+         name: 'Neon Stad',
+         bgTop: '#311042',
+         bgBottom: '#090d16',
+         accentColor: '#f43f5e',
+         platforms: [
+             { x: 150, y: 420, w: 660, main: true },
+             { x: 280, y: 315, w: 400, main: false },
+             { x: 410, y: 210, w: 140, main: false }
+         ]
+     }
+ };
+
+ const ROSTER = [
+     {
+         id: 'gojo', name: 'Satoru Gojo', franchise: 'Jujutsu Kaisen',
+         desc: 'De almachtige leraar met witte haren, blinddoek en Mugen-kracht.',
+         skin: '#fde68a', primary: '#1e293b', secondary: '#0f172a', hair: '#f8fafc', aura: '#38bdf8',
+         speed: 5.8, jump: 12.6, weight: 1.0,
+         moves: {
+             neutral: { name: 'Mugen', desc: 'Onbegrensd schild dat vijanden vertraagt' },
+             side: { name: 'Rode Brief (Aka)', desc: 'Krachtige rode energie-stoot' },
+             up: { name: 'Teleportatie', desc: 'Teleporteert bliksemsnel omhoog' },
+             down: { name: 'Onbegrensde Leegte', desc: 'Domeinuitbreiding die vijanden bevriest' }
+         }
+     },
+     {
+         id: 'sukuna', name: 'Sukuna', franchise: 'Jujutsu Kaisen',
+         desc: 'De legendarische Vloekkoning met dodelijke snij-aanvallen.',
+         skin: '#fed7aa', primary: '#f8fafc', secondary: '#1e1b4b', hair: '#f472b6', aura: '#ef4444',
+         speed: 5.6, jump: 12.2, weight: 1.08,
+         moves: {
+             neutral: { name: 'Cleave', desc: 'Snelle onzichtbare snij-aanval' },
+             side: { name: 'Dismantle', desc: 'Drie scherpe slash-golven naar voren' },
+             up: { name: 'Vloekvlucht', desc: 'Schiet met duivelse snelheid omhoog' },
+             down: { name: 'Vlammenpijl', desc: 'Explosieve vuurschokgolf' }
+         }
+     },
+     {
+         id: 'yuji', name: 'Yuji Itadori', franchise: 'Jujutsu Kaisen',
+         desc: 'Energieke vechter met brute kracht en de Zwarte Flits.',
+         skin: '#fed7aa', primary: '#1e293b', secondary: '#ef4444', hair: '#fda4af', aura: '#dc2626',
+         speed: 6.1, jump: 12.8, weight: 1.0,
+         moves: {
+             neutral: { name: 'Divergent Fist', desc: 'Vervloekte dubbele vuistslag' },
+             side: { name: 'Stormloop van Stoten', desc: 'Snelle voorwaartse combo-rush' },
+             up: { name: 'Jump Power', desc: 'Hoge bovenmenselijke uppercut-sprong' },
+             down: { name: 'Black Flash', desc: 'Counter die een zwarte flits ontketent' }
+         }
+     },
+     {
+         id: 'jinwoo', name: 'Sung Jinwoo', franchise: 'Solo Leveling',
+         desc: 'De Shadow Monarch met koninklijke dolken en schaduwleger.',
+         skin: '#fde68a', primary: '#0f172a', secondary: '#4c1d95', hair: '#1e293b', aura: '#a855f7',
+         speed: 6.3, jump: 12.8, weight: 0.98,
+         moves: {
+             neutral: { name: 'Dagger Rush', desc: 'Gooit snelle schaduwdolken' },
+             side: { name: 'Schaduwstap', desc: 'Teleporteert direct achter de vijand' },
+             up: { name: 'Heerser der Schaduwen', desc: 'Zweeft met schaduwvleugels omhoog' },
             down: { name: 'Schaduwoproep', desc: 'Roept een schaduwsoldaat op' }
         }
     },
@@ -294,8 +298,7 @@ const ROSTER = [
         }
     },
     {
-        id: 'shadow', name: 'Shadow', franchise: 'Sonic',
-        desc: 'De duistere egel met Chaos Spears en tijdvertraging.',
+        id: 'shadow', name: 'Shadow', franchise: 'Sonic',        desc: 'De duistere egel met Chaos Spears en tijdvertraging.',
         skin: '#fde68a', primary: '#0f172a', secondary: '#dc2626', hair: '#090d16', aura: '#facc15',
         speed: 7.0, jump: 13.0, weight: 0.92,
         moves: {
@@ -394,8 +397,7 @@ const ROSTER = [
         desc: 'Wilde kettingzaagduivel die kettingzagen uit hoofd en armen laat groeien.',
         skin: '#fed7aa', primary: '#f8fafc', secondary: '#ea580c', hair: '#facc15', aura: '#ef4444',
         speed: 6.1, jump: 12.5, weight: 1.02,
-        moves: {
-            neutral: { name: 'Kettingzaag-Zwaai', desc: 'Zwaait wild met beide kettingzagen' },
+        moves: {            neutral: { name: 'Kettingzaag-Zwaai', desc: 'Zwaait wild met beide kettingzagen' },
             side: { name: 'Kettingzaag-Stormloop', desc: 'Stormt met gierende zagen naar voren' },
             up: { name: 'Kabel-Grijp', desc: 'Schiet omhoog met kettingzaag-kabels' },
             down: { name: 'Bloed-Transfusie', desc: 'Herstelt schade met duivelsbloed' }
@@ -427,1020 +429,700 @@ const ROSTER = [
     }
 ];
 
-// =========================================================================
-// 3. THREE.JS 3D VOXEL ANIME CHARACTER BUILDER & ENGINE
-// =========================================================================
-const ASSET_PATHS = {
-    characters: 'assest/carakters/',
-    maps: 'assest/maps/',
-    items: 'assest/items/'
-};
-
-const gltfLoader = (typeof THREE !== 'undefined' && THREE.GLTFLoader && window.location.protocol.startsWith('http')) ? new THREE.GLTFLoader() : null;
-const loadedGLBTemplates = {};
-const failedGLBPaths = {};
-
-function loadExternalCharacterGLB(charId, onLoadedCallback) {
-    const path = `${ASSET_PATHS.characters}${charId}.glb`;
-    if (!gltfLoader || failedGLBPaths[path]) return;
-
-    if (loadedGLBTemplates[path]) {
-        onLoadedCallback(loadedGLBTemplates[path].clone());
-        return;
-    }
-
-    try {
-        gltfLoader.load(
-            path,
-            (gltf) => {
-                const model = gltf.scene;
-                const box = new THREE.Box3().setFromObject(model);
-                const size = new THREE.Vector3();
-                box.getSize(size);
-                if (size.y > 0) {
-                    const scale = 1.95 / size.y;
-                    model.scale.setScalar(scale);
-                }
-                const scaledBox = new THREE.Box3().setFromObject(model);
-                const center = new THREE.Vector3();
-                scaledBox.getCenter(center);
-                model.position.set(-center.x, -scaledBox.min.y, -center.z);
-
-                const wrapper = new THREE.Group();
-                wrapper.add(model);
-                loadedGLBTemplates[path] = wrapper;
-                onLoadedCallback(wrapper.clone());
-            },
-            undefined,
-            () => { failedGLBPaths[path] = true; }
-        );
-    } catch (err) {
-        failedGLBPaths[path] = true;
-    }
-}
-
-const voxelMatCache = {};
-function getVoxelMat(hexColor, emissiveHex = null, emissiveInt = 0.25) {
-    const key = `${hexColor}_${emissiveHex || ''}_${emissiveInt}`;
-    if (!voxelMatCache[key]) {
-        const params = { color: new THREE.Color(hexColor), roughness: 0.75, metalness: 0.08 };
-        if (emissiveHex) {
-            params.emissive = new THREE.Color(emissiveHex);
-            params.emissiveIntensity = emissiveInt;
-        }
-        voxelMatCache[key] = new THREE.MeshStandardMaterial(params);
-    }
-    return voxelMatCache[key];
-}
-
-function addVoxelBox(parent, w, h, d, mat, x, y, z) {
-    const mesh = new THREE.Mesh(new THREE.BoxGeometry(w, h, d), mat);
-    mesh.position.set(x, y, z);
-    parent.add(mesh);
-    return mesh;
-}
-
-function create3DAnimeCharacter(charData, onExternalModelLoaded = null) {
-    const root = new THREE.Group();
-    const isHeavy = (charData.id === 'bowser' || charData.id === 'dk');
-    const isCompact = ['sonic', 'shadow', 'knuckles', 'mario', 'nezuko'].includes(charData.id);
-    const scaleMult = isHeavy ? 1.24 : (isCompact ? 0.90 : 1.0);
-
-    const skinMat = getVoxelMat(charData.skin);
-    const primaryMat = getVoxelMat(charData.primary);
-    const secondaryMat = getVoxelMat(charData.secondary);
-    const hairMat = getVoxelMat(charData.hair);
-    const auraMat = getVoxelMat(charData.aura, charData.aura, 0.7);
-    const blackMat = getVoxelMat('#090d16');
-    const whiteMat = getVoxelMat('#f8fafc');
-    const metalMat = getVoxelMat('#cbd5e1', '#94a3b8', 0.2);
-    const goldMat = getVoxelMat('#facc15', '#f59e0b', 0.2);
-    const redMat = getVoxelMat('#dc2626');
-    const brownMat = getVoxelMat('#451a03');
-
-    const bodyPivot = new THREE.Group();
-    bodyPivot.scale.setScalar(scaleMult);
-    root.add(bodyPivot);
-
-    // --- 1. VOXEL TORSO & KLEDING DETAILS ---
-    addVoxelBox(bodyPivot, 0.56, 0.64, 0.34, primaryMat, 0, 0.94, 0);
-    // Kraag / sjaal / accenten
-    if (charData.id === 'gojo' || charData.id === 'jinwoo' || charData.id === 'aki') {
-        addVoxelBox(bodyPivot, 0.44, 0.14, 0.36, primaryMat, 0, 1.30, 0);
-        addVoxelBox(bodyPivot, 0.10, 0.52, 0.36, secondaryMat, 0, 0.94, 0);
-    } else if (charData.id === 'mario') {
-        addVoxelBox(bodyPivot, 0.58, 0.38, 0.36, secondaryMat, 0, 0.80, 0);
-        addVoxelBox(bodyPivot, 0.10, 0.24, 0.37, secondaryMat, -0.16, 1.08, 0);
-        addVoxelBox(bodyPivot, 0.10, 0.24, 0.37, secondaryMat, 0.16, 1.08, 0);
-        addVoxelBox(bodyPivot, 0.07, 0.07, 0.39, goldMat, -0.16, 0.98, 0);
-        addVoxelBox(bodyPivot, 0.07, 0.07, 0.39, goldMat, 0.16, 0.98, 0);
-    } else if (charData.id === 'todoroki') {
-        addVoxelBox(bodyPivot, 0.28, 0.65, 0.35, getVoxelMat('#ef4444', '#f97316', 0.35), 0.14, 0.94, 0);
-    } else if (charData.id === 'tanjiro') {
-        addVoxelBox(bodyPivot, 0.60, 0.62, 0.36, primaryMat, 0, 0.94, 0);
-        addVoxelBox(bodyPivot, 0.18, 0.20, 0.37, blackMat, -0.16, 1.08, 0);
-        addVoxelBox(bodyPivot, 0.18, 0.20, 0.37, blackMat, 0.16, 0.82, 0);
-        addVoxelBox(bodyPivot, 0.18, 0.20, 0.37, blackMat, -0.16, 0.72, 0);
-    } else if (charData.id === 'bowser') {
-        addVoxelBox(bodyPivot, 0.60, 0.64, 0.36, goldMat, 0, 0.94, 0.02);
-        addVoxelBox(bodyPivot, 0.64, 0.68, 0.26, primaryMat, 0, 0.95, -0.20);
-        addVoxelBox(bodyPivot, 0.14, 0.14, 0.16, whiteMat, 0, 1.12, -0.36);
-        addVoxelBox(bodyPivot, 0.14, 0.14, 0.16, whiteMat, 0, 0.84, -0.36);
-    } else if (charData.id === 'natsu') {
-        addVoxelBox(bodyPivot, 0.22, 0.56, 0.35, skinMat, 0, 0.96, 0.01);
-        addVoxelBox(bodyPivot, 0.62, 0.16, 0.42, whiteMat, 0, 1.24, 0);
-    } else if (charData.id === 'cloud' || charData.id === 'tifa') {
-        addVoxelBox(bodyPivot, 0.58, 0.14, 0.37, secondaryMat, 0, 0.68, 0);
-    } else if (charData.id === 'denji' || charData.id === 'power' || charData.id === 'aki') {
-        addVoxelBox(bodyPivot, 0.56, 0.64, 0.34, whiteMat, 0, 0.94, 0);
-        addVoxelBox(bodyPivot, 0.10, 0.44, 0.36, charData.id === 'denji' ? secondaryMat : blackMat, 0, 0.98, 0);
-    } else {
-        addVoxelBox(bodyPivot, 0.58, 0.11, 0.36, secondaryMat, 0, 0.68, 0);
-    }
-
-    // Vleugels / Capes op de rug
-    if (charData.id === 'sephiroth') {
-        const wing = addVoxelBox(bodyPivot, 0.12, 1.15, 0.72, blackMat, 0.36, 1.18, -0.35);
-        wing.rotation.x = 0.25;
-        wing.rotation.z = -0.22;
-    } else if (charData.id === 'beru') {
-        addVoxelBox(bodyPivot, 0.18, 0.85, 0.10, getVoxelMat('#4c1d95'), -0.20, 1.10, -0.24);
-        addVoxelBox(bodyPivot, 0.18, 0.85, 0.10, getVoxelMat('#4c1d95'), 0.20, 1.10, -0.24);
-    }
-
-    // --- 2. VOXEL HOOFD, GEZICHT & KENMERKENDE ANIME HAARSTIJL ---
-    const headGroup = new THREE.Group();
-    headGroup.position.set(0, 1.56, 0);
-    bodyPivot.add(headGroup);
-
-    addVoxelBox(headGroup, 0.54, 0.52, 0.52, skinMat, 0, 0, 0);
-    addVoxelBox(headGroup, 0.08, 0.14, 0.10, skinMat, -0.30, -0.02, 0);
-    addVoxelBox(headGroup, 0.08, 0.14, 0.10, skinMat, 0.30, -0.02, 0);
-
-    // Gezichtsdetails (Ogen / Blinddoek / Masker / Snor)
-    if (charData.id === 'gojo') {
-        addVoxelBox(headGroup, 0.58, 0.20, 0.56, blackMat, 0, 0.04, 0.01);
-        addVoxelBox(headGroup, 0.14, 0.04, 0.04, getVoxelMat('#d97706'), 0, -0.14, 0.26);
-    } else if (charData.id === 'denji') {
-        addVoxelBox(headGroup, 0.56, 0.54, 0.54, secondaryMat, 0, 0.01, 0);
-        addVoxelBox(headGroup, 0.44, 0.14, 0.10, getVoxelMat('#facc15', '#f59e0b', 0.4), 0, 0.06, 0.26);
-        addVoxelBox(headGroup, 0.08, 0.45, 0.72, metalMat, 0, 0.35, 0.26);
-    } else if (charData.id === 'mario') {
-        addVoxelBox(headGroup, 0.08, 0.11, 0.04, blackMat, -0.12, 0.04, 0.26);
-        addVoxelBox(headGroup, 0.08, 0.11, 0.04, blackMat, 0.12, 0.04, 0.26);
-        addVoxelBox(headGroup, 0.14, 0.10, 0.12, skinMat, 0, -0.03, 0.30);
-        addVoxelBox(headGroup, 0.28, 0.07, 0.06, brownMat, 0, -0.11, 0.28);
-        addVoxelBox(headGroup, 0.58, 0.18, 0.58, redMat, 0, 0.26, 0.02);
-        addVoxelBox(headGroup, 0.54, 0.06, 0.22, redMat, 0, 0.18, 0.32);
-    } else if (charData.id === 'nezuko') {
-        addVoxelBox(headGroup, 0.09, 0.10, 0.04, getVoxelMat('#ec4899'), -0.13, 0.03, 0.26);
-        addVoxelBox(headGroup, 0.09, 0.10, 0.04, getVoxelMat('#ec4899'), 0.13, 0.03, 0.26);
-        addVoxelBox(headGroup, 0.34, 0.09, 0.10, getVoxelMat('#22c55e'), 0, -0.13, 0.28);
-    } else if (charData.id === 'sukuna') {
-        addVoxelBox(headGroup, 0.09, 0.09, 0.04, redMat, -0.13, 0.04, 0.26);
-        addVoxelBox(headGroup, 0.09, 0.09, 0.04, redMat, 0.13, 0.04, 0.26);
-        addVoxelBox(headGroup, 0.06, 0.12, 0.04, blackMat, -0.18, -0.08, 0.26);
-        addVoxelBox(headGroup, 0.06, 0.12, 0.04, blackMat, 0.18, -0.08, 0.26);
-    } else if (charData.id === 'beru') {
-        addVoxelBox(headGroup, 0.56, 0.54, 0.54, primaryMat, 0, 0, 0);
-        addVoxelBox(headGroup, 0.11, 0.08, 0.04, getVoxelMat('#38bdf8', '#38bdf8', 0.8), -0.14, 0.04, 0.27);
-        addVoxelBox(headGroup, 0.11, 0.08, 0.04, getVoxelMat('#38bdf8', '#38bdf8', 0.8), 0.14, 0.04, 0.27);
-    } else {
-        const eyeColor = charData.id === 'jinwoo' ? getVoxelMat('#3b82f6', '#3b82f6', 0.5) : blackMat;
-        addVoxelBox(headGroup, 0.10, 0.11, 0.03, whiteMat, -0.13, 0.03, 0.26);
-        addVoxelBox(headGroup, 0.10, 0.11, 0.03, whiteMat, 0.13, 0.03, 0.26);
-        addVoxelBox(headGroup, 0.06, 0.09, 0.04, eyeColor, -0.12, 0.03, 0.265);
-        addVoxelBox(headGroup, 0.06, 0.09, 0.04, eyeColor, 0.12, 0.03, 0.265);
-    }
-
-    // --- 3. VOXEL HAAR & HOORNS ---
-    if (!['mario', 'denji', 'beru', 'dk'].includes(charData.id)) {
-        addVoxelBox(headGroup, 0.58, 0.18, 0.58, hairMat, 0, 0.28, -0.02);
-        addVoxelBox(headGroup, 0.58, 0.46, 0.16, hairMat, 0, 0.06, -0.24);
-
-        const spikyChars = ['gojo', 'cloud', 'deku', 'bakugo', 'asta', 'natsu', 'yuji', 'sukuna', 'sonic', 'shadow', 'knuckles', 'zenitsu'];
-        if (spikyChars.includes(charData.id)) {
-            addVoxelBox(headGroup, 0.14, 0.22, 0.14, hairMat, -0.18, 0.42, 0.06);
-            addVoxelBox(headGroup, 0.16, 0.26, 0.16, hairMat, 0.02, 0.45, 0.02);
-            addVoxelBox(headGroup, 0.14, 0.22, 0.14, hairMat, 0.20, 0.41, 0.05);
-            addVoxelBox(headGroup, 0.14, 0.20, 0.14, hairMat, -0.10, 0.40, -0.14);
-            addVoxelBox(headGroup, 0.14, 0.20, 0.14, hairMat, 0.12, 0.40, -0.14);
-        }
-
-        if (charData.id === 'todoroki') {
-            addVoxelBox(headGroup, 0.29, 0.20, 0.59, redMat, 0.15, 0.28, -0.02);
-            addVoxelBox(headGroup, 0.29, 0.46, 0.17, redMat, 0.15, 0.06, -0.24);
-        }
-
-        if (['sephiroth', 'nezuko', 'noelle', 'erza', 'tifa'].includes(charData.id)) {
-            addVoxelBox(headGroup, 0.62, 0.78, 0.16, hairMat, 0, -0.24, -0.24);
-        }
-
-        if (charData.id === 'power') {
-            addVoxelBox(headGroup, 0.09, 0.24, 0.09, redMat, -0.18, 0.44, 0.10);
-            addVoxelBox(headGroup, 0.09, 0.24, 0.09, redMat, 0.18, 0.44, 0.10);
-        }
-
-        if (['sonic', 'shadow', 'knuckles'].includes(charData.id)) {
-            addVoxelBox(headGroup, 0.20, 0.18, 0.34, hairMat, 0, 0.12, -0.36);
-            addVoxelBox(headGroup, 0.18, 0.16, 0.30, hairMat, 0, -0.08, -0.34);
-        }
-    }
-
-    // --- 4. VOXEL ARMEN, HANDEN & WAPENS ---
-    const armMat = ['yuji', 'natsu', 'tifa', 'dk', 'bowser'].includes(charData.id) ? skinMat : primaryMat;
-    const handMat = ['sonic', 'shadow', 'knuckles', 'mario'].includes(charData.id) ? whiteMat : skinMat;
-
-    const leftArmPivot = new THREE.Group();
-    leftArmPivot.position.set(-0.39, 1.22, 0);
-    addVoxelBox(leftArmPivot, 0.18, 0.42, 0.18, armMat, 0, -0.21, 0);
-    addVoxelBox(leftArmPivot, 0.19, 0.16, 0.19, handMat, 0, -0.48, 0);
-    bodyPivot.add(leftArmPivot);
-
-    const rightArmPivot = new THREE.Group();
-    rightArmPivot.position.set(0.39, 1.22, 0);
-    addVoxelBox(rightArmPivot, 0.18, 0.42, 0.18, armMat, 0, -0.21, 0);
-    addVoxelBox(rightArmPivot, 0.19, 0.16, 0.19, handMat, 0, -0.48, 0);
-    bodyPivot.add(rightArmPivot);
-
-    if (charData.id === 'cloud') {
-        addVoxelBox(rightArmPivot, 0.06, 0.24, 0.08, brownMat, 0, -0.52, 0.16);
-        addVoxelBox(rightArmPivot, 0.05, 1.15, 0.28, metalMat, 0, -0.52, 0.72);
-    } else if (charData.id === 'sephiroth') {
-        addVoxelBox(rightArmPivot, 0.04, 0.06, 1.65, metalMat, 0, -0.50, 0.85);
-    } else if (charData.id === 'asta') {
-        addVoxelBox(rightArmPivot, 0.07, 0.32, 1.10, blackMat, 0, -0.50, 0.62);
-        addVoxelBox(rightArmPivot, 0.08, 0.34, 0.08, redMat, 0, -0.50, 0.20);
-    } else if (['tanjiro', 'cha', 'aki', 'erza'].includes(charData.id)) {
-        const bladeColor = charData.id === 'cha' ? goldMat : metalMat;
-        addVoxelBox(rightArmPivot, 0.04, 0.08, 0.95, bladeColor, 0, -0.50, 0.52);
-    } else if (charData.id === 'jinwoo') {
-        addVoxelBox(rightArmPivot, 0.04, 0.09, 0.52, getVoxelMat('#a855f7', '#a855f7', 0.6), 0, -0.50, 0.30);
-        addVoxelBox(leftArmPivot, 0.04, 0.09, 0.52, getVoxelMat('#a855f7', '#a855f7', 0.6), 0, -0.50, 0.30);
-    } else if (charData.id === 'denji') {
-        addVoxelBox(rightArmPivot, 0.07, 0.22, 0.85, metalMat, 0, -0.50, 0.45);
-        addVoxelBox(leftArmPivot, 0.07, 0.22, 0.85, metalMat, 0, -0.50, 0.45);
-    } else if (charData.id === 'power') {
-        addVoxelBox(rightArmPivot, 0.06, 0.06, 0.85, redMat, 0, -0.50, 0.45);
-        addVoxelBox(rightArmPivot, 0.34, 0.34, 0.28, redMat, 0, -0.50, 0.85);
-    }
-
-    // --- 5. VOXEL BENEN & SCHOENEN ---
-    const legMat = ['mario', 'deku', 'cloud', 'denji', 'power', 'aki'].includes(charData.id) ? secondaryMat : primaryMat;
-    const shoeMat = ['sonic', 'shadow', 'mario'].includes(charData.id) ? redMat : blackMat;
-
-    const leftLegPivot = new THREE.Group();
-    leftLegPivot.position.set(-0.15, 0.62, 0);
-    leftLegPivot.scale.setScalar(scaleMult);
-    addVoxelBox(leftLegPivot, 0.22, 0.46, 0.22, legMat, 0, -0.23, 0);
-    addVoxelBox(leftLegPivot, 0.24, 0.16, 0.30, shoeMat, 0, -0.54, 0.04);
-    root.add(leftLegPivot);
-
-    const rightLegPivot = new THREE.Group();
-    rightLegPivot.position.set(0.15, 0.62, 0);
-    rightLegPivot.scale.setScalar(scaleMult);
-    addVoxelBox(rightLegPivot, 0.22, 0.46, 0.22, legMat, 0, -0.23, 0);
-    addVoxelBox(rightLegPivot, 0.24, 0.16, 0.30, shoeMat, 0, -0.54, 0.04);
-    root.add(rightLegPivot);
-
-    // --- 6. AURA, SCHILD & BEVRIEZING EFFECTEN ---
-    const auraRing = new THREE.Mesh(new THREE.TorusGeometry(0.68, 0.04, 8, 24), auraMat);
-    auraRing.rotation.x = Math.PI / 2;
-    auraRing.position.y = 0.08;
-    auraRing.visible = false;
-    root.add(auraRing);
-
-    const shieldSphere = new THREE.Mesh(
-        new THREE.SphereGeometry(1.18, 18, 18),
-        new THREE.MeshBasicMaterial({ color: new THREE.Color(charData.aura), transparent: true, opacity: 0.34 })
-    );
-    shieldSphere.position.y = 1.05;
-    shieldSphere.visible = false;
-    root.add(shieldSphere);
-
-    const iceCube = new THREE.Mesh(
-        new THREE.BoxGeometry(1.35, 2.05, 1.35),
-        new THREE.MeshBasicMaterial({ color: 0x38bdf8, transparent: true, opacity: 0.45 })
-    );
-    iceCube.position.y = 1.02;
-    iceCube.visible = false;
-    root.add(iceCube);
-
-    const rig = { root, bodyPivot, headGroup, leftArmPivot, rightArmPivot, leftLegPivot, rightLegPivot, auraRing, shieldSphere, iceCube, isExternalGLB: false, externalModel: null };
-
-    loadExternalCharacterGLB(charData.id, (glbModel) => {
-        bodyPivot.visible = false;
-        leftLegPivot.visible = false;
-        rightLegPivot.visible = false;
-        root.add(glbModel);
-        rig.isExternalGLB = true;
-        rig.externalModel = glbModel;
-        if (onExternalModelLoaded) onExternalModelLoaded(rig);
-    });
-
-    return rig;
-}
-
-function animate3DCharacter(rig, animTick, state) {
-    const walkSwing = state.isMoving && state.isGrounded ? Math.sin(animTick * 0.32) * 0.85 : 0;
-    const idleBob = state.isGrounded ? Math.sin(animTick * 0.14) * 0.04 : 0.06;
-
-    if (typeof state.facing === 'number') {
-        rig.root.rotation.y = state.facing === 1 ? Math.PI * 0.42 : -Math.PI * 0.42;
-    }
-
-    if (rig.isExternalGLB && rig.externalModel) {
-        rig.externalModel.position.y = idleBob;
-    } else {
-        rig.bodyPivot.position.y = idleBob;
-        rig.leftLegPivot.rotation.x = walkSwing;
-        rig.rightLegPivot.rotation.x = -walkSwing;
-
-        if (state.isAttacking) {
-            rig.rightArmPivot.rotation.x = -1.65;
-            rig.leftArmPivot.rotation.x = 0.55;
-            rig.bodyPivot.rotation.y = 0.35;
-        } else {
-            rig.rightArmPivot.rotation.x = -walkSwing * 0.75;
-            rig.leftArmPivot.rotation.x = walkSwing * 0.75;
-            rig.bodyPivot.rotation.y = 0;
-        }
-    }
-
-    rig.auraRing.visible = (state.auraBoost > 0 || state.isAttacking);
-    if (rig.auraRing.visible) {
-        rig.auraRing.rotation.z = animTick * 0.12;
-    }
-    rig.shieldSphere.visible = !!state.shieldActive;
-    rig.iceCube.visible = !!state.isFrozen;
-}
-
-// =========================================================================
-// 4. PREVIEW VIEWERS & UI ROUTINES
-// =========================================================================
-const previewViewers = {};
-const rosterThumbnailRigs = {};
-let rosterThumbnailViewer = null;
-
-function setup3DPreviewViewer(canvasId, interactive = true) {
-    const c = document.getElementById(canvasId);
-    if (!c) return null;
-    const renderer = new THREE.WebGLRenderer({ canvas: c, alpha: true, antialias: true });
-    renderer.setSize(c.width, c.height, false);
-
-    const scene = new THREE.Scene();
-    const camera = new THREE.PerspectiveCamera(36, c.width / c.height, 0.1, 30);
-    camera.position.set(0, 1.15, 3.65);
-    camera.lookAt(0, 1.0, 0);
-
-    scene.add(new THREE.HemisphereLight(0xffffff, 0x1e293b, 1.15));
-    const dir = new THREE.DirectionalLight(0xffffff, 1.25);
-    dir.position.set(2.5, 4, 3);
-    scene.add(dir);
-
-    const state = { renderer, scene, camera, rig: null, rotY: 0.35, dragging: false, lastX: 0 };
-
-    if (interactive) {
-        c.addEventListener('pointerdown', (e) => { state.dragging = true; state.lastX = e.clientX; });
-        window.addEventListener('pointermove', (e) => {
-            if (!state.dragging) return;
-            state.rotY += (e.clientX - state.lastX) * 0.025;
-            state.lastX = e.clientX;
-        });
-        window.addEventListener('pointerup', () => { state.dragging = false; });
-    }
-
-    previewViewers[canvasId] = state;
-    return state;
-}
-
-function setPreviewCharacter3D(canvasId, charData) {
-    let viewer = previewViewers[canvasId];
-    if (!viewer) viewer = setup3DPreviewViewer(canvasId, canvasId.includes('portrait'));
-    if (!viewer) return;
-
-    if (viewer.rig) viewer.scene.remove(viewer.rig.root);
-    viewer.rig = create3DAnimeCharacter(charData);
-    viewer.scene.add(viewer.rig.root);
-    viewer.renderer.render(viewer.scene, viewer.camera);
-}
-
-function setupRosterThumbnailViewer() {
-    if (rosterThumbnailViewer) return rosterThumbnailViewer;
-
-    const canvas = document.createElement('canvas');
-    canvas.width = 70;
-    canvas.height = 70;
-    const renderer = new THREE.WebGLRenderer({
-        canvas,
-        alpha: true,
-        antialias: true,
-        preserveDrawingBuffer: true
-    });
-    renderer.setSize(canvas.width, canvas.height, false);
-
-    const scene = new THREE.Scene();
-    const camera = new THREE.PerspectiveCamera(36, 1, 0.1, 30);
-    camera.position.set(0, 1.15, 3.65);
-    camera.lookAt(0, 1.0, 0);
-
-    scene.add(new THREE.HemisphereLight(0xffffff, 0x1e293b, 1.15));
-    const dir = new THREE.DirectionalLight(0xffffff, 1.25);
-    dir.position.set(2.5, 4, 3);
-    scene.add(dir);
-
-    rosterThumbnailViewer = { renderer, scene, camera };
-    return rosterThumbnailViewer;
-}
-
-function drawRosterThumbnail(canvasEl, rig) {
-    const context = canvasEl.getContext('2d');
-    if (!context) return;
-
-    const viewer = setupRosterThumbnailViewer();
-    rig.root.rotation.y = 0.35;
-    viewer.scene.add(rig.root);
-    viewer.renderer.render(viewer.scene, viewer.camera);
-    context.clearRect(0, 0, canvasEl.width, canvasEl.height);
-    context.drawImage(viewer.renderer.domElement, 0, 0, canvasEl.width, canvasEl.height);
-    viewer.scene.remove(rig.root);
-}
-
-function renderRosterThumbnail(canvasEl, charData) {
-    let rig = rosterThumbnailRigs[charData.id];
-    if (!rig) {
-        rig = create3DAnimeCharacter(charData, (loadedRig) => {
-            rosterThumbnailRigs[charData.id] = loadedRig;
-            const currentCanvas = document.getElementById(`roster-portrait-${charData.id}`);
-            if (currentCanvas) drawRosterThumbnail(currentCanvas, loadedRig);
-        });
-        rosterThumbnailRigs[charData.id] = rig;
-    }
-
-    drawRosterThumbnail(canvasEl, rig);
-}
-
-function renderPortrait(canvasEl, charData) {
-    if (!canvasEl) return;
-    if (canvasEl.id && canvasEl.id.startsWith('roster-portrait-')) {
-        renderRosterThumbnail(canvasEl, charData);
-        return;
-    }
-    if (canvasEl.id && (canvasEl.id.includes('portrait') || canvasEl.id.includes('hud-'))) {
-        setPreviewCharacter3D(canvasEl.id, charData);
-        return;
-    }
-}
-
-function animatePreviews() {
-    Object.values(previewViewers).forEach(v => {
-        if (v && v.rig && v.renderer && v.scene && v.camera) {
-            if (!v.dragging) v.rotY += 0.012;
-            v.rig.root.rotation.y = v.rotY;
-            v.renderer.render(v.scene, v.camera);
-        }
-    });
-    requestAnimationFrame(animatePreviews);
-}
-requestAnimationFrame(animatePreviews);
-
-let selectedP1Index = 0;
-let selectedP2Index = 1;
-let activeSelectorTarget = 1;
-let activeFranchiseFilter = 'all';
+const selection = [ROSTER[0], ROSTER[1]];
+let selectionTarget = 0;
 let gameMode = 'cpu';
+let activeFranchise = 'all';
+let gameRunning = false;
+let animationFrame = 0;
+let lastFrameTime = 0;
+let matchStartedAt = 0;
+let fighters = [];
+let currentArena = ARENAS.dojo;
+const pressedKeys = new Set();
+const jumpRequests = [false, false];
+const dropRequests = [false, false];
+const activeSpecialEffects = [];
+const portraitCanvases = [
+    document.getElementById('p1-portrait-canvas'),
+    document.getElementById('p2-portrait-canvas')
+];
+const portraitViewers = new Map();
+const characterModelCache = new Map();
+const failedCharacterModels = new Set();
+const characterLoader = typeof THREE !== 'undefined' && THREE.GLTFLoader &&
+    window.location.protocol.startsWith('http')
+    ? new THREE.GLTFLoader()
+    : null;
+let battleRenderer = null;
+let battleScene = null;
+let battleCamera = null;
 
-const franchiseTabsEl = document.getElementById('franchise-tabs');
-const rosterGrid = document.getElementById('roster-grid');
+function createCharacterModel(character) {
+    const root = new THREE.Group();
+    const materials = {
+        skin: new THREE.MeshStandardMaterial({ color: character.skin }),
+        body: new THREE.MeshStandardMaterial({ color: character.primary, roughness: 0.72 }),
+        accent: new THREE.MeshStandardMaterial({ color: character.secondary, roughness: 0.7 }),
+        hair: new THREE.MeshStandardMaterial({ color: character.hair, roughness: 0.8 })
+    };
+    const addBox = (width, height, depth, material, x, y, z) => {
+        const mesh = new THREE.Mesh(new THREE.BoxGeometry(width, height, depth), material);
+        mesh.position.set(x, y, z);
+        root.add(mesh);
+    };
+
+    addBox(0.7, 0.85, 0.42, materials.body, 0, 0.95, 0);
+    addBox(0.56, 0.56, 0.56, materials.skin, 0, 1.72, 0);
+    addBox(0.62, 0.24, 0.62, materials.hair, 0, 2.03, -0.02);
+    addBox(0.22, 0.6, 0.24, materials.body, -0.46, 1.03, 0);
+    addBox(0.22, 0.6, 0.24, materials.body, 0.46, 1.03, 0);
+    addBox(0.25, 0.72, 0.28, materials.accent, -0.18, 0.36, 0);
+    addBox(0.25, 0.72, 0.28, materials.accent, 0.18, 0.36, 0);
+    root.userData.fallbackMeshes = root.children.slice();
+    const shield = new THREE.Mesh(
+        new THREE.SphereGeometry(1.25, 18, 16),
+        new THREE.MeshBasicMaterial({ color: character.aura, transparent: true, opacity: 0.28 })
+    );
+    shield.position.y = 1.05;
+    shield.visible = false;
+    root.userData.shield = shield;
+    root.add(shield);
+
+    const path = `assest/carakters/${character.id}.glb`;
+    if (characterLoader && !failedCharacterModels.has(path)) {
+        const addLoadedModel = (model) => {
+            root.userData.fallbackMeshes.forEach((mesh) => {
+                root.remove(mesh);
+                mesh.geometry.dispose();
+            });
+            root.userData.fallbackMeshes = [];
+            root.add(model);
+        };
+        const cached = characterModelCache.get(path);
+        if (cached) {
+            addLoadedModel(cached.clone());
+        } else {
+            characterLoader.load(path, (gltf) => {
+                const model = gltf.scene;
+                const bounds = new THREE.Box3().setFromObject(model);
+                const size = new THREE.Vector3();
+                bounds.getSize(size);
+                if (size.y > 0) model.scale.setScalar(2.2 / size.y);
+                const scaledBounds = new THREE.Box3().setFromObject(model);
+                const center = new THREE.Vector3();
+                scaledBounds.getCenter(center);
+                model.position.set(-center.x, -scaledBounds.min.y, -center.z);
+                characterModelCache.set(path, model);
+                addLoadedModel(model.clone());
+            }, undefined, () => {
+                failedCharacterModels.add(path);
+                console.warn(`3D-personage niet geladen: ${path}`);
+            });
+        }
+    }
+    return root;
+}
+
+function set3DPortrait(canvas, character) {
+    let viewer = portraitViewers.get(canvas);
+    if (!viewer) {
+        try {
+            const renderer = new THREE.WebGLRenderer({ canvas, alpha: true, antialias: true });
+            renderer.setSize(canvas.width, canvas.height, false);
+            const scene = new THREE.Scene();
+            const camera = new THREE.PerspectiveCamera(36, canvas.width / canvas.height, 0.1, 20);
+            camera.position.set(0, 1.25, 4.2);
+            camera.lookAt(0, 1.15, 0);
+            scene.add(new THREE.HemisphereLight(0xffffff, 0x1e293b, 1.3));
+            const light = new THREE.DirectionalLight(0xffffff, 1.3);
+            light.position.set(2, 4, 3);
+            scene.add(light);
+            viewer = { renderer, scene, camera, model: null };
+            portraitViewers.set(canvas, viewer);
+        } catch (error) {
+            console.warn('3D-portret is niet beschikbaar; er wordt een getekend portret getoond.', error);
+            return false;
+        }
+    }
+    if (viewer.model) viewer.scene.remove(viewer.model);
+    viewer.model = createCharacterModel(character);
+    viewer.scene.add(viewer.model);
+    viewer.renderer.render(viewer.scene, viewer.camera);
+    return true;
+}
+
+function animatePortraits() {
+    portraitViewers.forEach((viewer) => {
+        if (!viewer.model) return;
+        viewer.model.rotation.y += 0.008;
+        viewer.renderer.render(viewer.scene, viewer.camera);
+    });
+    requestAnimationFrame(animatePortraits);
+}
+requestAnimationFrame(animatePortraits);
+
+function drawPortrait(canvas, character) {
+    if (!canvas || !character) return;
+    if (canvas.id.startsWith('p') && typeof THREE !== 'undefined' &&
+        canvas.id.endsWith('-portrait-canvas') && set3DPortrait(canvas, character)) return;
+    const ctx = canvas.getContext('2d');
+    if (!ctx) {
+        console.warn(`Portretcanvas kon niet worden getekend: ${canvas.id || 'rooster'}`);
+        return;
+    }
+    const { width, height } = canvas;
+    ctx.clearRect(0, 0, width, height);
+    const glow = ctx.createRadialGradient(width / 2, height / 2, 8, width / 2, height / 2, width / 2);
+    glow.addColorStop(0, character.aura || '#38bdf8');
+    glow.addColorStop(1, '#10182c');
+    ctx.fillStyle = glow;
+    ctx.fillRect(0, 0, width, height);
+
+    ctx.fillStyle = character.primary || '#1e293b';
+    ctx.beginPath();
+    ctx.ellipse(width / 2, height * 0.79, width * 0.25, height * 0.29, 0, 0, Math.PI * 2);
+    ctx.fill();
+
+    ctx.fillStyle = character.skin || '#fed7aa';
+    ctx.beginPath();
+    ctx.arc(width / 2, height * 0.38, width * 0.2, 0, Math.PI * 2);
+    ctx.fill();
+
+    ctx.fillStyle = character.hair || '#1e293b';
+    ctx.beginPath();
+    ctx.arc(width / 2, height * 0.32, width * 0.21, Math.PI, Math.PI * 2);
+    ctx.lineTo(width * 0.72, height * 0.4);
+    ctx.lineTo(width * 0.28, height * 0.4);
+    ctx.closePath();
+    ctx.fill();
+    ctx.fillStyle = character.secondary || '#fff';
+    ctx.fillRect(width * 0.37, height * 0.39, width * 0.08, 3);
+    ctx.fillRect(width * 0.55, height * 0.39, width * 0.08, 3);
+  }
+
+function updateSelectionCards() {
+    selection.forEach((character, index) => {
+        const prefix = `p${index + 1}`;
+        document.getElementById(`${prefix}-char-name`).textContent = character.name;
+        document.getElementById(`${prefix}-char-franchise`).textContent = character.franchise;
+        document.getElementById(`${prefix}-char-desc`).textContent = character.desc;
+        document.getElementById(`${prefix}-move-n`).textContent = character.moves.neutral.name;
+        document.getElementById(`${prefix}-move-s`).textContent = character.moves.side.name;
+        document.getElementById(`${prefix}-move-u`).textContent = character.moves.up.name;
+        document.getElementById(`${prefix}-move-d`).textContent = character.moves.down.name;
+        drawPortrait(portraitCanvases[index], character);
+    });
+
+    document.getElementById('p2-role-label').textContent =
+        gameMode === 'cpu' ? 'CPU TEGENSTANDER' : 'PLAYER 2';
+}
+
+function setSelectorTarget(target) {
+    selectionTarget = target;
+    document.getElementById('target-p1-btn').classList.toggle('target-active-red', target === 0);
+    document.getElementById('target-p2-btn').classList.toggle('target-active-blue', target === 1);
+}
 
 function buildFranchiseTabs() {
-    if (!franchiseTabsEl) return;
-    franchiseTabsEl.innerHTML = '';
-    FRANCHISES.forEach(f => {
-        const btn = document.createElement('button');
-        btn.type = 'button';
-        btn.className = activeFranchiseFilter === f.key ? 'active' : '';
-        btn.textContent = f.label;
-        btn.addEventListener('click', () => {
-            activeFranchiseFilter = f.key;
+    const tabs = document.getElementById('franchise-tabs');
+    tabs.replaceChildren();
+    const availableFranchises = FRANCHISES.filter((franchise) =>
+        franchise.key === 'all' || ROSTER.some((character) => character.franchise === franchise.key)
+    );
+    if (!availableFranchises.some((franchise) => franchise.key === activeFranchise)) {
+        activeFranchise = 'all';
+    }
+
+    availableFranchises.forEach((franchise) => {
+        const button = document.createElement('button');
+        button.type = 'button';
+        button.textContent = franchise.label;
+        button.classList.toggle('active', activeFranchise === franchise.key);
+        button.addEventListener('click', () => {
+            activeFranchise = franchise.key;
             buildFranchiseTabs();
             buildRosterUI();
         });
-        franchiseTabsEl.appendChild(btn);
+        tabs.append(button);
     });
 }
 
 function buildRosterUI() {
-    if (!rosterGrid) return;
-    rosterGrid.innerHTML = '';
-    ROSTER.forEach((char, idx) => {
-        if (activeFranchiseFilter !== 'all' && char.franchise !== activeFranchiseFilter) return;
+    const grid = document.getElementById('roster-grid');
+    grid.replaceChildren();
+    const characters = activeFranchise === 'all'
+        ? ROSTER
+        : ROSTER.filter((character) => character.franchise === activeFranchise);
 
-        const btn = document.createElement('button');
-        btn.type = 'button';
-        btn.className = 'char-card';
-        btn.dataset.index = idx;
-
-        const miniCanvas = document.createElement('canvas');
-        miniCanvas.id = `roster-portrait-${char.id}`;
-        miniCanvas.width = 70; miniCanvas.height = 70;
-        renderPortrait(miniCanvas, char);
-
-        const label = document.createElement('span');
-        label.textContent = char.name.split(' ')[0];
-
-        btn.appendChild(miniCanvas);
-        btn.appendChild(label);
-
-        btn.addEventListener('click', () => {
-            if (activeSelectorTarget === 1) { selectedP1Index = idx; setSelectorTarget(2); }
-            else { selectedP2Index = idx; setSelectorTarget(1); }
+    characters.forEach((character) => {
+        const button = document.createElement('button');
+        button.type = 'button';
+        button.className = 'char-card';
+        button.setAttribute('aria-label', `Kies ${character.name}`);
+        const portrait = document.createElement('canvas');
+        portrait.width = 100;
+        portrait.height = 100;
+        drawPortrait(portrait, character);
+        const name = document.createElement('span');
+        name.textContent = character.name;
+        button.append(portrait, name);
+        button.addEventListener('click', () => {
+            selection[selectionTarget] = character;
             updateSelectionCards();
+            setSelectorTarget(selectionTarget === 0 ? 1 : 0);
         });
-        rosterGrid.appendChild(btn);
+        grid.append(button);
     });
+}
+
+function setGameMode(mode) {
+    gameMode = mode;
+    document.getElementById('mode-cpu-btn').classList.toggle('active', mode === 'cpu');
+    document.getElementById('mode-2p-btn').classList.toggle('active', mode === '2p');
+    document.getElementById('cpu-diff-wrapper').classList.toggle('hidden', mode !== 'cpu');
     updateSelectionCards();
 }
 
-function setSelectorTarget(target) {
-    activeSelectorTarget = target;
-    const b1 = document.getElementById('target-p1-btn');
-    const b2 = document.getElementById('target-p2-btn');
-    if (!b1 || !b2) return;
-    if (target === 1) {
-        b1.className = 'target-btn target-active-red';
-        b2.className = 'target-btn';
-    } else {
-        b2.className = 'target-btn target-active-red';
-        b1.className = 'target-btn';
-    }
-}
-
-function updateSelectionCards() {
-    const c1 = ROSTER[selectedP1Index];
-    const c2 = ROSTER[selectedP2Index];
-
-    renderPortrait(document.getElementById('p1-portrait-canvas'), c1);
-    document.getElementById('p1-char-name').textContent = c1.name;
-    document.getElementById('p1-char-franchise').textContent = c1.franchise;
-    document.getElementById('p1-char-desc').textContent = c1.desc;
-    document.getElementById('p1-move-n').textContent = `${c1.moves.neutral.name} — ${c1.moves.neutral.desc}`;
-    document.getElementById('p1-move-s').textContent = `${c1.moves.side.name} — ${c1.moves.side.desc}`;
-    document.getElementById('p1-move-u').textContent = `${c1.moves.up.name} — ${c1.moves.up.desc}`;
-    document.getElementById('p1-move-d').textContent = `${c1.moves.down.name} — ${c1.moves.down.desc}`;
-
-    renderPortrait(document.getElementById('p2-portrait-canvas'), c2);
-    document.getElementById('p2-char-name').textContent = c2.name;
-    document.getElementById('p2-char-franchise').textContent = c2.franchise;
-    document.getElementById('p2-char-desc').textContent = c2.desc;
-    document.getElementById('p2-move-n').textContent = `${c2.moves.neutral.name} — ${c2.moves.neutral.desc}`;
-    document.getElementById('p2-move-s').textContent = `${c2.moves.side.name} — ${c2.moves.side.desc}`;
-    document.getElementById('p2-move-u').textContent = `${c2.moves.up.name} — ${c2.moves.up.desc}`;
-    document.getElementById('p2-move-d').textContent = `${c2.moves.down.name} — ${c2.moves.down.desc}`;
-}
-
-// =========================================================================
-// 5. 3D BATTLE ARENA ENGINE & SUPER SMASH BROS SPECIAL MOVES
-// =========================================================================
-let battleRunning = false;
-let battleScene, battleCamera, battleRenderer;
-let p1Fighter, p2Fighter;
-let activeProjectiles = [];
-let activeArenaData = null;
-let maxStocks = 3;
-let cpuDifficulty = 'normal';
-let keysDown = {};
-let keysPressed = {};
-let hitstopTimer = 0;
-let screenShake = 0;
-
-const platformWorldX = (p) => (p.x + p.w / 2 - 480) / 65;
-const platformWorldLeft = (p) => (p.x - 480) / 65;
-const platformWorldRight = (p) => (p.x + p.w - 480) / 65;
-
-function spawnProjectile3D(owner, vx, vy, colorHex, size = 0.28, damage = 11, knockback = 5.5, life = 1.6, freeze = false) {
-    const mesh = new THREE.Mesh(
-        new THREE.SphereGeometry(size, 12, 12),
-        getVoxelMat(colorHex, colorHex, 0.85)
-    );
-    mesh.position.set(owner.x + owner.facing * 0.7, owner.y + 1.05, 0);
-    battleScene.add(mesh);
-    activeProjectiles.push({ owner, mesh, vx, vy, damage, knockback, life, freeze });
-}
-
-function triggerSpecialMove(f, opponent, controls) {
-    if (f.specialCooldown > 0) return;
-    f.specialCooldown = 0.65;
-    f.attackTimer = 0.26;
-    f.isAttacking = true;
-    f.auraBoost = 35;
-
-    const dirType = controls.up ? 'up' : (controls.down ? 'down' : ((controls.left || controls.right) ? 'side' : 'neutral'));
-    const moveObj = f.data.moves[dirType];
-    const arenaNote = document.getElementById('arena-note');
-    if (arenaNote && moveObj) {
-        arenaNote.textContent = `${f.data.name} gebruikt ${moveObj.name.toUpperCase()}!`;
-    }
-
-    if (dirType === 'up') {
-        f.vy = f.data.jump * 1.15;
-        f.isGrounded = false;
-        if (Math.abs(opponent.x - f.x) < 1.6 && Math.abs(opponent.y - f.y) < 1.8) {
-            applySmashHit(f, opponent, 12, 6.2, 8.5, false);
-        }
-    } else if (dirType === 'down') {
-        if (['gojo', 'todoroki', 'gray'].includes(f.data.id)) {
-            spawnProjectile3D(f, f.facing * 6.5, 0, '#38bdf8', 0.42, 9, 4.0, 1.2, true);
-        } else if (['natsu', 'denji', 'cha', 'cloud', 'noelle'].includes(f.data.id)) {
-            f.percent = Math.max(0, f.percent - 12);
-            f.auraBoost = 180;
-        } else {
-            spawnProjectile3D(f, f.facing * 8.5, 0, f.data.aura, 0.48, 15, 7.8, 0.65, false);
-            spawnProjectile3D(f, -f.facing * 8.5, 0, f.data.aura, 0.48, 15, 7.8, 0.65, false);
-        }
-    } else if (dirType === 'side') {
-        if (['jinwoo', 'shadow', 'zenitsu'].includes(f.data.id)) {
-            f.x = opponent.x - f.facing * 1.1;
-            f.y = opponent.y;
-            applySmashHit(f, opponent, 14, 7.2, 6.0, false);
-        } else {
-            f.knockbackX += f.facing * 8.5;
-            spawnProjectile3D(f, f.facing * 11.5, 0, f.data.aura, 0.35, 13, 6.8, 1.1, false);
-        }
-    } else {
-        spawnProjectile3D(f, f.facing * 10.5, 0, f.data.aura, 0.34, 11, 5.8, 1.5, false);
-    }
-}
-
-function applySmashHit(attacker, target, damage, kbX, kbY, freeze = false) {
-    if (target.shieldActive) {
-        target.knockbackX += attacker.facing * (kbX * 0.35);
-        return;
-    }
-    target.percent = Math.min(999, target.percent + damage);
-    const scale = (1 + target.percent * 0.014) / target.data.weight;
-    target.knockbackX += attacker.facing * kbX * scale;
-    target.vy = Math.max(target.vy, kbY * scale);
-    target.isGrounded = false;
-    if (freeze) target.frozenTimer = 1.6;
-    hitstopTimer = 0.04;
-    screenShake = Math.min(0.45, 0.12 + target.percent * 0.002);
-}
-
-function startMatch() {
-    const selectScreen = document.getElementById('select-screen');
-    const arenaScreen = document.getElementById('arena-screen');
-    if (selectScreen && arenaScreen) {
-        selectScreen.classList.add('hidden');
-        selectScreen.classList.remove('flex');
-        arenaScreen.classList.remove('hidden');
-        arenaScreen.classList.add('flex');
-    }
-
-    const stocksEl = document.getElementById('stocks-select');
-    if (stocksEl) maxStocks = parseInt(stocksEl.value) || 3;
-
-    const diffEl = document.getElementById('cpu-diff-select');
-    if (diffEl) cpuDifficulty = diffEl.value;
-
-    const arenaEl = document.getElementById('arena-select');
-    const arenaKey = arenaEl ? arenaEl.value : 'dojo';
-    activeArenaData = ARENAS[arenaKey] || ARENAS.dojo;
-
-    keysDown = {};
-    keysPressed = {};
-    activeProjectiles = [];
-    initBattleScene();
-    battleRunning = true;
-    lastFrameTime = performance.now();
-    requestAnimationFrame(battleLoop);
-}
-
-function initBattleScene() {
-    const canvas = document.getElementById('gameCanvas');
-    if (!canvas) return;
-
-    battleRenderer = new THREE.WebGLRenderer({ canvas, antialias: true });
-    battleRenderer.setSize(canvas.clientWidth, canvas.clientHeight, false);
-
-    battleScene = new THREE.Scene();
-    battleScene.background = new THREE.Color(activeArenaData.bgBottom);
-
-    battleCamera = new THREE.PerspectiveCamera(45, canvas.clientWidth / canvas.clientHeight, 0.1, 100);
-    battleCamera.position.set(0, 5.5, 14.5);
-    battleCamera.lookAt(0, 2.5, 0);
-
-    battleScene.add(new THREE.HemisphereLight(0xffffff, 0x0f172a, 1.25));
-    const dirLight = new THREE.DirectionalLight(0xffffff, 1.45);
-    dirLight.position.set(5, 10, 7);
-    battleScene.add(dirLight);
-
-    activeArenaData.platforms.forEach(p => {
-        const platGeo = new THREE.BoxGeometry(p.w / 65, 0.4, 1.8);
-        const platMat = getVoxelMat(activeArenaData.accentColor);
-        const platMesh = new THREE.Mesh(platGeo, platMat);
-        platMesh.position.set(platformWorldX(p), -(p.y - 250) / 65, 0);
-        battleScene.add(platMesh);
-    });
-
-    const c1 = ROSTER[selectedP1Index];
-    const c2 = ROSTER[selectedP2Index];
-
-    p1Fighter = createFighterObject(c1, -2.5, 3.5, 0);
-    p2Fighter = createFighterObject(c2, 2.5, 3.5, 1);
-
-    battleScene.add(p1Fighter.rig.root);
-    battleScene.add(p2Fighter.rig.root);
-    updateBattleHud();
-}
-
-function createFighterObject(charData, x, y, playerIndex) {
-    const rig = create3DAnimeCharacter(charData);
-    rig.root.position.set(x, y, 0);
-
+function makeFighter(character, playerIndex) {
     return {
-        data: charData,
-        rig: rig,
-        x: x,
-        y: y,
+        character,
+        model: createCharacterModel(character),
+        playerIndex,
+        x: playerIndex === 0 ? 330 : 630,
+        y: 180,
         vx: 0,
         vy: 0,
-        knockbackX: 0,
-        percent: 0,
-        stocks: maxStocks,
+        grounded: false,
+        dropThroughTimer: 0,
+        width: character.scaleW || 34,
+        height: character.scaleH || 48,
+        stocks: Number(document.getElementById('stocks-select').value) || 3,
+        damage: 0,
         facing: playerIndex === 0 ? 1 : -1,
-        isGrounded: false,
-        jumpsUsed: 0,
-        isMoving: false,
-        isAttacking: false,
-        attackTimer: 0,
         attackCooldown: 0,
         specialCooldown: 0,
-        attackHasHit: false,
-        jumpWasDown: false,
-        shieldActive: false,
-        isFrozen: false,
-        frozenTimer: 0,
-        auraBoost: 0,
-        playerIndex: playerIndex,
-        animTick: Math.random() * 100
+        blocking: false,
+        invulnerable: 1.2,
+        attacks: 0,
+        hits: 0,
+        knockouts: 0
     };
 }
 
-function updateFighter(f, opponent, controls, dt) {
-    if (f.frozenTimer > 0) {
-        f.frozenTimer -= dt;
-        f.isFrozen = true;
-        animate3DCharacter(f.rig, f.animTick, f);
+function startMatch() {
+    if (typeof THREE === 'undefined') {
+        window.alert('De 3D-engine kan niet worden geladen. Controleer je internetverbinding en laad de pagina opnieuw.');
         return;
     }
-    f.isFrozen = false;
-
-    f.animTick += dt * 12;
-    f.auraBoost = Math.max(0, f.auraBoost - dt * 60);
-    f.attackCooldown = Math.max(0, f.attackCooldown - dt);
-    f.specialCooldown = Math.max(0, f.specialCooldown - dt);
-    f.attackTimer = Math.max(0, f.attackTimer - dt);
-    f.isAttacking = f.attackTimer > 0;
-    f.shieldActive = !!controls.shield && f.isGrounded;
-
-    let moveDir = 0;
-    if (!f.shieldActive) {
-        if (controls.left) { moveDir = -1; f.facing = -1; }
-        if (controls.right) { moveDir = 1; f.facing = 1; }
+    cancelAnimationFrame(animationFrame);
+    pressedKeys.clear();
+    jumpRequests.fill(false);
+    dropRequests.fill(false);
+    currentArena = ARENAS[document.getElementById('arena-select').value] || ARENAS.dojo;
+    fighters = [makeFighter(selection[0], 0), makeFighter(selection[1], 1)];
+    gameRunning = true;
+    matchStartedAt = performance.now();
+    lastFrameTime = matchStartedAt;
+    document.getElementById('select-screen').classList.add('hidden');
+    document.getElementById('arena-screen').classList.remove('hidden');
+    document.getElementById('result-overlay').classList.add('hidden');
+    document.getElementById('arena-note').textContent =
+        `${currentArena.name} · Duw je tegenstander van de platforms af om te winnen.`;
+    document.getElementById('p1-hud-name').textContent = selection[0].name;
+    document.getElementById('p2-hud-name').textContent = selection[1].name;
+    document.getElementById('p2-hud-role').textContent = gameMode === 'cpu' ? 'CPU' : 'PLAYER 2';
+    const canvas = document.getElementById('gameCanvas');
+    canvas.width = 960;
+    canvas.height = 540;
+    try {
+        initBattleScene(canvas);
+    } catch (error) {
+        gameRunning = false;
+        console.error('De 3D-arena kon niet worden gestart.', error);
+        document.getElementById('arena-screen').classList.add('hidden');
+        document.getElementById('select-screen').classList.remove('hidden');
+        window.alert('De 3D-arena kon niet starten. Controleer of WebGL in je browser is ingeschakeld.');
+        return;
     }
-
-    f.vx = moveDir * (f.data.speed * 0.68);
-    f.x += (f.vx + f.knockbackX) * dt;
-    f.knockbackX *= Math.exp(-5 * dt);
-    f.isMoving = moveDir !== 0;
-
-    const previousY = f.y;
-    f.vy -= 24 * dt;
-    f.y += f.vy * dt;
-
-    f.isGrounded = false;
-    activeArenaData.platforms.forEach(p => {
-        const py = -(p.y - 250) / 65;
-        const platformTop = py + 0.2;
-        const overlapsPlatform = f.x + 0.35 >= platformWorldLeft(p)
-            && f.x - 0.35 <= platformWorldRight(p);
-        if (overlapsPlatform && f.vy <= 0 && previousY >= platformTop && f.y <= platformTop) {
-            f.y = platformTop;
-            f.vy = 0;
-            f.isGrounded = true;
-            f.jumpsUsed = 0;
-        }
-    });
-
-    if (controls.jump && !f.jumpWasDown && f.jumpsUsed < 2) {
-        f.vy = f.data.jump * 0.82;
-        f.isGrounded = false;
-        f.jumpsUsed++;
-    }
-    f.jumpWasDown = controls.jump;
-
-    if (controls.special) {
-        triggerSpecialMove(f, opponent, controls);
-    }
-
-    if (controls.attack && f.attackCooldown <= 0 && !f.shieldActive) {
-        f.attackTimer = 0.20;
-        f.attackCooldown = 0.42;
-        f.attackHasHit = false;
-        f.isAttacking = true;
-    }
-
-    if (f.isAttacking && !f.attackHasHit) {
-        const dx = opponent.x - f.x;
-        const dy = opponent.y - f.y;
-        const bonusDmg = f.auraBoost > 0 ? 5 : 0;
-        if (Math.abs(dx) <= 1.55 && Math.abs(dy) <= 1.3 && Math.sign(dx) === f.facing) {
-            applySmashHit(f, opponent, 10 + bonusDmg, 4.5, 5.2, false);
-            f.attackHasHit = true;
-        }
-    }
-
-    if (f.y < -6 || Math.abs(f.x) > 7.5) {
-        f.stocks--;
-        f.percent = 0;
-        f.x = f.playerIndex === 0 ? -2.5 : 2.5;
-        f.y = 3.5;
-        f.vy = 0;
-        f.knockbackX = 0;
-        f.jumpsUsed = 0;
-        f.attackTimer = 0;
-        f.isAttacking = false;
-        f.jumpWasDown = false;
-        screenShake = 0.35;
-    }
-
-    f.rig.root.position.set(f.x, f.y, 0);
-    animate3DCharacter(f.rig, f.animTick, f);
+    updateBattleHud();
+    animationFrame = requestAnimationFrame(battleLoop);
 }
 
-function updateProjectiles(dt) {
-    for (let i = activeProjectiles.length - 1; i >= 0; i--) {
-        const proj = activeProjectiles[i];
-        proj.life -= dt;
-        proj.mesh.position.x += proj.vx * dt;
-        proj.mesh.position.y += proj.vy * dt;
+function initBattleScene(canvas) {
+    if (!battleRenderer) {
+        battleRenderer = new THREE.WebGLRenderer({ canvas, antialias: true });
+        battleRenderer.setPixelRatio(Math.min(window.devicePixelRatio || 1, 2));
+    }
+    battleScene = new THREE.Scene();
+    battleScene.background = new THREE.Color(currentArena.bgBottom);
+    battleScene.fog = new THREE.Fog(currentArena.bgBottom, 13, 30);
 
-        const target = proj.owner === p1Fighter ? p2Fighter : p1Fighter;
-        const dist = Math.hypot(proj.mesh.position.x - target.x, proj.mesh.position.y - (target.y + 1.0));
-        if (dist < 0.95) {
-            applySmashHit(proj.owner, target, proj.damage, proj.knockback, 4.8, proj.freeze);
-            battleScene.remove(proj.mesh);
-            activeProjectiles.splice(i, 1);
-            continue;
-        }
+    battleCamera = new THREE.PerspectiveCamera(42, canvas.width / canvas.height, 0.1, 80);
+    battleCamera.position.set(0, 6, 15);
+    battleCamera.lookAt(0, 2.5, 0);
 
-        if (proj.life <= 0) {
-            battleScene.remove(proj.mesh);
-            activeProjectiles.splice(i, 1);
+    battleScene.add(new THREE.HemisphereLight(0xffffff, 0x18223a, 1.5));
+    const keyLight = new THREE.DirectionalLight(0xffffff, 2);
+    keyLight.position.set(-4, 9, 7);
+    battleScene.add(keyLight);
+
+    const accent = new THREE.Color(currentArena.accentColor);
+    currentArena.platforms.forEach((platform) => {
+        const width = platform.w / 65;
+        const top = (540 - platform.y) / 65;
+        const material = new THREE.MeshStandardMaterial({
+            color: platform.main ? '#202b42' : '#28334d',
+            emissive: accent,
+            emissiveIntensity: 0.16,
+            roughness: 0.68
+        });
+        const mesh = new THREE.Mesh(new THREE.BoxGeometry(width, 0.22, 2.2), material);
+        mesh.position.set((platform.x + platform.w / 2 - 480) / 65, top - 0.11, 0);
+        battleScene.add(mesh);
+
+        const edge = new THREE.Mesh(
+            new THREE.BoxGeometry(width, 0.045, 2.24),
+            new THREE.MeshBasicMaterial({ color: accent })
+        );
+        edge.position.set(mesh.position.x, top - 0.01, 0);
+        battleScene.add(edge);
+    });
+
+    const starGeometry = new THREE.BufferGeometry();
+    const starPositions = [];
+    for (let index = 0; index < 90; index++) {
+        starPositions.push(((index * 47) % 28) - 14, 2 + ((index * 29) % 12), -4);
+    }
+    starGeometry.setAttribute('position', new THREE.Float32BufferAttribute(starPositions, 3));
+    battleScene.add(new THREE.Points(
+        starGeometry,
+        new THREE.PointsMaterial({ color: accent, size: 0.055, transparent: true, opacity: 0.75 })
+    ));
+
+    fighters.forEach((fighter) => battleScene.add(fighter.model));
+    resizeBattleRenderer();
+}
+
+function resizeBattleRenderer() {
+    if (!battleRenderer || !battleCamera) return;
+    const canvas = battleRenderer.domElement;
+    const width = canvas.clientWidth || 960;
+    const height = canvas.clientHeight || 540;
+    battleRenderer.setSize(width, height, false);
+    battleCamera.aspect = width / height;
+    battleCamera.updateProjectionMatrix();
+}
+
+function performAttack(attacker, target, isSpecial) {
+    const cooldown = isSpecial ? 1.1 : 0.48;
+    if ((isSpecial && attacker.specialCooldown > 0) || (!isSpecial && attacker.attackCooldown > 0)) return;
+    if (isSpecial) attacker.specialCooldown = cooldown;
+    else attacker.attackCooldown = cooldown;
+    attacker.attacks++;
+
+    let moveDirection = 'neutral';
+    if (isSpecial) {
+        const upKey = attacker.playerIndex === 0 ? 'KeyW' : 'KeyI';
+        const downKey = attacker.playerIndex === 0 ? 'KeyS' : 'KeyK';
+        const leftKey = attacker.playerIndex === 0 ? 'KeyA' : 'KeyJ';
+        const rightKey = attacker.playerIndex === 0 ? 'KeyD' : 'KeyL';
+        if (pressedKeys.has(upKey)) moveDirection = 'up';
+        else if (pressedKeys.has(downKey)) moveDirection = 'down';
+        else if (pressedKeys.has(leftKey) || pressedKeys.has(rightKey)) moveDirection = 'side';
+
+        if (moveDirection === 'side') {
+            if (pressedKeys.has(leftKey)) attacker.facing = -1;
+            if (pressedKeys.has(rightKey)) attacker.facing = 1;
         }
+        const move = attacker.character.moves[moveDirection];
+        document.getElementById('arena-note').textContent =
+            `${attacker.character.name} gebruikt ${move.name}!`;
+        createSpecialEffect(attacker, moveDirection);
+        if (moveDirection === 'down') dropRequests[attacker.playerIndex] = false;
+        if (moveDirection === 'up') {
+            attacker.vy = -attacker.character.jump * 1.1;
+            attacker.grounded = false;
+        } else if (moveDirection === 'side') {
+            attacker.vx += attacker.facing * (attacker.character.speed || 5.5) * 0.75;
+        }
+    }
+
+    const distanceX = Math.abs((attacker.x + attacker.width / 2) - (target.x + target.width / 2));
+    const distanceY = Math.abs((attacker.y + attacker.height / 2) - (target.y + target.height / 2));
+    const reachX = !isSpecial ? 82 : moveDirection === 'side' ? 180 : moveDirection === 'up' ? 105 : 145;
+    const reachY = !isSpecial ? 82 : moveDirection === 'up' || moveDirection === 'down' ? 150 : 105;
+    if (distanceX > reachX || distanceY > reachY || target.invulnerable > 0) return;
+
+    const shieldKey = target.playerIndex === 0 ? 'KeyX' : 'KeyK';
+    const shielding = target.playerIndex === 0 || gameMode === '2p'
+        ? target.blocking || pressedKeys.has(shieldKey)
+        : false;
+    const damage = isSpecial ? 18 : 8;
+    target.damage += shielding ? damage * 0.25 : damage;
+    const direction = Math.sign(target.x - attacker.x) || attacker.facing;
+    const knockback = (isSpecial ? 8.5 : 4.5) + target.damage / 18;
+    target.vx = direction * knockback * (shielding ? 0.35 : 1);
+    target.vy = shielding ? -2 : (isSpecial ? -7 : -4);
+    target.invulnerable = 0.5;
+    attacker.hits++;
+    updateBattleHud();
+}
+
+function createSpecialEffect(fighter, direction) {
+    if (!battleScene) return;
+    let geometry;
+    if (direction === 'side') geometry = new THREE.BoxGeometry(1.7, 0.32, 0.24);
+    else if (direction === 'up') geometry = new THREE.CylinderGeometry(0.12, 0.55, 1.6, 10);
+    else if (direction === 'down') {
+        geometry = new THREE.TorusGeometry(0.9, 0.08, 8, 24);
+    } else geometry = new THREE.SphereGeometry(0.42, 14, 12);
+
+    const material = new THREE.MeshBasicMaterial({
+        color: fighter.character.aura,
+        transparent: true,
+        opacity: 0.9,
+        depthWrite: false
+    });
+    const mesh = new THREE.Mesh(geometry, material);
+    mesh.position.copy(fighter.model.position);
+    mesh.position.x += fighter.facing * 0.8;
+    mesh.position.y += direction === 'down' ? 0.12 : 1.1;
+    if (direction === 'down') mesh.rotation.x = Math.PI / 2;
+    battleScene.add(mesh);
+    activeSpecialEffects.push({ mesh, life: 0.32 });
+}
+
+function updateSpecialEffects(dt) {
+    for (let index = activeSpecialEffects.length - 1; index >= 0; index--) {
+        const effect = activeSpecialEffects[index];
+        effect.life -= dt;
+        effect.mesh.material.opacity = Math.max(0, effect.life / 0.32);
+        effect.mesh.scale.multiplyScalar(1 + dt * 1.8);
+        if (effect.life <= 0) {
+            battleScene.remove(effect.mesh);
+            effect.mesh.geometry.dispose();
+            effect.mesh.material.dispose();
+            activeSpecialEffects.splice(index, 1);
+        }
+    }
+}
+
+function loseStock(fighter) {
+    fighter.stocks--;
+    fighter.damage = 0;
+    if (fighter.stocks <= 0) {
+        const winner = fighters[1 - fighter.playerIndex];
+        winner.knockouts++;
+        finishMatch(winner);
+        return;
+    }
+
+    fighter.x = fighter.playerIndex === 0 ? 330 : 630;
+    fighter.y = 125;
+    fighter.vx = 0;
+    fighter.vy = 0;
+    fighter.grounded = false;
+    fighter.dropThroughTimer = 0;
+    fighter.invulnerable = 2;
+    updateBattleHud();
+}
+
+function finishMatch(winner) {
+    gameRunning = false;
+    cancelAnimationFrame(animationFrame);
+    const elapsed = Math.max(0, Math.floor((performance.now() - matchStartedAt) / 1000));
+    document.getElementById('result-winner').textContent = `${winner.character.name} wint!`;
+    document.getElementById('result-subtitle').textContent =
+        gameMode === 'cpu' && winner.playerIndex === 1
+            ? 'De CPU heeft de arena veroverd.'
+            : `${winner.playerIndex === 0 ? 'Speler 1' : 'Speler 2'} heeft de arena veroverd.`;
+    document.getElementById('result-duration').textContent =
+        `${Math.floor(elapsed / 60)}:${String(elapsed % 60).padStart(2, '0')}`;
+    fighters.forEach((fighter, index) => {
+        document.getElementById(`result-p${index + 1}-name`).textContent = fighter.character.name;
+        document.getElementById(`result-p${index + 1}-stats`).innerHTML =
+            `<span>Levens over <b>${fighter.stocks}</b></span>` +
+            `<span>Aanvallen <b>${fighter.attacks}</b></span>` +
+            `<span>Treffers <b>${fighter.hits}</b></span>` +
+            `<span>Uitschakelingen <b>${fighter.knockouts}</b></span>`;
+    });
+    document.getElementById('result-overlay').classList.remove('hidden');
+}
+
+function replayMatch() {
+    startMatch();
+}
+
+function returnToSelection() {
+    gameRunning = false;
+    cancelAnimationFrame(animationFrame);
+    pressedKeys.clear();
+    jumpRequests.fill(false);
+    dropRequests.fill(false);
+    document.getElementById('result-overlay').classList.add('hidden');
+    document.getElementById('arena-screen').classList.add('hidden');
+    document.getElementById('select-screen').classList.remove('hidden');
+}
+
+function returnToHome() {
+    returnToSelection();
+}
+
+function updateFighter(fighter, target, dt) {
+    const isPlayerOne = fighter.playerIndex === 0;
+    const leftKey = isPlayerOne ? 'KeyA' : 'KeyJ';
+    const rightKey = isPlayerOne ? 'KeyD' : 'KeyL';
+    const upKey = isPlayerOne ? 'KeyW' : 'KeyI';
+    const downKey = isPlayerOne ? 'KeyS' : 'KeyK';
+    const shieldKey = isPlayerOne ? 'KeyX' : 'KeyK';
+    const isCpu = gameMode === 'cpu' && !isPlayerOne;
+    let move = 0;
+    fighter.blocking = !isCpu && pressedKeys.has(shieldKey);
+
+    if (isCpu) {
+        const difficulty = document.getElementById('cpu-diff-select').value;
+        const attackRange = difficulty === 'hard' ? 122 : difficulty === 'easy' ? 78 : 100;
+        const attackChance = difficulty === 'hard' ? 0.075 : difficulty === 'easy' ? 0.02 : 0.045;
+        const specialChance = difficulty === 'hard' ? 0.016 : difficulty === 'easy' ? 0.003 : 0.008;
+        const distance = target.x - fighter.x;
+        if (Math.abs(distance) > 66) move = Math.sign(distance);
+        if (Math.abs(distance) < attackRange && fighter.attackCooldown <= 0 && Math.random() < attackChance) {
+            performAttack(fighter, target, false);
+        }
+        if (Math.abs(distance) < attackRange + 40 && fighter.specialCooldown <= 0 && Math.random() < specialChance) {
+            performAttack(fighter, target, true);
+        }
+        if (fighter.grounded && Math.random() < 0.025) {
+            fighter.vy = -fighter.character.jump;
+            fighter.grounded = false;
+        }
+    } else {
+        if (!fighter.blocking && pressedKeys.has(leftKey)) move--;
+        if (!fighter.blocking && pressedKeys.has(rightKey)) move++;
+        if (jumpRequests[fighter.playerIndex] && fighter.grounded) {
+            fighter.vy = -fighter.character.jump;
+            fighter.grounded = false;
+        } else if (isPlayerOne && pressedKeys.has(upKey) && fighter.grounded) {
+            fighter.vy = -fighter.character.jump * 0.4;
+            fighter.grounded = false;
+        }
+        if (isPlayerOne && dropRequests[0] && fighter.grounded) {
+            fighter.dropThroughTimer = 0.28;
+            fighter.y += 4;
+            fighter.vy = 2;
+            fighter.grounded = false;
+        }
+    }
+
+    if (!fighter.grounded && !isCpu && isPlayerOne) {
+        if (pressedKeys.has(upKey)) {
+            fighter.vy = Math.max(-fighter.character.jump * 1.1, fighter.vy - 30 * dt);
+        }
+        if (pressedKeys.has(downKey)) fighter.vy = Math.min(18, fighter.vy + 30 * dt);
+    }
+
+    if (move) fighter.facing = move;
+    const difficulty = isCpu ? document.getElementById('cpu-diff-select').value : 'normal';
+    const speedFactor = difficulty === 'hard' ? 1 : difficulty === 'easy' ? 0.75 : 0.9;
+    const speed = (fighter.character.speed || 5.5) * (isCpu ? speedFactor : 1);
+    fighter.vx += (move * speed - fighter.vx) * Math.min(1, dt * 12);
+    if (!move) fighter.vx *= Math.pow(0.82, dt * 60);
+    fighter.x += fighter.vx * dt * 18;
+    fighter.vy += 23 * dt;
+    fighter.y += fighter.vy * dt * 18;
+    fighter.attackCooldown = Math.max(0, fighter.attackCooldown - dt);
+    fighter.specialCooldown = Math.max(0, fighter.specialCooldown - dt);
+    fighter.invulnerable = Math.max(0, fighter.invulnerable - dt);
+    fighter.dropThroughTimer = Math.max(0, fighter.dropThroughTimer - dt);
+
+    fighter.grounded = false;
+    for (const platform of currentArena.platforms) {
+        const feet = fighter.y + fighter.height;
+        if (fighter.dropThroughTimer === 0 && fighter.vy >= 0 &&
+            feet >= platform.y && feet - fighter.vy * dt * 18 <= platform.y &&
+            fighter.x + fighter.width > platform.x && fighter.x < platform.x + platform.w) {
+            fighter.y = platform.y - fighter.height;
+            fighter.vy = 0;
+            fighter.grounded = true;
+        }
+    }
+    fighter.model.position.set(
+        (fighter.x + fighter.width / 2 - 480) / 65,
+        (540 - fighter.y - fighter.height) / 65,
+        0
+    );
+    fighter.model.rotation.y = fighter.facing > 0 ? Math.PI / 2 : -Math.PI / 2;
+    fighter.model.scale.setScalar(fighter.attackCooldown > 0.28 ? 1.04 : 1);
+    if (fighter.model.userData.shield) fighter.model.userData.shield.visible = fighter.blocking;
+    fighter.model.visible = fighter.invulnerable <= 0 || Math.floor(performance.now() / 90) % 2 === 0;
+    if (fighter.x < -fighter.width || fighter.x > 960 || fighter.y > 630) loseStock(fighter);
+}
+
+function drawBattle() {
+    if (!battleRenderer || !battleScene || !battleCamera) return;
+    const midpointX = (fighters[0].model.position.x + fighters[1].model.position.x) / 2;
+    const midpointY = Math.max(2.2, (fighters[0].model.position.y + fighters[1].model.position.y) / 2 + 1.4);
+    const distance = Math.abs(fighters[0].model.position.x - fighters[1].model.position.x);
+    const cameraZ = Math.min(20, Math.max(13, 12 + distance * 0.55));
+    battleCamera.position.x += (midpointX - battleCamera.position.x) * 0.08;
+    battleCamera.position.y += (midpointY + 2.8 - battleCamera.position.y) * 0.08;
+    battleCamera.position.z += (cameraZ - battleCamera.position.z) * 0.08;
+    battleCamera.lookAt(midpointX, midpointY, 0);
+    battleRenderer.render(battleScene, battleCamera);
+}
+
+function battleLoop(now) {
+    if (!gameRunning) return;
+    const dt = Math.min((now - lastFrameTime) / 1000, 0.04);
+    lastFrameTime = now;
+    updateFighter(fighters[0], fighters[1], dt);
+    jumpRequests[0] = false;
+    dropRequests[0] = false;
+    if (gameRunning) updateFighter(fighters[1], fighters[0], dt);
+    jumpRequests[1] = false;
+    dropRequests[1] = false;
+    if (gameRunning) {
+        updateSpecialEffects(dt);
+        drawBattle();
+        updateBattleHud();
+        animationFrame = requestAnimationFrame(battleLoop);
     }
 }
 
 function updateBattleHud() {
-    const p1Name = document.getElementById('p1-hud-name');
-    const p2Name = document.getElementById('p2-hud-name');
-    const p2Role = document.getElementById('p2-hud-role');
-    const p1Stats = document.getElementById('p1-hud-stats');
-    const p2Stats = document.getElementById('p2-hud-stats');
-
-    if (p1Name) p1Name.textContent = p1Fighter.data.name;
-    if (p2Name) p2Name.textContent = p2Fighter.data.name;
-    if (p2Role) p2Role.textContent = gameMode === '2p' ? 'PLAYER 2' : 'CPU';
-    if (p1Stats) p1Stats.textContent = `${p1Fighter.percent}% · ${'❤️'.repeat(Math.max(0, p1Fighter.stocks))}`;
-    if (p2Stats) p2Stats.textContent = `${p2Fighter.percent}% · ${'❤️'.repeat(Math.max(0, p2Fighter.stocks))}`;
+    fighters.forEach((fighter, index) => {
+        const label = document.getElementById(`p${index + 1}-hud-stats`);
+        label.textContent = `${'♥ '.repeat(Math.max(0, fighter.stocks))} · ${Math.floor(fighter.damage)}% schade`;
+    });
 }
 
-let lastFrameTime = performance.now();
-function battleLoop(now) {
-    if (!battleRunning) return;
-    const dt = Math.min((now - lastFrameTime) / 1000, 0.05);
-    lastFrameTime = now;
+window.addEventListener('resize', resizeBattleRenderer);
+window.addEventListener('keydown', (event) => {
+    if (!gameRunning) return;
+    pressedKeys.add(event.code);
+    if (event.code === 'Space') event.preventDefault();
+    if (event.repeat) return;
 
-    if (hitstopTimer > 0) {
-        hitstopTimer -= dt;
-        requestAnimationFrame(battleLoop);
-        return;
-    }
-
-    const p1Controls = {
-        left: keysDown['KeyA'] || keysDown['ArrowLeft'],
-        right: keysDown['KeyD'] || keysDown['ArrowRight'],
-        up: keysDown['KeyW'] || keysDown['ArrowUp'],
-        down: keysDown['KeyS'] || keysDown['ArrowDown'],
-        jump: keysDown['KeyW'] || keysDown['ArrowUp'] || keysDown['Space'],
-        shield: keysDown['KeyS'] || keysDown['ArrowDown'],
-        attack: keysPressed['KeyF'],
-        special: keysPressed['KeyG']
-    };
-    updateFighter(p1Fighter, p2Fighter, p1Controls, dt);
-
-    let p2Controls = {};
-    if (gameMode === '2p') {
-        p2Controls = {
-            left: keysDown['KeyJ'],
-            right: keysDown['KeyL'],
-            up: keysDown['KeyI'],
-            down: keysDown['KeyK'],
-            jump: keysDown['KeyI'],
-            shield: keysDown['KeyK'],
-            attack: keysPressed['KeyO'],
-            special: keysPressed['KeyP']
-        };
-    } else {
-        const dx = p1Fighter.x - p2Fighter.x;
-        const attackChance = cpuDifficulty === 'easy' ? 0.02 : (cpuDifficulty === 'hard' ? 0.14 : 0.07);
-        const offStage = Math.abs(p2Fighter.x) > 4.2 || p2Fighter.y < -1.0;
-        p2Controls = {
-            left: offStage ? p2Fighter.x > 0 : dx < -0.45,
-            right: offStage ? p2Fighter.x < 0 : dx > 0.45,
-            up: offStage,
-            down: Math.random() < 0.015,
-            jump: (offStage && p2Fighter.vy < 0) || (Math.random() < 0.03 && p2Fighter.isGrounded),
-            attack: Math.abs(dx) < 1.5 && Math.abs(p1Fighter.y - p2Fighter.y) < 1.3 && Math.random() < attackChance,
-            special: Math.random() < (attackChance * 0.45)
-        };
-    }
-    updateFighter(p2Fighter, p1Fighter, p2Controls, dt);
-    updateProjectiles(dt);
-    keysPressed = {};
-
-    if (battleRenderer && battleScene && battleCamera) {
-        const midX = (p1Fighter.x + p2Fighter.x) * 0.5;
-        const midY = Math.max(1.2, (p1Fighter.y + p2Fighter.y) * 0.5 + 1.8);
-        const dist = Math.hypot(p1Fighter.x - p2Fighter.x, p1Fighter.y - p2Fighter.y);
-        const targetZ = Math.min(18.5, Math.max(11.5, 10.5 + dist * 0.65));
-
-        const shakeX = screenShake > 0 ? (Math.random() - 0.5) * screenShake : 0;
-        const shakeY = screenShake > 0 ? (Math.random() - 0.5) * screenShake : 0;
-        screenShake = Math.max(0, screenShake - dt * 1.8);
-
-        battleCamera.position.x += (midX - battleCamera.position.x) * 0.08 + shakeX;
-        battleCamera.position.y += (midY + 2.4 - battleCamera.position.y) * 0.08 + shakeY;
-        battleCamera.position.z += (targetZ - battleCamera.position.z) * 0.08;
-        battleCamera.lookAt(midX, midY, 0);
-
-        battleRenderer.render(battleScene, battleCamera);
-    }
-
-    updateBattleHud();
-    if (p1Fighter.stocks <= 0 || p2Fighter.stocks <= 0) {
-        battleRunning = false;
-        const winner = p1Fighter.stocks > 0 ? p1Fighter.data.name : p2Fighter.data.name;
-        const arenaNote = document.getElementById('arena-note');
-        if (arenaNote) arenaNote.textContent = `🏆 GAME! ${winner} wint het gevecht!`;
-        return;
-    }
-
-    requestAnimationFrame(battleLoop);
-}
-
-// Event Listeners voor toetsenbord
-window.addEventListener('keydown', (e) => {
-    if (battleRunning && ['ArrowLeft', 'ArrowRight', 'ArrowUp', 'ArrowDown', 'Space'].includes(e.code)) e.preventDefault();
-    if (!keysDown[e.code]) keysPressed[e.code] = true;
-    keysDown[e.code] = true;
-});
-window.addEventListener('keyup', (e) => {
-    keysDown[e.code] = false;
-    keysPressed[e.code] = false;
-});
-window.addEventListener('blur', () => {
-    keysDown = {};
-    keysPressed = {};
+    if (event.code === 'Space') jumpRequests[0] = true;
+    if (gameMode === '2p' && event.code === 'KeyI') jumpRequests[1] = true;
+    if (event.code === 'KeyS') dropRequests[0] = true;
+    if (event.code === 'KeyF') performAttack(fighters[0], fighters[1], false);
+    if (event.code === 'KeyG') performAttack(fighters[0], fighters[1], true);
+    if (gameMode === '2p' && event.code === 'KeyO') performAttack(fighters[1], fighters[0], false);
+    if (gameMode === '2p' && event.code === 'KeyP') performAttack(fighters[1], fighters[0], true);
 });
 
-// Event Listeners voor Modus & Start
+window.addEventListener('keyup', (event) => pressedKeys.delete(event.code));
+window.addEventListener('blur', () => pressedKeys.clear());
+
 document.addEventListener('DOMContentLoaded', () => {
-    const p1Btn = document.getElementById('target-p1-btn');
-    const p2Btn = document.getElementById('target-p2-btn');
-    if (p1Btn) p1Btn.addEventListener('click', () => setSelectorTarget(1));
-    if (p2Btn) p2Btn.addEventListener('click', () => setSelectorTarget(2));
-
-    const modeCpu = document.getElementById('mode-cpu-btn');
-    const mode2p = document.getElementById('mode-2p-btn');
-    if (modeCpu) modeCpu.addEventListener('click', () => {
-        gameMode = 'cpu';
-        modeCpu.classList.add('active');
-        if (mode2p) mode2p.classList.remove('active');
-        document.getElementById('cpu-diff-wrapper').classList.remove('hidden');
-        document.getElementById('p2-role-label').textContent = 'CPU TEGENSTANDER';
-        updateSelectionCards();
-    });
-    if (mode2p) mode2p.addEventListener('click', () => {
-        gameMode = '2p';
-        mode2p.classList.add('active');
-        if (modeCpu) modeCpu.classList.remove('active');
-        document.getElementById('cpu-diff-wrapper').classList.add('hidden');
-        document.getElementById('p2-role-label').textContent = 'PLAYER 2';
-        updateSelectionCards();
-    });
-
+    document.getElementById('target-p1-btn').addEventListener('click', () => setSelectorTarget(0));
+    document.getElementById('target-p2-btn').addEventListener('click', () => setSelectorTarget(1));
+    document.getElementById('mode-cpu-btn').addEventListener('click', () => setGameMode('cpu'));
+    document.getElementById('mode-2p-btn').addEventListener('click', () => setGameMode('2p'));
     buildFranchiseTabs();
     buildRosterUI();
+    updateSelectionCards();
+    setSelectorTarget(0);
 });

@@ -67,8 +67,25 @@
 
   <main id="arena-screen" class="screen arena-screen hidden">
     <header class="arena-top"><div><p class="eyebrow">HYPER HELDEN HAVOC</p><h1>DE <span>ARENA</span></h1></div><button class="back-btn" type="button" onclick="location.reload()">← TERUG NAAR SELECTIE</button></header>
-    <div class="battle-hud"><div class="hud-player red-hud"><span>PLAYER 1</span><strong id="p1-hud-name">VECHTER 1</strong><small>A/D · W/SPATIE · S SCHILD · F SLAG · G SPECIAL</small><small id="p1-hud-stats"></small></div><div class="fight-label">VS</div><div class="hud-player blue-hud"><span id="p2-hud-role">CPU</span><strong id="p2-hud-name">VECHTER 2</strong><small>J/L · I SPRINGEN · K SCHILD · O SLAG · P SPECIAL</small><small id="p2-hud-stats"></small></div></div>
-    <div class="game-frame"><canvas id="gameCanvas"></canvas><div class="arena-hint">P1: A/D lopen · W springen · S schild · F aanval · G + richting = Special <span> | </span> P2: J/L · I · K · O · P</div></div>
+    <div class="battle-hud"><div class="hud-player red-hud"><span>PLAYER 1</span><strong id="p1-hud-name">VECHTER 1</strong><small>W/A/S/D BEWEGEN · SPATIE SPRINGEN · X BLOKKEREN · F SLAAN · G SPECIAL</small><small id="p1-hud-stats"></small></div><div class="fight-label">VS</div><div class="hud-player blue-hud"><span id="p2-hud-role">CPU</span><strong id="p2-hud-name">VECHTER 2</strong><small>J/L · I SPRINGEN · K SCHILD · O SLAAN · P SPECIAL</small><small id="p2-hud-stats"></small></div></div>
+    <div class="game-frame"><canvas id="gameCanvas"></canvas><div class="arena-hint">P1: W/A/S/D bewegen · spatie springen · X blokkeren · F slaan · G + richting = character-special <span> | </span> P2: J/L · I · K · O · P</div></div>
+    <section id="result-overlay" class="result-overlay hidden" role="dialog" aria-modal="true" aria-labelledby="result-winner">
+      <div class="result-panel">
+        <p class="result-eyebrow">🏆 BATTLE COMPLETE</p>
+        <h2 id="result-winner">Winnaar!</h2>
+        <p id="result-subtitle"></p>
+        <p class="result-time">Gevechtsduur: <strong id="result-duration"></strong></p>
+        <div class="result-stats-grid">
+          <article><h3 id="result-p1-name"></h3><div class="result-stats" id="result-p1-stats"></div></article>
+          <article><h3 id="result-p2-name"></h3><div class="result-stats" id="result-p2-stats"></div></article>
+        </div>
+        <div class="result-actions">
+          <button type="button" onclick="replayMatch()">⚔️ Nog een ronde</button>
+          <button type="button" onclick="returnToSelection()">👥 Andere karakters kiezen</button>
+          <button type="button" onclick="returnToHome()">⌂ Terug naar startpagina</button>
+        </div>
+      </div>
+    </section>
     <p id="arena-note" class="arena-note">Duw je tegenstander van de platforms af om te winnen.</p>
   </main>
 </body>
