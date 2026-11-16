@@ -1,0 +1,75 @@
+<!DOCTYPE html>
+<html lang="nl">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Hyper Helden Havoc</title>
+  <link rel="stylesheet" href="css/style.css">
+  <script src="https://cdn.jsdelivr.net/npm/three@0.128.0/build/three.min.js"></script>
+  <script src="https://cdn.jsdelivr.net/npm/three@0.128.0/examples/js/loaders/GLTFLoader.js"></script>
+  <script defer src="javascript/script.js"></script>
+</head>
+<body>
+  <main id="select-screen" class="screen selection-screen">
+    <header class="topbar">
+      <div>
+        <p class="eyebrow">THE ULTIMATE ANIME SHOWDOWN</p>
+        <h1>Anime <span>Rumble</span></h1>
+        <p class="subtitle">Kies je held. Betreed de arena. Word legendarisch.</p>
+      </div>
+      <div class="game-tag">3D FIGHTING GAME</div>
+    </header>
+
+    <section class="mode-panel panel">
+      <div class="mode-group">
+        <span class="section-label">SPELMODUS</span>
+        <div class="button-row">
+          <button id="mode-cpu-btn" class="choice-btn active" type="button">Tegen CPU</button>
+          <button id="mode-2p-btn" class="choice-btn" type="button">2 spelers</button>
+        </div>
+      </div>
+      <div id="cpu-diff-wrapper" class="setting-group">
+        <label class="section-label" for="cpu-diff-select">CPU MOEILIJKHEID</label>
+        <select id="cpu-diff-select"><option value="easy">Makkelijk</option><option value="normal" selected>Normaal</option><option value="hard">Moeilijk</option></select>
+      </div>
+      <div class="setting-group">
+        <label class="section-label" for="stocks-select">LEVENS</label>
+        <select id="stocks-select"><option value="1">1 leven</option><option value="2">2 levens</option><option value="3" selected>3 levens</option><option value="5">5 levens</option></select>
+      </div>
+      <div class="setting-group arena-setting">
+        <label class="section-label" for="arena-select">ARENA</label>
+        <select id="arena-select">
+          <option value="dojo">Anime Dojo</option><option value="castle">Schaduw Kasteel</option><option value="island">Zwevend Eiland</option><option value="neon">Neon Stad</option>
+        </select>
+      </div>
+    </section>
+
+    <section class="fighter-select">
+      <div class="fighter-heading"><div><span class="section-label">STEL JE TEAM SAMEN</span><h2>KIES JE VECHTER</h2></div><p>30 HELDEN · 10 WERELDEN</p></div>
+      <div class="player-cards">
+        <article class="player-card player-one">
+          <div class="player-title"><span class="player-dot red"></span><span>PLAYER 1</span><span class="player-role">JOUW VECHTER</span></div>
+          <div class="fighter-info"><canvas id="p1-portrait-canvas" width="180" height="180"></canvas><div><h3 id="p1-char-name">Satoru Gojo</h3><p id="p1-char-franchise" class="franchise">Jujutsu Kaisen</p><p id="p1-char-desc" class="description"></p></div></div>
+          <div class="moves"><p><b>NEUTRAAL</b><span id="p1-move-n"></span></p><p><b>ZIJWAARTS</b><span id="p1-move-s"></span></p><p><b>OMHOOG</b><span id="p1-move-u"></span></p><p><b>OMLAAG</b><span id="p1-move-d"></span></p></div>
+        </article>
+        <article class="player-card player-two">
+          <div class="player-title"><span class="player-dot blue"></span><span id="p2-role-label">CPU TEGENSTANDER</span><span class="player-role">RIVAAL</span></div>
+          <div class="fighter-info"><canvas id="p2-portrait-canvas" width="180" height="180"></canvas><div><h3 id="p2-char-name">Sukuna</h3><p id="p2-char-franchise" class="franchise">Jujutsu Kaisen</p><p id="p2-char-desc" class="description"></p></div></div>
+          <div class="moves"><p><b>NEUTRAAL</b><span id="p2-move-n"></span></p><p><b>ZIJWAARTS</b><span id="p2-move-s"></span></p><p><b>OMHOOG</b><span id="p2-move-u"></span></p><p><b>OMLAAG</b><span id="p2-move-d"></span></p></div>
+        </article>
+      </div>
+      <div class="roster-heading"><h3>PERSONAGES</h3><p>Kies eerst speler 1 en daarna speler 2</p></div>
+      <nav id="franchise-tabs" class="franchise-tabs" aria-label="Filter op serie"></nav>
+      <div id="roster-grid" class="roster-grid"></div>
+      <div class="select-footer"><div class="target-buttons"><button id="target-p1-btn" class="target-btn target-active-red" type="button">KIES VOOR P1</button><button id="target-p2-btn" class="target-btn" type="button">KIES VOOR P2</button></div><button class="start-btn" type="button" onclick="startMatch()">START GEVECHT <span>➜</span></button></div>
+    </section>
+  </main>
+
+  <main id="arena-screen" class="screen arena-screen hidden">
+    <header class="arena-top"><div><p class="eyebrow">HYPER HELDEN HAVOC</p><h1>DE <span>ARENA</span></h1></div><button class="back-btn" type="button" onclick="location.reload()">← TERUG NAAR SELECTIE</button></header>
+    <div class="battle-hud"><div class="hud-player red-hud"><span>PLAYER 1</span><strong id="p1-hud-name">VECHTER 1</strong><small>WASD / SPATIE</small></div><div class="fight-label">VS</div><div class="hud-player blue-hud"><span id="p2-hud-role">CPU</span><strong id="p2-hud-name">VECHTER 2</strong><small>CPU / J I K L</small></div></div>
+    <div class="game-frame"><canvas id="gameCanvas"></canvas><div class="arena-hint">P1: A / D bewegen · W of SPATIE springen <span> | </span> P2: J / L bewegen · I springen</div></div>
+    <p class="arena-note">Tip: blijf op de platforms en probeer je tegenstander van de arena af te duwen.</p>
+  </main>
+</body>
+</html>
