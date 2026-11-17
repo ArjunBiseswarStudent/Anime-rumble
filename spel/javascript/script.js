@@ -1292,80 +1292,12 @@ const portraitCanvases = [
     document.getElementById('p2-portrait-canvas')
 ];
 const portraitViewers = new Map();
-const characterModelCache = new Map();
-const failedCharacterModels = new Set();
-const characterLoader = typeof THREE !== 'undefined' && THREE.GLTFLoader &&
-    window.location.protocol.startsWith('http')
-    ? new THREE.GLTFLoader()
-    : null;
 let battleRenderer = null;
 let battleScene = null;
 let battleCamera = null;
 
 function createCharacterModel(character) {
-    const root = new THREE.Group();
-    const materials = {
-        skin: new THREE.MeshStandardMaterial({ color: character.skin }),
-        body: new THREE.MeshStandardMaterial({ color: character.primary, roughness: 0.72 }),
-        accent: new THREE.MeshStandardMaterial({ color: character.secondary, roughness: 0.7 }),
-        hair: new THREE.MeshStandardMaterial({ color: character.hair, roughness: 0.8 })
-    };
-    const addBox = (width, height, depth, material, x, y, z) => {
-        const mesh = new THREE.Mesh(new THREE.BoxGeometry(width, height, depth), material);
-        mesh.position.set(x, y, z);
-        root.add(mesh);
-    };
-
-    addBox(0.7, 0.85, 0.42, materials.body, 0, 0.95, 0);
-    addBox(0.56, 0.56, 0.56, materials.skin, 0, 1.72, 0);
-    addBox(0.62, 0.24, 0.62, materials.hair, 0, 2.03, -0.02);
-    addBox(0.22, 0.6, 0.24, materials.body, -0.46, 1.03, 0);
-    addBox(0.22, 0.6, 0.24, materials.body, 0.46, 1.03, 0);
-    addBox(0.25, 0.72, 0.28, materials.accent, -0.18, 0.36, 0);
-    addBox(0.25, 0.72, 0.28, materials.accent, 0.18, 0.36, 0);
-    root.userData.fallbackMeshes = root.children.slice();
-    const shield = new THREE.Mesh(
-        new THREE.SphereGeometry(1.25, 18, 16),
-        new THREE.MeshBasicMaterial({ color: character.aura, transparent: true, opacity: 0.28 })
-    );
-    shield.position.y = 1.05;
-    shield.visible = false;
-    root.userData.shield = shield;
-    root.add(shield);
-
-    const path = `assest/carakters/${character.id}.glb`;
-    if (characterLoader && !failedCharacterModels.has(path)) {
-        const addLoadedModel = (model) => {
-            root.userData.fallbackMeshes.forEach((mesh) => {
-                root.remove(mesh);
-                mesh.geometry.dispose();
-            });
-            root.userData.fallbackMeshes = [];
-            root.add(model);
-        };
-        const cached = characterModelCache.get(path);
-        if (cached) {
-            addLoadedModel(cached.clone());
-        } else {
-            characterLoader.load(path, (gltf) => {
-                const model = gltf.scene;
-                const bounds = new THREE.Box3().setFromObject(model);
-                const size = new THREE.Vector3();
-                bounds.getSize(size);
-                if (size.y > 0) model.scale.setScalar(2.2 / size.y);
-                const scaledBounds = new THREE.Box3().setFromObject(model);
-                const center = new THREE.Vector3();
-                scaledBounds.getCenter(center);
-                model.position.set(-center.x, -scaledBounds.min.y, -center.z);
-                characterModelCache.set(path, model);
-                addLoadedModel(model.clone());
-            }, undefined, () => {
-                failedCharacterModels.add(path);
-                console.warn(`3D-personage niet geladen: ${path}`);
-            });
-        }
-    }
-    return root;
+    return window.CharacterMotion.create(THREE, character);
 }
 
 function set3DPortrait(canvas, character) {
@@ -1399,7 +1331,11 @@ function set3DPortrait(canvas, character) {
 function animatePortraits() {
     portraitViewers.forEach((viewer) => {
         if (!viewer.model) return;
-        viewer.model.rotation.y += 0.008;
+        const now = performance.now();
+        const dt = Math.min((now - (viewer.lastFrame || now)) / 1000, 0.04);
+        viewer.lastFrame = now;
+        window.CharacterMotion.update(viewer.model, { vx: 0, grounded: true, blocking: false, facing: 1 }, dt);
+        viewer.model.rotation.y = Math.sin(now / 2600) * 0.25;
         viewer.renderer.render(viewer.scene, viewer.camera);
     });
     requestAnimationFrame(animatePortraits);
@@ -1663,6 +1599,7 @@ function performAttack(attacker, target, isSpecial, specialMove = 'neutral') {
     if (isSpecial) attacker.specialCooldown = cooldown;
     else attacker.attackCooldown = cooldown;
     attacker.attacks++;
+    window.CharacterMotion.attack(attacker.model, isSpecial ? specialMove : 'punch');
 
     const moveDirection = isSpecial ? specialMove : 'neutral';
     if (isSpecial) {
@@ -1864,8 +1801,7 @@ function updateFighter(fighter, target, dt) {
         (540 - fighter.y - fighter.height) / 65,
         0
     );
-    fighter.model.rotation.y = fighter.facing > 0 ? Math.PI / 2 : -Math.PI / 2;
-    fighter.model.scale.setScalar(fighter.attackCooldown > 0.28 ? 1.04 : 1);
+    window.CharacterMotion.update(fighter.model, fighter, dt);
     if (fighter.model.userData.shield) fighter.model.userData.shield.visible = fighter.blocking;
     fighter.model.visible = fighter.invulnerable <= 0 || Math.floor(performance.now() / 90) % 2 === 0;
     if (fighter.x < -fighter.width || fighter.x > 960 || fighter.y > 630) loseStock(fighter);
