@@ -1,0 +1,4 @@
+.throw-loadout { color: #abc8df; font-size: 11px; line-height: 1.6; margin: 8px 0; }
+.throw-loadout b { color: #78d6f0; margin-right: 6px; font-size: 10px; letter-spacing: 1px; }
+.throw-ammo { display: block; margin-top: 4px; color: #a5e9ff !important; font-size: 11px !important; font-weight: 700; font-variant-numeric: tabular-nums; }
+.throw-ammo.reloading { color: #ffd089 !important; }

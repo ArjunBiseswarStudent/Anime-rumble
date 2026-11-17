@@ -42,10 +42,11 @@ test('melee misses behind or outside reach; spear reaches further than fists', (
     target.damage = 0; target.x = 100; attack(owner, target); step(owner, target, 1); assert.equal(target.damage, 0);
     target.x = 700; attack(owner, target); step(owner, target, 1); assert.equal(target.damage, 0); api.reset();
 });
-test('kunai travel, collide once and obey range and invulnerability', () => {
+test('kunai normal attack is melee, preventing an unlimited ranged-ammo bypass', () => {
     const { fighter, attack, step, api, scene } = setup();
     const owner = fighter('naruto', 100), target = fighter('gojo', 400);
-    attack(owner, target); assert.equal(target.damage, 0); step(owner, target, 0.7); assert.equal(target.damage, 7);
+    attack(owner, target); assert.equal(target.damage, 0); step(owner, target, 0.7); assert.equal(target.damage, 0);
+    target.x = 150; attack(owner, target); step(owner, target, 0.7); assert.equal(target.damage, 7);
     target.x = 900; target.damage = 0; attack(owner, target); step(owner, target, 1.5); assert.equal(target.damage, 0);
     target.x = 400; target.invulnerable = 3; attack(owner, target); step(owner, target, 1.5); assert.equal(target.damage, 0);
     assert.equal(scene.children.length, 0); api.reset();

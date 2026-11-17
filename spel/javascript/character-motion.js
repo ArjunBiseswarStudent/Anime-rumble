@@ -232,6 +232,7 @@ window.CharacterMotion = (() => {
         const punch = active && m.action === 'punch';
         const super1 = active && m.action === 'neutral';
         const super2 = active && m.action === 'side';
+        const throwing = active && m.action === 'throw';
         const phase = m.time * (9 + moving * 5);
         const strike = punch ? Math.sin((1 - m.actionTime / 0.42) * Math.PI) : 0;
         const power = active && !punch ? Math.sin((1 - m.actionTime / 0.7) * Math.PI) : 0;
@@ -251,6 +252,7 @@ window.CharacterMotion = (() => {
             if (punch && side === 1) { arm = -0.35 - strike * 1.3; bend = -0.95 + strike * 0.85; }
             if (super1) { arm = -0.6 - power; bend = -1.15 + power; }
             if (super2) { arm = side === 1 ? -1.7 * power : 0.4; bend = -0.4; leg = side === 1 ? -power * 1.4 : 0.25; kneel = side === 1 ? 0.2 : 0.4; }
+            if (throwing && side === 1) { arm = -0.4 - power * 1.9; bend = -1.1 + power; }
             if (weaponAnimation?.remaining > 0 && !guard && !super1 && !super2) {
                 const progress = 1 - weaponAnimation.remaining / weaponAnimation.duration;
                 const swing = Math.sin(progress * Math.PI);

@@ -2,7 +2,8 @@ window.CombatActions = (() => {
     const effects = new Set();
     let clock = 0;
     function profile(type) {
-        if (type === 'kunai' || type === 'slingshot') return { kind: 'projectile', damage: type === 'kunai' ? 7 : 10, range: 500, cooldown: 0.65, color: type === 'kunai' ? '#d4e6ff' : '#ffbc64' };
+        // Ranged throws use the shared X/5 ammunition system; F/1 stays a close weapon strike.
+        if (type === 'kunai' || type === 'slingshot') return { kind: 'quick', damage: type === 'kunai' ? 7 : 5, range: 75, cooldown: 0.4, color: type === 'kunai' ? '#d4e6ff' : '#ffbc64' };
         if (/hammer|buster|fusion|four-swords/.test(type)) return { kind: 'heavy', damage: 15, range: 120, cooldown: 0.85, color: type.includes('blood') ? '#f25378' : '#ffcc77' };
         if (/spear|staff|pole|long-katana/.test(type)) return { kind: 'thrust', damage: 10, range: 175, cooldown: 0.6, color: /ice|water/.test(type) ? '#88eaff' : type.includes('blood') ? '#f25378' : '#c6dcff' };
         if (/gloves|bracers|dual-daggers/.test(type)) return { kind: 'quick', damage: 6, range: 90, cooldown: 0.28, color: type === 'bracers' ? '#ff9e43' : '#e3caff' };

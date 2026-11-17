@@ -17,7 +17,7 @@ Dezelfde uitrusting is zichtbaar in de portretten en gevechten. Wapens volgen de
 
 P1 gebruikt F voor een wapenaanval en H om uitrusting te wisselen. P2 gebruikt 1 en 4 (ook numpad). Personages zonder wapen gebruiken hun bestaande vuistslag. De twee supers blijven ongewijzigd beschikbaar.
 
-Kunai en Kuro Kabuto schieten projectielen met eindig bereik en eigen trefferdetectie. Zwaarden geven zwaaiaanvallen, speren en staven lange steken, hamers langzame zware aanvallen en dolken/handschoenen snelle aanvallen. Drie aanvallen met hooguit 1,3 seconde ertussen vormen een combo; de derde aanval geeft 35% extra schade en extra verticale terugslag. IJs- en Soul Solid-treffers vertragen de tegenstander 0,7 seconde met 35%. Blokkeren beperkt wapenschade tot 25% en voorkomt deze vertraging.
+Kunai en Kuro Kabuto gebruiken op F/1 een korte wapenstoot. Projectielen gaan via X/5 en het werpitemsysteem met drie ladingen en tien seconden herladen; zo kan de werplimiet niet via de gewone aanval worden omzeild. Zwaarden geven zwaaiaanvallen, speren en staven lange steken, hamers langzame zware aanvallen en dolken/handschoenen snelle aanvallen. Drie aanvallen met hooguit 1,3 seconde ertussen vormen een combo; de derde aanval geeft 35% extra schade en extra verticale terugslag. IJs- en Soul Solid-treffers vertragen de tegenstander 0,7 seconde met 35%. Blokkeren beperkt wapenschade tot 25% en voorkomt deze vertraging.
 
 Zwaaisporen, projectielen, vonken en blauwe schildinslagen worden in Three.js gerenderd. Elke wapenaanval kan zijn doel één keer raken. Uitgeruste wapens bewegen mee met een slag-, steek- of hamerhouding. De CPU gebruikt hetzelfde systeem. Effecten worden opgeruimd bij het verliezen van een leven, een nieuwe ronde of terugkeer naar de selectie.
 

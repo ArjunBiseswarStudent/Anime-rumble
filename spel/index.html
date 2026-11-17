@@ -7,11 +7,14 @@
   <link rel="stylesheet" href="css/style.css">
   <link rel="stylesheet" href="assest/maps/maps.css">
   <link rel="stylesheet" href="assest/items/combat-items/css/combat-items.css">
+  <link rel="stylesheet" href="assest/items/trow-items/css/trow-items.css">
   <script src="https://cdn.jsdelivr.net/npm/three@0.128.0/build/three.min.js"></script>
   <script defer src="assest/maps/maps.js"></script>
   <script defer src="assest/items/combat-items/javascript/combat-items-data.js"></script>
   <script defer src="assest/items/combat-items/javascript/combat-items.js"></script>
   <script defer src="assest/items/combat-items/javascript/combat-actions.js"></script>
+  <script defer src="assest/items/trow-items/javascript/trow-items-data.js"></script>
+  <script defer src="assest/items/trow-items/javascript/trow-items.js"></script>
   <script defer src="javascript/character-motion.js"></script>
   <script defer src="assest/special-moves/javascript/moves-data.js"></script>
   <script defer src="assest/special-moves/javascript/special-moves.js"></script>
@@ -60,12 +63,14 @@
           <div class="player-title"><span class="player-dot red"></span><span>PLAYER 1</span><span class="player-role">JOUW VECHTER</span></div>
           <div class="fighter-info"><canvas id="p1-portrait-canvas" width="180" height="180"></canvas><div><h3 id="p1-char-name">Satoru Gojo</h3><p id="p1-char-franchise" class="franchise">Jujutsu Kaisen</p><p id="p1-char-desc" class="description"></p></div></div>
           <p class="combat-equipment"><b>WAPENS</b><span id="p1-equipment"></span></p>
+          <p class="throw-loadout"><b>WERPITEMS</b><span id="p1-throw-items"></span></p>
           <div class="moves"><p><b>SUPER 1</b><span id="p1-move-n"></span></p><p><b>SUPER 2</b><span id="p1-move-s"></span></p></div>
         </article>
         <article class="player-card player-two">
           <div class="player-title"><span class="player-dot blue"></span><span id="p2-role-label">CPU TEGENSTANDER</span><span class="player-role">RIVAAL</span></div>
           <div class="fighter-info"><canvas id="p2-portrait-canvas" width="180" height="180"></canvas><div><h3 id="p2-char-name">Sukuna</h3><p id="p2-char-franchise" class="franchise">Jujutsu Kaisen</p><p id="p2-char-desc" class="description"></p></div></div>
           <p class="combat-equipment"><b>WAPENS</b><span id="p2-equipment"></span></p>
+          <p class="throw-loadout"><b>WERPITEMS</b><span id="p2-throw-items"></span></p>
           <div class="moves"><p><b>SUPER 1</b><span id="p2-move-n"></span></p><p><b>SUPER 2</b><span id="p2-move-s"></span></p></div>
         </article>
       </div>
@@ -78,8 +83,8 @@
 
   <main id="arena-screen" class="screen arena-screen hidden">
     <header class="arena-top"><div><p class="eyebrow">HYPER HELDEN HAVOC</p><h1>DE <span>ARENA</span></h1></div><button class="back-btn" type="button" onclick="location.reload()">← TERUG NAAR SELECTIE</button></header>
-    <div class="battle-hud"><div class="hud-player red-hud"><span>PLAYER 1</span><strong id="p1-hud-name">VECHTER 1</strong><small>A/D LOPEN &middot; W SPRINGEN &middot; S BESCHERMEN &middot; F WAPENAANVAL &middot; H WISSELEN &middot; G/Q SUPER 1 &middot; C/E SUPER 2</small><small id="p1-hud-stats"></small></div><div class="fight-label">VS</div><div class="hud-player blue-hud"><span id="p2-hud-role">CPU</span><strong id="p2-hud-name">VECHTER 2</strong><small>&larr;/&rarr; LOPEN &middot; &uarr; SPRINGEN &middot; &darr; BESCHERMEN &middot; 1 WAPENAANVAL &middot; 4 WISSELEN &middot; 2 SUPER 1 &middot; 3 SUPER 2</small><small id="p2-hud-stats"></small></div></div>
-    <div class="game-frame"><canvas id="gameCanvas"></canvas><div class="arena-hint">P1: A/D lopen | W springen | S beschermen | F wapenaanval | H wisselen | G/Q en C/E supers <span> | </span> P2: &larr;/&rarr; lopen | &uarr; springen | &darr; beschermen | 1 wapenaanval | 4 wisselen | 2/3 supers</div></div>
+    <div class="battle-hud"><div class="hud-player red-hud"><span>PLAYER 1</span><strong id="p1-hud-name">VECHTER 1</strong><small>A/D LOPEN &middot; W SPRINGEN &middot; S BESCHERMEN &middot; F WAPENAANVAL &middot; H WISSELEN &middot; X WERPEN &middot; G/Q SUPER 1 &middot; C/E SUPER 2</small><small id="p1-hud-stats"></small><small class="throw-ammo" id="p1-throw-ammo" role="status"></small></div><div class="fight-label">VS</div><div class="hud-player blue-hud"><span id="p2-hud-role">CPU</span><strong id="p2-hud-name">VECHTER 2</strong><small>&larr;/&rarr; LOPEN &middot; &uarr; SPRINGEN &middot; &darr; BESCHERMEN &middot; 1 WAPENAANVAL &middot; 4 WISSELEN &middot; 5 WERPEN &middot; 2 SUPER 1 &middot; 3 SUPER 2</small><small id="p2-hud-stats"></small><small class="throw-ammo" id="p2-throw-ammo" role="status"></small></div></div>
+    <div class="game-frame"><canvas id="gameCanvas"></canvas><div class="arena-hint">P1: A/D lopen | W springen | S beschermen | F wapenaanval | H wisselen | X werpen | G/Q en C/E supers <span> | </span> P2: &larr;/&rarr; lopen | &uarr; springen | &darr; beschermen | 1 wapenaanval | 4 wisselen | 5 werpen | 2/3 supers</div></div>
     <section id="result-overlay" class="result-overlay hidden" role="dialog" aria-modal="true" aria-labelledby="result-winner">
       <div class="result-panel">
         <p class="result-eyebrow">🏆 BATTLE COMPLETE</p>
