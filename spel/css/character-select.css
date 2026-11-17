@@ -1,0 +1,88 @@
+/* Arcade character selection: opposing fighters frame the central roster. */
+.selection-screen { width: min(1480px, calc(100% - 40px)); padding-top: 20px; }
+.selection-screen .topbar { margin-bottom: 20px; }
+.selection-screen .topbar h1 { font-size: 34px; font-style: italic; letter-spacing: -1px; }
+.selection-screen .topbar .eyebrow { font-size: 8px; }
+.selection-screen .subtitle { font-size: 11px; }
+.arcade-select { position: relative; isolation: isolate; padding: 20px 24px 0; overflow: hidden; border: 1px solid #53627a; border-radius: 4px; background: radial-gradient(ellipse at 7% 45%, #80232d70, transparent 44%), radial-gradient(ellipse at 93% 40%, #1e65b86b, transparent 44%), linear-gradient(145deg, #111c31, #080c17 50%, #1e1730); box-shadow: 0 25px 70px #0008; }
+.arcade-select::before { content: ''; position: absolute; z-index: -1; inset: 0; pointer-events: none; opacity: .22; background: repeating-linear-gradient(125deg, transparent 0 80px, #b8d4ff1c 81px 82px, transparent 83px 140px), radial-gradient(ellipse at 50% 100%, #c4d2e259, transparent 65%); }
+.arcade-select .fighter-heading { align-items: center; margin-bottom: 22px; }
+.arcade-select .fighter-heading h2 { margin-top: 7px; font-size: clamp(20px, 2.4vw, 34px); font-style: italic; letter-spacing: -.7px; text-shadow: 0 3px 0 #000; }
+.arcade-select .fighter-heading .section-label { color: #a9b8cf; font-size: 9px; }
+.selection-stage { display: grid; grid-template-columns: minmax(200px, 1fr) minmax(360px, 1.4fr) minmax(200px, 1fr); gap: 22px; align-items: start; }
+.arcade-select .player-card { --player-color: #f15c68; min-width: 0; padding: 0; border: 0; border-radius: 0; background: transparent; box-shadow: none; }
+.arcade-select .player-two { --player-color: #59a7ff; }
+.arcade-select .player-title { min-height: 30px; padding: 6px 10px; border-bottom: 1px solid var(--player-color); color: var(--player-color); background: #080e1b80; }
+.arcade-select .player-role { font-size: 8px; }
+.arcade-select .player-card.is-selecting .player-title { box-shadow: 0 3px 15px color-mix(in srgb, var(--player-color) 30%, transparent); }
+.arcade-select .fighter-info { position: relative; display: flex; flex-direction: column; gap: 0; margin: 0; }
+.arcade-select .fighter-info canvas { display: block; width: 100%; height: 400px; max-width: none; flex: none; object-fit: contain; border: 0; border-radius: 0; background: radial-gradient(ellipse at 50% 65%, color-mix(in srgb, var(--player-color) 14%, transparent), transparent 65%); filter: drop-shadow(0 15px 16px #0008); }
+.arcade-select .fighter-info > div { position: relative; width: 100%; margin-top: -25px; padding: 10px 14px; border-left: 4px solid var(--player-color); background: linear-gradient(100deg, color-mix(in srgb, var(--player-color) 62%, #101526), #121c2bd9); transform: skewX(-5deg); box-shadow: 0 4px 16px #0007; }
+.arcade-select .fighter-info h3 { overflow-wrap: anywhere; font-size: clamp(20px, 2vw, 29px); font-style: italic; text-transform: uppercase; line-height: 1.05; }
+.arcade-select .franchise { margin: 5px 0 0; color: #fff; font-size: 9px; letter-spacing: 1px; }
+.arcade-select .description { display: none; }
+.arcade-select .random-character-btn { width: 100%; margin: 12px 0 7px; border-radius: 2px; border-color: #65728b; background: #10192cbf; font-size: 11px; }
+.arcade-select .random-character-btn:hover { border-color: var(--player-color); background: #283851; }
+.arcade-select .combat-equipment, .arcade-select .throw-loadout { margin: 4px 0; padding: 6px 9px; border: 0; border-bottom: 1px solid #40516b55; border-radius: 0; background: #0b132273; font-size: 10px; line-height: 1.4; }
+.arcade-select .moves { margin-top: 7px; gap: 5px; }
+.arcade-select .moves p { border-radius: 2px; background: #0a1320b3; }
+.roster-panel { min-width: 0; padding: 0 0 12px; }
+.arcade-select .target-buttons { gap: 5px; }
+.arcade-select .target-btn { flex: 1; min-height: 35px; border-radius: 2px; font-size: 11px; }
+.arcade-select .target-active-red { background: #a53041; border-color: #ff8190; }
+.arcade-select .target-active-blue { background: #245ca5; border-color: #8dc3ff; }
+.selection-instruction { margin: 9px 0 0; color: #c9d5e6; font-size: 10px; text-align: center; }
+.arcade-select .franchise-tabs { gap: 4px; padding: 10px 0; scrollbar-width: thin; }
+.arcade-select .franchise-tabs button { padding: 6px 8px; border-radius: 2px; font-size: 9px; }
+.arcade-select .roster-grid { grid-template-columns: repeat(8, minmax(0, 1fr)); gap: 3px; max-height: 468px; padding: 4px; overflow-y: auto; border: 1px solid #41536f; background: #050a13c7; scrollbar-width: thin; scrollbar-color: #5d718e #101727; }
+.arcade-select .char-card { position: relative; padding: 0; border: 1px solid #526581; border-radius: 0; background: linear-gradient(140deg, #344a64, #111827); transition: border-color .12s, filter .12s; }
+.arcade-select .char-card:hover, .arcade-select .char-card:focus-visible { z-index: 2; transform: none; border-color: #ffe399; outline: 2px solid #ffe399; outline-offset: 0; filter: brightness(1.18); }
+.arcade-select .char-card canvas { width: 100%; max-width: none; border-radius: 0; }
+.arcade-select .char-card > span { margin: 0; padding: 3px 1px; background: #070e19e8; font-size: 8px; font-weight: 700; }
+.arcade-select .char-card.selected-p1 { border-color: #ff8090; box-shadow: inset 0 0 0 2px #f15c68; }
+.arcade-select .char-card.selected-p2 { border-color: #8dc3ff; box-shadow: inset 0 0 0 2px #59a7ff; }
+.arcade-select .char-card.selected-p1::before, .arcade-select .char-card.selected-p2::after { position: absolute; z-index: 1; top: 0; padding: 2px 3px; color: white; font-size: 9px; font-weight: 900; line-height: 1.2; text-shadow: 0 1px 2px #0008; }
+.arcade-select .char-card.selected-p1::before { content: 'P1'; left: 0; background: #bb3143; }
+.arcade-select .char-card.selected-p2::after { content: 'P2'; right: 0; background: #245caa; }
+.arcade-select .random-character-status { margin: 8px 0; font-size: 10px; }
+.roster-help { margin: 10px 0 0; color: #9baac0; font-size: 9px; text-align: center; line-height: 1.6; }
+.arcade-select .select-footer { position: relative; margin: 16px -24px 0; padding: 15px 24px; border-top: 1px solid #59627a; background: #090e1ae6; }
+.selection-versus { font-size: 38px; font-style: italic; font-weight: 900; color: #f2c678; line-height: 1; text-shadow: 2px 2px 0 #6e3d36; }
+.arcade-select .select-footer p { flex: 1; color: #9bacc6; font-size: 11px; }
+.arcade-select .start-btn { border-radius: 2px; padding: 15px 30px; transform: skewX(-5deg); }
+.selection-settings { margin-top: 15px; border: 1px solid #35445d; background: #10192b; border-radius: 4px; }
+.selection-settings summary { padding: 14px 17px; cursor: pointer; font-size: 12px; font-weight: 700; color: #e3eaf5; }
+.selection-settings summary span { margin-left: 12px; color: #9fb0ca; font-size: 10px; font-weight: 400; }
+.selection-settings .mode-panel { margin: 0; padding-top: 12px; border: 0; box-shadow: none; background: transparent; }
+.selection-settings .music-controls { margin: 0 17px 17px; }
+@media (min-width: 1500px) { .arcade-select .fighter-info canvas { height: 440px; } .arcade-select .roster-grid { max-height: 510px; } }
+@media (max-width: 1050px) {
+    .selection-screen { width: calc(100% - 24px); }
+    .arcade-select { padding: 16px 14px 0; }
+    .selection-stage { grid-template-columns: minmax(150px, 1fr) minmax(310px, 1.5fr) minmax(150px, 1fr); gap: 12px; }
+    .arcade-select .fighter-info canvas { height: 330px; }
+    .arcade-select .player-role { display: none; }
+    .arcade-select .roster-grid { grid-template-columns: repeat(7, minmax(0, 1fr)); max-height: 440px; }
+    .arcade-select .select-footer { margin-left: -14px; margin-right: -14px; }
+    .arcade-select .combat-equipment, .arcade-select .throw-loadout { font-size: 9px; }
+}
+@media (max-width: 720px) {
+    .selection-screen .topbar { gap: 10px; }
+    .selection-screen .topbar h1 { font-size: 29px; }
+    .selection-screen .game-tag { display: none; }
+    .selection-stage { grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 12px; }
+    .arcade-select .player-one { grid-column: 1; grid-row: 1; }
+    .arcade-select .player-two { grid-column: 2; grid-row: 1; }
+    .roster-panel { grid-column: 1 / -1; grid-row: 2; }
+    .arcade-select .fighter-info canvas { height: 220px; }
+    .arcade-select .fighter-info h3 { font-size: 20px; }
+    .arcade-select .fighter-info > div { padding: 8px; }
+    .arcade-select .combat-equipment, .arcade-select .throw-loadout, .arcade-select .moves { display: none; }
+    .arcade-select .fighter-heading { margin-bottom: 12px; }
+    .arcade-select .fighter-heading h2 { font-size: 23px; }
+    .arcade-select .roster-grid { grid-template-columns: repeat(8, minmax(0, 1fr)); max-height: 360px; }
+    .arcade-select .select-footer { flex-direction: row; flex-wrap: wrap; padding: 12px 14px; }
+    .arcade-select .select-footer p { margin: 0; font-size: 10px; }
+    .arcade-select .start-btn { width: 100%; }
+}
+@media (prefers-reduced-motion: reduce) { .arcade-select .char-card { transition: none; } }

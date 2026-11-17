@@ -1260,6 +1260,7 @@ function set3DPortrait(canvas, character) {
     if (!viewer) {
         try {
             const renderer = new THREE.WebGLRenderer({ canvas, alpha: true, antialias: true });
+            renderer.setPixelRatio(Math.min(window.devicePixelRatio || 1, 2));
             renderer.setSize(canvas.width, canvas.height, false);
             const scene = new THREE.Scene();
             const camera = new THREE.PerspectiveCamera(36, canvas.width / canvas.height, 0.1, 20);
@@ -1269,31 +1270,38 @@ function set3DPortrait(canvas, character) {
             const light = new THREE.DirectionalLight(0xffffff, 1.3);
             light.position.set(2, 4, 3);
             scene.add(light);
-            viewer = { renderer, scene, camera, model: null };
+            const rim = new THREE.DirectionalLight(canvas.id.startsWith('p1') ? '#ff6977' : '#65b1ff', 1.5);
+            rim.position.set(-3, 2, -2);
+            scene.add(rim);
+            viewer = { renderer, scene, camera, model: null, facing: canvas.id.startsWith('p1') ? 1 : -1 };
             portraitViewers.set(canvas, viewer);
         } catch (error) {
             console.warn('3D-portret is niet beschikbaar; er wordt een getekend portret getoond.', error);
             return false;
         }
     }
+    if (viewer.model && viewer.characterId === character.id) return true;
     if (viewer.model) {
         viewer.scene.remove(viewer.model);
         disposePortraitModel(viewer.model);
     }
     viewer.model = createCharacterModel(character);
+    viewer.characterId = character.id;
+    viewer.model.rotation.y = viewer.facing * 0.3;
     viewer.scene.add(viewer.model);
     viewer.renderer.render(viewer.scene, viewer.camera);
     return true;
 }
 
 function animatePortraits() {
+    const selectionVisible = !document.hidden && !document.getElementById('select-screen').classList.contains('hidden');
     portraitViewers.forEach((viewer) => {
-        if (!viewer.model) return;
+        if (!viewer.model || !selectionVisible) { viewer.lastFrame = 0; return; }
         const now = performance.now();
         const dt = Math.min((now - (viewer.lastFrame || now)) / 1000, 0.04);
         viewer.lastFrame = now;
         window.CharacterMotion.update(viewer.model, { vx: 0, grounded: true, blocking: false, facing: 1 }, dt);
-        viewer.model.rotation.y = Math.sin(now / 2600) * 0.25;
+        viewer.model.rotation.y = viewer.facing * (0.3 + Math.sin(now / 2600) * 0.1);
         viewer.renderer.render(viewer.scene, viewer.camera);
     });
     requestAnimationFrame(animatePortraits);
@@ -1398,12 +1406,39 @@ function updateSelectionCards() {
 
     document.getElementById('p2-role-label').textContent =
         gameMode === 'cpu' ? 'CPU TEGENSTANDER' : 'PLAYER 2';
+    syncRosterSelection();
+}
+
+function syncRosterSelection() {
+    document.querySelectorAll('.char-card[data-character-id]').forEach(button => {
+        const p1 = button.dataset.characterId === selection[0].id;
+        const p2 = button.dataset.characterId === selection[1].id;
+        button.classList.toggle('selected-p1', p1);
+        button.classList.toggle('selected-p2', p2);
+        button.setAttribute('aria-pressed', String(p1 || p2));
+        button.setAttribute('aria-label', `Kies ${button.dataset.characterName}${p1 ? ', gekozen door speler 1' : ''}${p2 ? ', gekozen door speler 2' : ''}`);
+    });
 }
 
 function setSelectorTarget(target) {
     selectionTarget = target;
     document.getElementById('target-p1-btn').classList.toggle('target-active-red', target === 0);
     document.getElementById('target-p2-btn').classList.toggle('target-active-blue', target === 1);
+    document.getElementById('target-p1-btn').setAttribute('aria-pressed', String(target === 0));
+    document.getElementById('target-p2-btn').setAttribute('aria-pressed', String(target === 1));
+    document.querySelector('.player-one').classList.toggle('is-selecting', target === 0);
+    document.querySelector('.player-two').classList.toggle('is-selecting', target === 1);
+    const player = target === 1 && gameMode === 'cpu' ? 'de CPU' : `speler ${target + 1}`;
+    document.getElementById('selection-instruction').textContent = `Kies een personage voor ${player}`;
+}
+
+function chooseRandomCharacter(playerIndex) {
+    const character = ROSTER[Math.floor(Math.random() * ROSTER.length)];
+    selection[playerIndex] = character;
+    updateSelectionCards();
+    setSelectorTarget(playerIndex === 0 ? 1 : 0);
+    const player = playerIndex === 1 && gameMode === 'cpu' ? 'CPU' : `Speler ${playerIndex + 1}`;
+    document.getElementById('random-character-status').textContent = `${player}: ${character.name} willekeurig gekozen uit alle ${ROSTER.length} personages.`;
 }
 
 function buildFranchiseTabs() {
@@ -1442,6 +1477,7 @@ function buildRosterUI() {
         button.type = 'button';
         button.className = 'char-card';
         button.dataset.characterId = character.id;
+        button.dataset.characterName = character.name;
         button.title = `${character.name} — ${character.franchise}`;
         button.setAttribute('aria-label', `Kies ${character.name}`);
         const portrait = document.createElement('canvas');
@@ -1453,19 +1489,23 @@ function buildRosterUI() {
         button.append(portrait, name);
         button.addEventListener('click', () => {
             selection[selectionTarget] = character;
+            document.getElementById('random-character-status').textContent = '';
             updateSelectionCards();
             setSelectorTarget(selectionTarget === 0 ? 1 : 0);
         });
         grid.append(button);
     });
+    syncRosterSelection();
 }
 
 function setGameMode(mode) {
     gameMode = mode;
+    document.getElementById('random-character-status').textContent = '';
     document.getElementById('mode-cpu-btn').classList.toggle('active', mode === 'cpu');
     document.getElementById('mode-2p-btn').classList.toggle('active', mode === '2p');
     document.getElementById('cpu-diff-wrapper').classList.toggle('hidden', mode !== 'cpu');
     updateSelectionCards();
+    setSelectorTarget(selectionTarget);
 }
 
 function makeFighter(character, playerIndex) {
@@ -1900,6 +1940,20 @@ window.addEventListener('keyup', (event) => pressedKeys.delete(normalizeGameKey(
 window.addEventListener('blur', () => pressedKeys.clear());
 
 document.addEventListener('DOMContentLoaded', () => {
+    document.getElementById('roster-grid').addEventListener('keydown', event => {
+        if (event.altKey || event.ctrlKey || event.metaKey || !['ArrowLeft', 'ArrowRight', 'ArrowUp', 'ArrowDown', 'Home', 'End'].includes(event.key)) return;
+        const cards = Array.from(event.currentTarget.querySelectorAll('.char-card'));
+        const index = cards.indexOf(event.target);
+        if (index < 0) return;
+        event.preventDefault();
+        const columns = getComputedStyle(event.currentTarget).gridTemplateColumns.split(' ').filter(Boolean).length;
+        const offset = { ArrowLeft: -1, ArrowRight: 1, ArrowUp: -columns, ArrowDown: columns }[event.key];
+        const next = event.key === 'Home' ? 0 : event.key === 'End' ? cards.length - 1 : Math.max(0, Math.min(cards.length - 1, index + offset));
+        cards[next].focus();
+    });
+    document.querySelectorAll('[data-random-player]').forEach(button => {
+        button.addEventListener('click', () => chooseRandomCharacter(Number(button.dataset.randomPlayer)));
+    });
     document.getElementById('roster-count').textContent = `${ROSTER.length} HELDEN · ${new Set(ROSTER.map(character => character.franchise)).size} WERELDEN`;
     document.getElementById('target-p1-btn').addEventListener('click', () => setSelectorTarget(0));
     document.getElementById('target-p2-btn').addEventListener('click', () => setSelectorTarget(1));

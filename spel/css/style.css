@@ -618,6 +618,11 @@ select:focus-visible {
 .music-controls [data-music-status] { margin-left: auto; color: #a7bbd3; }
 .music-controls :focus-visible { outline: 2px solid #f5ad32; outline-offset: 4px; }
 @media(max-width:580px) { .music-controls [data-music-status] { width: 100%; margin-left: 0; } }
+.random-character-btn { margin: 8px 0; padding: 10px 14px; border: 1px solid #7685a4; border-radius: 8px; background: #24324a; color: #eef3ff; font: inherit; font-size: 13px; font-weight: 700; cursor: pointer; }
+.random-character-btn:hover { background: #334663; border-color: #f5ad32; }
+.random-character-btn:focus-visible { outline: 2px solid #f5ad32; outline-offset: 3px; }
+.random-character-status { margin: 12px 0; color: #c9d7ee; font-size: 13px; line-height: 1.5; }
+.random-character-status:empty { display: none; }
 .result-time {color:#9aabc4;}
 .result-stats-grid {display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:15px;margin:24px 0;}
 .result-stats-grid article {padding:18px;border-radius:12px;background:#0d1526;border:1px solid #263550;text-align:left;}

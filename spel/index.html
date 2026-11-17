@@ -8,6 +8,7 @@
   <link rel="stylesheet" href="assest/maps/maps.css">
   <link rel="stylesheet" href="assest/items/combat-items/css/combat-items.css">
   <link rel="stylesheet" href="assest/items/trow-items/css/trow-items.css">
+  <link rel="stylesheet" href="css/character-select.css">
   <script src="https://cdn.jsdelivr.net/npm/three@0.128.0/build/three.min.js"></script>
   <script defer src="assest/maps/maps.js"></script>
   <script defer src="assest/maps/battlefield.js"></script>
@@ -33,7 +34,38 @@
       <div class="game-tag">3D FIGHTING GAME</div>
     </header>
 
-    <section class="mode-panel panel">
+    <section class="fighter-select arcade-select" aria-label="Kies je vechters">
+      <div class="fighter-heading"><div><span class="section-label">ANIME RUMBLE / VERSUS</span><h2>SELECTEER JE VECHTERS</h2></div><p id="roster-count"></p></div>
+      <div class="selection-stage">
+        <article class="player-card player-one">
+          <div class="player-title"><span class="player-dot red"></span><span>PLAYER 1</span><span class="player-role">JOUW VECHTER</span></div>
+          <div class="fighter-info"><canvas id="p1-portrait-canvas" width="360" height="480"></canvas><div><h3 id="p1-char-name">Satoru Gojo</h3><p id="p1-char-franchise" class="franchise">Jujutsu Kaisen</p><p id="p1-char-desc" class="description"></p></div></div>
+          <button class="random-character-btn" type="button" data-random-player="0" aria-label="Kies een willekeurig personage voor speler 1" title="Kies uit alle personages, ongeacht het seriefilter">🎲 Willekeurig personage</button>
+          <p class="combat-equipment"><b>WAPENS</b><span id="p1-equipment"></span></p>
+          <p class="throw-loadout"><b>WERPITEMS</b><span id="p1-throw-items"></span></p>
+          <div class="moves"><p><b>SUPER 1</b><span id="p1-move-n"></span></p><p><b>SUPER 2</b><span id="p1-move-s"></span></p></div>
+        </article>
+        <section class="roster-panel" aria-label="Personageraster">
+          <div class="target-buttons"><button id="target-p1-btn" class="target-btn target-active-red" type="button" aria-pressed="true">SPELER 1</button><button id="target-p2-btn" class="target-btn" type="button" aria-pressed="false">SPELER 2 / CPU</button></div>
+          <p id="selection-instruction" class="selection-instruction" aria-live="polite">Kies een personage voor speler 1</p>
+          <nav id="franchise-tabs" class="franchise-tabs" aria-label="Filter op serie"></nav>
+          <div id="roster-grid" class="roster-grid" role="group" aria-label="Beschikbare personages"></div>
+          <p id="random-character-status" class="random-character-status" role="status" aria-live="polite"></p>
+          <p class="roster-help">Klik om te kiezen · Pijltjestoetsen om te bladeren · Enter om te kiezen</p>
+        </section>
+        <article class="player-card player-two">
+          <div class="player-title"><span class="player-dot blue"></span><span id="p2-role-label">CPU TEGENSTANDER</span><span class="player-role">RIVAAL</span></div>
+          <div class="fighter-info"><canvas id="p2-portrait-canvas" width="360" height="480"></canvas><div><h3 id="p2-char-name">Sukuna</h3><p id="p2-char-franchise" class="franchise">Jujutsu Kaisen</p><p id="p2-char-desc" class="description"></p></div></div>
+          <button class="random-character-btn" type="button" data-random-player="1" aria-label="Kies een willekeurig personage voor speler 2 of de CPU" title="Kies uit alle personages, ongeacht het seriefilter">🎲 Willekeurig personage</button>
+          <p class="combat-equipment"><b>WAPENS</b><span id="p2-equipment"></span></p>
+          <p class="throw-loadout"><b>WERPITEMS</b><span id="p2-throw-items"></span></p>
+          <div class="moves"><p><b>SUPER 1</b><span id="p2-move-n"></span></p><p><b>SUPER 2</b><span id="p2-move-s"></span></p></div>
+        </article>
+      </div>
+      <div class="select-footer"><span class="selection-versus" aria-hidden="true">VS</span><p>Jouw held. Jouw tegenstander. Jouw gevecht.</p><button class="start-btn" type="button" onclick="startMatch()">START GEVECHT <span>➜</span></button></div>
+    </section>
+    <details class="selection-settings"><summary>Spelinstellingen <span>Arena · Spelmodus · Muziek</span></summary>
+        <section class="mode-panel panel">
       <div class="mode-group">
         <span class="section-label">SPELMODUS</span>
         <div class="button-row">
@@ -64,29 +96,8 @@
       <input id="music-volume-select" data-music-volume type="range" min="0" max="100" value="28">
       <span data-music-status>Start bij het gevecht</span>
     </section>
-    <section class="fighter-select">
-      <div class="fighter-heading"><div><span class="section-label">STEL JE TEAM SAMEN</span><h2>KIES JE VECHTER</h2></div><p id="roster-count">56 HELDEN &middot; 13 WERELDEN</p></div>
-      <div class="player-cards">
-        <article class="player-card player-one">
-          <div class="player-title"><span class="player-dot red"></span><span>PLAYER 1</span><span class="player-role">JOUW VECHTER</span></div>
-          <div class="fighter-info"><canvas id="p1-portrait-canvas" width="180" height="180"></canvas><div><h3 id="p1-char-name">Satoru Gojo</h3><p id="p1-char-franchise" class="franchise">Jujutsu Kaisen</p><p id="p1-char-desc" class="description"></p></div></div>
-          <p class="combat-equipment"><b>WAPENS</b><span id="p1-equipment"></span></p>
-          <p class="throw-loadout"><b>WERPITEMS</b><span id="p1-throw-items"></span></p>
-          <div class="moves"><p><b>SUPER 1</b><span id="p1-move-n"></span></p><p><b>SUPER 2</b><span id="p1-move-s"></span></p></div>
-        </article>
-        <article class="player-card player-two">
-          <div class="player-title"><span class="player-dot blue"></span><span id="p2-role-label">CPU TEGENSTANDER</span><span class="player-role">RIVAAL</span></div>
-          <div class="fighter-info"><canvas id="p2-portrait-canvas" width="180" height="180"></canvas><div><h3 id="p2-char-name">Sukuna</h3><p id="p2-char-franchise" class="franchise">Jujutsu Kaisen</p><p id="p2-char-desc" class="description"></p></div></div>
-          <p class="combat-equipment"><b>WAPENS</b><span id="p2-equipment"></span></p>
-          <p class="throw-loadout"><b>WERPITEMS</b><span id="p2-throw-items"></span></p>
-          <div class="moves"><p><b>SUPER 1</b><span id="p2-move-n"></span></p><p><b>SUPER 2</b><span id="p2-move-s"></span></p></div>
-        </article>
-      </div>
-      <div class="roster-heading"><h3>PERSONAGES</h3><p>Kies eerst speler 1 en daarna speler 2</p></div>
-      <nav id="franchise-tabs" class="franchise-tabs" aria-label="Filter op serie"></nav>
-      <div id="roster-grid" class="roster-grid"></div>
-      <div class="select-footer"><div class="target-buttons"><button id="target-p1-btn" class="target-btn target-active-red" type="button">KIES VOOR P1</button><button id="target-p2-btn" class="target-btn" type="button">KIES VOOR P2</button></div><button class="start-btn" type="button" onclick="startMatch()">START GEVECHT <span>➜</span></button></div>
-    </section>
+
+    </details>
   </main>
 
   <main id="arena-screen" class="screen arena-screen hidden">
