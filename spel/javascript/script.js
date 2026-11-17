@@ -1287,7 +1287,7 @@ const PLAYER_CONTROLS = [
     { left: 'KeyA', right: 'KeyD', jump: 'KeyW', shield: 'KeyS', attack: 'KeyF', super1: 'KeyG', super2: 'KeyC' },
     { left: 'ArrowLeft', right: 'ArrowRight', jump: 'ArrowUp', shield: 'ArrowDown', attack: 'Digit1', super1: 'Digit2', super2: 'Digit3' }
 ];
-const GAME_KEYS = new Set(PLAYER_CONTROLS.flatMap(controls => Object.values(controls)));
+const GAME_KEYS = new Set([...PLAYER_CONTROLS.flatMap(controls => Object.values(controls)), 'KeyH', 'Digit4']);
 
 const portraitCanvases = [
     document.getElementById('p1-portrait-canvas'),
@@ -1432,6 +1432,8 @@ function updateSelectionCards() {
         document.getElementById(`${prefix}-char-name`).textContent = character.name;
         document.getElementById(`${prefix}-char-franchise`).textContent = character.franchise;
         document.getElementById(`${prefix}-char-desc`).textContent = character.desc;
+        const equipment = document.getElementById(`${prefix}-equipment`);
+        if (equipment) equipment.textContent = window.CombatItems.names(character.id) || 'Ongewapend';
         document.getElementById(`${prefix}-move-n`).textContent = character.moves.neutral.name;
         document.getElementById(`${prefix}-move-s`).textContent = character.moves.side.name;
         ['neutral', 'side'].forEach((direction, slot) => {
@@ -1546,6 +1548,7 @@ function startMatch() {
     }
     cancelAnimationFrame(animationFrame);
     window.SpecialMoves.reset();
+    window.CombatActions?.reset();
     pressedKeys.clear();
     jumpRequests.fill(false);
     currentArena = ARENAS[document.getElementById('arena-select').value] || ARENAS.dojo;
@@ -1663,6 +1666,11 @@ function performAttack(attacker, target, isSpecial, specialMove = 'neutral') {
         });
         return;
     }
+    if (window.CombatActions && window.CombatItems.list(attacker.character.id).length) {
+        window.CombatActions.attack({ THREE, scene: battleScene, owner: attacker, target, isShielded: isFighterShielded,
+            onNotice: message => { document.getElementById('arena-note').textContent = message; } });
+        return;
+    }
     if (attacker.attackCooldown > 0) return;
     attacker.attackCooldown = 0.48;
     attacker.attacks++;
@@ -1683,6 +1691,8 @@ function performAttack(attacker, target, isSpecial, specialMove = 'neutral') {
 
 function loseStock(fighter) {
     window.SpecialMoves.clearFighter(fighter);
+    window.CombatActions?.clearFighter(fighter);
+    fighter.weaponSlow = 0;
     fighter.stocks--;
     fighter.damage = 0;
     if (fighter.stocks <= 0) {
@@ -1704,6 +1714,7 @@ function loseStock(fighter) {
 
 function finishMatch(winner) {
     window.SpecialMoves.reset();
+    window.CombatActions?.reset();
     gameRunning = false;
     cancelAnimationFrame(animationFrame);
     const elapsed = Math.max(0, Math.floor((performance.now() - matchStartedAt) / 1000));
@@ -1731,6 +1742,7 @@ function replayMatch() {
 
 function returnToSelection() {
     window.SpecialMoves.reset();
+    window.CombatActions?.reset();
     gameRunning = false;
     cancelAnimationFrame(animationFrame);
     pressedKeys.clear();
@@ -1747,6 +1759,7 @@ function returnToHome() {
 function updateFighter(fighter, target, dt) {
     window.SpecialMoves.tickFighter(fighter, dt);
     const specialStatus = fighter.specialStatus;
+    fighter.weaponSlow = Math.max(0, (fighter.weaponSlow || 0) - dt);
     const isPlayerOne = fighter.playerIndex === 0;
     const { left: leftKey, right: rightKey, shield: shieldKey } = PLAYER_CONTROLS[fighter.playerIndex];
     const isCpu = gameMode === 'cpu' && !isPlayerOne;
@@ -1784,7 +1797,7 @@ function updateFighter(fighter, target, dt) {
     if (move) fighter.facing = move;
     const difficulty = isCpu ? document.getElementById('cpu-diff-select').value : 'normal';
     const speedFactor = difficulty === 'hard' ? 1 : difficulty === 'easy' ? 0.75 : 0.9;
-    const speed = (fighter.character.speed || 5.5) * (isCpu ? speedFactor : 1) * (specialStatus.buff > 0 ? 1.2 : 1);
+    const speed = (fighter.character.speed || 5.5) * (isCpu ? speedFactor : 1) * (specialStatus.buff > 0 ? 1.2 : 1) * (fighter.weaponSlow > 0 ? 0.65 : 1);
     if (specialStatus.stun > 0) fighter.vx *= Math.exp(-dt * 15);
     else if (specialStatus.dash > 0) fighter.vx = specialStatus.dashSpeed;
     else fighter.vx += (move * speed - fighter.vx) * Math.min(1, dt * 12);
@@ -1841,6 +1854,7 @@ function battleLoop(now) {
     jumpRequests[1] = false;
     if (gameRunning) {
         window.SpecialMoves.update(dt);
+        window.CombatActions?.update(dt);
         window.AnimeMaps.updateScenery(battleScene, (now - matchStartedAt) / 1000);
         drawBattle();
         updateBattleHud();
@@ -1851,7 +1865,7 @@ function battleLoop(now) {
 function updateBattleHud() {
     fighters.forEach((fighter, index) => {
         const label = document.getElementById(`p${index + 1}-hud-stats`);
-        label.textContent = `${'♥ '.repeat(Math.max(0, fighter.stocks))} · ${Math.floor(fighter.damage)}% schade | Super 1: ${window.SpecialMoves.cooldownLabel(fighter, 0)} | Super 2: ${window.SpecialMoves.cooldownLabel(fighter, 1)}`;
+        label.textContent = `${'♥ '.repeat(Math.max(0, fighter.stocks))} · ${Math.floor(fighter.damage)}% schade | Super 1: ${window.SpecialMoves.cooldownLabel(fighter, 0)} | Super 2: ${window.SpecialMoves.cooldownLabel(fighter, 1)}${window.CombatActions?.equipped(fighter) ? ' | ' + window.CombatActions.equipped(fighter).name : ''}`;
     });
 }
 
@@ -1859,7 +1873,7 @@ window.addEventListener('resize', resizeBattleRenderer);
 function normalizeGameKey(code) {
     if (code === 'KeyQ') return 'KeyG';
     if (code === 'KeyE') return 'KeyC';
-    return /^Numpad[123]$/.test(code) ? code.replace('Numpad', 'Digit') : code;
+    return /^Numpad[1234]$/.test(code) ? code.replace('Numpad', 'Digit') : code;
 }
 
 window.addEventListener('keydown', (event) => {
@@ -1872,6 +1886,9 @@ window.addEventListener('keydown', (event) => {
 
     PLAYER_CONTROLS.forEach((controls, index) => {
         if (index === 1 && gameMode !== '2p') return;
+        if (code === (index === 0 ? 'KeyH' : 'Digit4') && window.CombatActions?.cycle(fighters[index])) {
+            document.getElementById('arena-note').textContent = window.CombatActions.equipped(fighters[index]).name;
+        }
         if (code === controls.jump) jumpRequests[index] = true;
         if (code === controls.attack) performAttack(fighters[index], fighters[1 - index], false);
         if (code === controls.super1) performAttack(fighters[index], fighters[1 - index], true, 'neutral');

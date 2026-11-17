@@ -204,6 +204,7 @@ window.CharacterMotion = (() => {
         root.add(shield);
         root.userData.shield = shield;
         root.userData.motion = { rig, torso, head, limbs, time: 0, blend: 0, landing: 0, wasGrounded: false, action: '', actionTime: 0 };
+        if (window.CombatItems) window.CombatItems.attach(THREE, root, character);
         return root;
     }
 
@@ -217,6 +218,8 @@ window.CharacterMotion = (() => {
         if (!m) return;
         m.time += dt;
         m.actionTime = Math.max(0, m.actionTime - dt);
+        const weaponAnimation = root.userData.weaponAnimation;
+        if (weaponAnimation) weaponAnimation.remaining = Math.max(0, weaponAnimation.remaining - dt);
         const moving = Math.min(1, Math.abs(fighter.vx || 0) / 4);
         const follow = 1 - Math.exp(-dt * 14);
         m.blend += (moving - m.blend) * follow;
@@ -248,6 +251,14 @@ window.CharacterMotion = (() => {
             if (punch && side === 1) { arm = -0.35 - strike * 1.3; bend = -0.95 + strike * 0.85; }
             if (super1) { arm = -0.6 - power; bend = -1.15 + power; }
             if (super2) { arm = side === 1 ? -1.7 * power : 0.4; bend = -0.4; leg = side === 1 ? -power * 1.4 : 0.25; kneel = side === 1 ? 0.2 : 0.4; }
+            if (weaponAnimation?.remaining > 0 && !guard && !super1 && !super2) {
+                const progress = 1 - weaponAnimation.remaining / weaponAnimation.duration;
+                const swing = Math.sin(progress * Math.PI);
+                if (side === 1 || weaponAnimation.combo > 1) {
+                    arm = weaponAnimation.kind === 'heavy' ? -2.5 + swing * 2 : -0.4 - swing * 1.7;
+                    bend = weaponAnimation.kind === 'thrust' ? -0.9 + swing * 0.85 : -0.45;
+                }
+            }
             shoulder.rotation.x += (arm - shoulder.rotation.x) * follow;
             shoulder.rotation.z += ((-side * (guard ? 0.2 : 0.08)) - shoulder.rotation.z) * follow;
             elbow.rotation.x += (bend - elbow.rotation.x) * follow;
