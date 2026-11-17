@@ -1269,6 +1269,8 @@ ROSTER.push(...[
     }
 ]);
 
+window.SpecialMoves.applyRoster(ROSTER);
+
 const selection = [ROSTER[0], ROSTER[1]];
 let selectionTarget = 0;
 let gameMode = 'cpu';
@@ -1286,7 +1288,7 @@ const PLAYER_CONTROLS = [
     { left: 'ArrowLeft', right: 'ArrowRight', jump: 'ArrowUp', shield: 'ArrowDown', attack: 'Digit1', super1: 'Digit2', super2: 'Digit3' }
 ];
 const GAME_KEYS = new Set(PLAYER_CONTROLS.flatMap(controls => Object.values(controls)));
-const activeSpecialEffects = [];
+
 const portraitCanvases = [
     document.getElementById('p1-portrait-canvas'),
     document.getElementById('p2-portrait-canvas')
@@ -1432,6 +1434,10 @@ function updateSelectionCards() {
         document.getElementById(`${prefix}-char-desc`).textContent = character.desc;
         document.getElementById(`${prefix}-move-n`).textContent = character.moves.neutral.name;
         document.getElementById(`${prefix}-move-s`).textContent = character.moves.side.name;
+        ['neutral', 'side'].forEach((direction, slot) => {
+            const label = document.getElementById(`${prefix}-move-${slot === 0 ? 'n' : 's'}`);
+            label.title = `${character.moves[direction].desc} Cooldown: ${character.moves[direction].cooldown}s.`;
+        });
         drawPortrait(portraitCanvases[index], character);
     });
 
@@ -1524,7 +1530,7 @@ function makeFighter(character, playerIndex) {
         damage: 0,
         facing: playerIndex === 0 ? 1 : -1,
         attackCooldown: 0,
-        specialCooldown: 0,
+        specialCooldowns: [0, 0],
         blocking: false,
         invulnerable: 1.2,
         attacks: 0,
@@ -1539,6 +1545,7 @@ function startMatch() {
         return;
     }
     cancelAnimationFrame(animationFrame);
+    window.SpecialMoves.reset();
     pressedKeys.clear();
     jumpRequests.fill(false);
     currentArena = ARENAS[document.getElementById('arena-select').value] || ARENAS.dojo;
@@ -1638,92 +1645,44 @@ function resizeBattleRenderer() {
     battleCamera.updateProjectionMatrix();
 }
 
+function isFighterShielded(fighter) {
+    return (fighter.playerIndex === 0 || gameMode === '2p') && pressedKeys.has(PLAYER_CONTROLS[fighter.playerIndex].shield);
+}
+
 function performAttack(attacker, target, isSpecial, specialMove = 'neutral') {
-    const cooldown = isSpecial ? 1.1 : 0.48;
-    if ((isSpecial && attacker.specialCooldown > 0) || (!isSpecial && attacker.attackCooldown > 0)) return;
-    if (isSpecial) attacker.specialCooldown = cooldown;
-    else attacker.attackCooldown = cooldown;
-    attacker.attacks++;
-    window.CharacterMotion.attack(attacker.model, isSpecial ? specialMove : 'punch');
-
-    const moveDirection = isSpecial ? specialMove : 'neutral';
+    const controls = PLAYER_CONTROLS[attacker.playerIndex];
+    const status = window.SpecialMoves.prepare(attacker);
+    if (status.stun > 0 || isFighterShielded(attacker)) return;
+    if (pressedKeys.has(controls.left)) attacker.facing = -1;
+    if (pressedKeys.has(controls.right)) attacker.facing = 1;
     if (isSpecial) {
-        const controls = PLAYER_CONTROLS[attacker.playerIndex];
-        if (pressedKeys.has(controls.left)) attacker.facing = -1;
-        if (pressedKeys.has(controls.right)) attacker.facing = 1;
-        const move = attacker.character.moves[moveDirection];
-        document.getElementById('arena-note').textContent =
-            `${attacker.character.name} gebruikt ${move.name}!`;
-        createSpecialEffect(attacker, moveDirection);
-        if (moveDirection === 'up') {
-            attacker.vy = -attacker.character.jump * 1.1;
-            attacker.grounded = false;
-        } else if (moveDirection === 'side') {
-            attacker.vx += attacker.facing * (attacker.character.speed || 5.5) * 0.75;
-        }
+        window.SpecialMoves.cast({
+            THREE, scene: battleScene, owner: attacker, target, slot: specialMove === 'side' ? 1 : 0,
+            isShielded: isFighterShielded,
+            onNotice: message => { document.getElementById('arena-note').textContent = message; }
+        });
+        return;
     }
-
-    const distanceX = Math.abs((attacker.x + attacker.width / 2) - (target.x + target.width / 2));
-    const distanceY = Math.abs((attacker.y + attacker.height / 2) - (target.y + target.height / 2));
-    const reachX = !isSpecial ? 82 : moveDirection === 'side' ? 180 : moveDirection === 'up' ? 105 : 145;
-    const reachY = !isSpecial ? 82 : moveDirection === 'up' || moveDirection === 'down' ? 150 : 105;
-    if (distanceX > reachX || distanceY > reachY || target.invulnerable > 0) return;
-
-    const shieldKey = PLAYER_CONTROLS[target.playerIndex].shield;
-    const shielding = target.playerIndex === 0 || gameMode === '2p'
-        ? target.blocking || pressedKeys.has(shieldKey)
-        : false;
-    const damage = isSpecial ? 18 : 8;
-    target.damage += shielding ? damage * 0.25 : damage;
+    if (attacker.attackCooldown > 0) return;
+    attacker.attackCooldown = 0.48;
+    attacker.attacks++;
+    window.CharacterMotion.attack(attacker.model, 'punch');
+    const distanceX = Math.abs(attacker.x + attacker.width / 2 - target.x - target.width / 2);
+    const distanceY = Math.abs(attacker.y + attacker.height / 2 - target.y - target.height / 2);
+    if (distanceX > (status.buff > 0 ? 110 : 82) || distanceY > 82 || target.invulnerable > 0) return;
+    const shielding = isFighterShielded(target);
+    const targetStatus = window.SpecialMoves.prepare(target);
+    target.damage += 8 * (status.buff > 0 ? 1.3 : 1) * (targetStatus.armor > 0 ? 0.65 : 1) * (shielding ? 0.25 : 1);
     const direction = Math.sign(target.x - attacker.x) || attacker.facing;
-    const knockback = (isSpecial ? 8.5 : 4.5) + target.damage / 18;
-    target.vx = direction * knockback * (shielding ? 0.35 : 1);
-    target.vy = shielding ? -2 : (isSpecial ? -7 : -4);
+    target.vx = direction * (4.5 + target.damage / 18) * (shielding ? 0.35 : 1);
+    target.vy = shielding ? -2 : -4;
     target.invulnerable = 0.5;
     attacker.hits++;
     updateBattleHud();
 }
 
-function createSpecialEffect(fighter, direction) {
-    if (!battleScene) return;
-    let geometry;
-    if (direction === 'side') geometry = new THREE.BoxGeometry(1.7, 0.32, 0.24);
-    else if (direction === 'up') geometry = new THREE.CylinderGeometry(0.12, 0.55, 1.6, 10);
-    else if (direction === 'down') {
-        geometry = new THREE.TorusGeometry(0.9, 0.08, 8, 24);
-    } else geometry = new THREE.SphereGeometry(0.42, 14, 12);
-
-    const material = new THREE.MeshBasicMaterial({
-        color: fighter.character.aura,
-        transparent: true,
-        opacity: 0.9,
-        depthWrite: false
-    });
-    const mesh = new THREE.Mesh(geometry, material);
-    mesh.position.copy(fighter.model.position);
-    mesh.position.x += fighter.facing * 0.8;
-    mesh.position.y += direction === 'down' ? 0.12 : 1.1;
-    if (direction === 'down') mesh.rotation.x = Math.PI / 2;
-    battleScene.add(mesh);
-    activeSpecialEffects.push({ mesh, life: 0.32 });
-}
-
-function updateSpecialEffects(dt) {
-    for (let index = activeSpecialEffects.length - 1; index >= 0; index--) {
-        const effect = activeSpecialEffects[index];
-        effect.life -= dt;
-        effect.mesh.material.opacity = Math.max(0, effect.life / 0.32);
-        effect.mesh.scale.multiplyScalar(1 + dt * 1.8);
-        if (effect.life <= 0) {
-            battleScene.remove(effect.mesh);
-            effect.mesh.geometry.dispose();
-            effect.mesh.material.dispose();
-            activeSpecialEffects.splice(index, 1);
-        }
-    }
-}
-
 function loseStock(fighter) {
+    window.SpecialMoves.clearFighter(fighter);
     fighter.stocks--;
     fighter.damage = 0;
     if (fighter.stocks <= 0) {
@@ -1744,6 +1703,7 @@ function loseStock(fighter) {
 }
 
 function finishMatch(winner) {
+    window.SpecialMoves.reset();
     gameRunning = false;
     cancelAnimationFrame(animationFrame);
     const elapsed = Math.max(0, Math.floor((performance.now() - matchStartedAt) / 1000));
@@ -1770,6 +1730,7 @@ function replayMatch() {
 }
 
 function returnToSelection() {
+    window.SpecialMoves.reset();
     gameRunning = false;
     cancelAnimationFrame(animationFrame);
     pressedKeys.clear();
@@ -1784,13 +1745,15 @@ function returnToHome() {
 }
 
 function updateFighter(fighter, target, dt) {
+    window.SpecialMoves.tickFighter(fighter, dt);
+    const specialStatus = fighter.specialStatus;
     const isPlayerOne = fighter.playerIndex === 0;
     const { left: leftKey, right: rightKey, shield: shieldKey } = PLAYER_CONTROLS[fighter.playerIndex];
     const isCpu = gameMode === 'cpu' && !isPlayerOne;
     let move = 0;
     fighter.blocking = !isCpu && pressedKeys.has(shieldKey);
 
-    if (isCpu) {
+    if (isCpu && specialStatus.stun <= 0) {
         const difficulty = document.getElementById('cpu-diff-select').value;
         const attackRange = difficulty === 'hard' ? 122 : difficulty === 'easy' ? 78 : 100;
         const attackChance = difficulty === 'hard' ? 0.075 : difficulty === 'easy' ? 0.02 : 0.045;
@@ -1800,14 +1763,16 @@ function updateFighter(fighter, target, dt) {
         if (Math.abs(distance) < attackRange && fighter.attackCooldown <= 0 && Math.random() < attackChance) {
             performAttack(fighter, target, false);
         }
-        if (Math.abs(distance) < attackRange + 40 && fighter.specialCooldown <= 0 && Math.random() < specialChance) {
-            performAttack(fighter, target, true, Math.random() < 0.5 ? 'neutral' : 'side');
+        if (Math.abs(distance) < attackRange + 40 && fighter.specialCooldowns.some(time => time <= 0) && Math.random() < specialChance) {
+            const availableSlots = fighter.specialCooldowns.map((time, slot) => time <= 0 ? slot : -1).filter(slot => slot >= 0);
+            const slot = availableSlots[Math.floor(Math.random() * availableSlots.length)];
+            performAttack(fighter, target, true, slot === 0 ? 'neutral' : 'side');
         }
         if (fighter.grounded && Math.random() < 0.025) {
             fighter.vy = -fighter.character.jump;
             fighter.grounded = false;
         }
-    } else {
+    } else if (!isCpu && specialStatus.stun <= 0) {
         if (!fighter.blocking && pressedKeys.has(leftKey)) move--;
         if (!fighter.blocking && pressedKeys.has(rightKey)) move++;
         if (jumpRequests[fighter.playerIndex] && fighter.grounded && !fighter.blocking) {
@@ -1819,14 +1784,15 @@ function updateFighter(fighter, target, dt) {
     if (move) fighter.facing = move;
     const difficulty = isCpu ? document.getElementById('cpu-diff-select').value : 'normal';
     const speedFactor = difficulty === 'hard' ? 1 : difficulty === 'easy' ? 0.75 : 0.9;
-    const speed = (fighter.character.speed || 5.5) * (isCpu ? speedFactor : 1);
-    fighter.vx += (move * speed - fighter.vx) * Math.min(1, dt * 12);
-    if (!move) fighter.vx *= Math.pow(0.82, dt * 60);
+    const speed = (fighter.character.speed || 5.5) * (isCpu ? speedFactor : 1) * (specialStatus.buff > 0 ? 1.2 : 1);
+    if (specialStatus.stun > 0) fighter.vx *= Math.exp(-dt * 15);
+    else if (specialStatus.dash > 0) fighter.vx = specialStatus.dashSpeed;
+    else fighter.vx += (move * speed - fighter.vx) * Math.min(1, dt * 12);
+    if (!move && specialStatus.dash <= 0) fighter.vx *= Math.pow(0.82, dt * 60);
     fighter.x += fighter.vx * dt * 18;
     fighter.vy += 23 * dt;
     fighter.y += fighter.vy * dt * 18;
     fighter.attackCooldown = Math.max(0, fighter.attackCooldown - dt);
-    fighter.specialCooldown = Math.max(0, fighter.specialCooldown - dt);
     fighter.invulnerable = Math.max(0, fighter.invulnerable - dt);
     fighter.dropThroughTimer = Math.max(0, fighter.dropThroughTimer - dt);
 
@@ -1874,7 +1840,7 @@ function battleLoop(now) {
     if (gameRunning) updateFighter(fighters[1], fighters[0], dt);
     jumpRequests[1] = false;
     if (gameRunning) {
-        updateSpecialEffects(dt);
+        window.SpecialMoves.update(dt);
         window.AnimeMaps.updateScenery(battleScene, (now - matchStartedAt) / 1000);
         drawBattle();
         updateBattleHud();
@@ -1885,12 +1851,14 @@ function battleLoop(now) {
 function updateBattleHud() {
     fighters.forEach((fighter, index) => {
         const label = document.getElementById(`p${index + 1}-hud-stats`);
-        label.textContent = `${'♥ '.repeat(Math.max(0, fighter.stocks))} · ${Math.floor(fighter.damage)}% schade`;
+        label.textContent = `${'♥ '.repeat(Math.max(0, fighter.stocks))} · ${Math.floor(fighter.damage)}% schade | Super 1: ${window.SpecialMoves.cooldownLabel(fighter, 0)} | Super 2: ${window.SpecialMoves.cooldownLabel(fighter, 1)}`;
     });
 }
 
 window.addEventListener('resize', resizeBattleRenderer);
 function normalizeGameKey(code) {
+    if (code === 'KeyQ') return 'KeyG';
+    if (code === 'KeyE') return 'KeyC';
     return /^Numpad[123]$/.test(code) ? code.replace('Numpad', 'Digit') : code;
 }
 

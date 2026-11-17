@@ -1,0 +1,1346 @@
+{
+  "naruto": [
+    {
+      "name": "Rasengan",
+      "desc": "Rent naar voren met een draaiende chakrabal die vijanden wegduwt.",
+      "kind": "dash",
+      "damage": 14,
+      "cooldown": 5,
+      "windup": 0.18,
+      "duration": 0.65,
+      "range": 155,
+      "character": "Naruto Uzumaki"
+    },
+    {
+      "name": "Rasenshuriken",
+      "desc": "Gooit een windchakra-shuriken die explodeert en meerdere keren schade doet.",
+      "kind": "explosive",
+      "damage": 30,
+      "cooldown": 16,
+      "windup": 0.65,
+      "duration": 1.8,
+      "range": 270,
+      "character": "Naruto Uzumaki"
+    }
+  ],
+  "sasuke": [
+    {
+      "name": "Chidori",
+      "desc": "Sprint vooruit met bliksemchakra in zijn hand.",
+      "kind": "dash",
+      "damage": 14,
+      "cooldown": 5,
+      "windup": 0.18,
+      "duration": 0.65,
+      "range": 155,
+      "character": "Sasuke Uchiha"
+    },
+    {
+      "name": "Amaterasu",
+      "desc": "Zwarte vlammen blijven tijdelijk branden op de doelpositie.",
+      "kind": "zone",
+      "damage": 30,
+      "cooldown": 16,
+      "windup": 0.65,
+      "duration": 2.4,
+      "range": 270,
+      "character": "Sasuke Uchiha"
+    }
+  ],
+  "sakura": [
+    {
+      "name": "Cherry Blossom Impact",
+      "desc": "Slaat op de grond en veroorzaakt een schokgolf.",
+      "kind": "ground",
+      "damage": 14,
+      "cooldown": 5,
+      "windup": 0.18,
+      "duration": 0.65,
+      "range": 155,
+      "character": "Sakura Haruno"
+    },
+    {
+      "name": "Byakugo Release",
+      "desc": "Herstelt gezondheid en versterkt tijdelijk aanvallen.",
+      "kind": "heal",
+      "damage": 0,
+      "cooldown": 16,
+      "windup": 0.65,
+      "duration": 6,
+      "range": 270,
+      "character": "Sakura Haruno"
+    }
+  ],
+  "itachi": [
+    {
+      "name": "Fire Style: Great Fireball",
+      "desc": "Blaast een grote vuurbal vooruit.",
+      "kind": "projectile",
+      "damage": 14,
+      "cooldown": 5,
+      "windup": 0.18,
+      "duration": 0.65,
+      "range": 155,
+      "character": "Itachi Uchiha"
+    },
+    {
+      "name": "Tsukuyomi",
+      "desc": "Vangt een tegenstander in een genjutsu en verlamt deze kort.",
+      "kind": "stun",
+      "damage": 30,
+      "cooldown": 16,
+      "windup": 0.65,
+      "duration": 1.8,
+      "range": 270,
+      "character": "Itachi Uchiha"
+    }
+  ],
+  "kakashi": [
+    {
+      "name": "Lightning Blade (Raikiri)",
+      "desc": "Stormt naar voren met bliksem.",
+      "kind": "dash",
+      "damage": 14,
+      "cooldown": 5,
+      "windup": 0.18,
+      "duration": 0.65,
+      "range": 155,
+      "character": "Kakashi Hatake"
+    },
+    {
+      "name": "Kamui",
+      "desc": "Vervormt ruimte rond het doelwit en veroorzaakt vertraagde schade.",
+      "kind": "delayed",
+      "damage": 30,
+      "cooldown": 16,
+      "windup": 0.65,
+      "duration": 1.8,
+      "range": 270,
+      "character": "Kakashi Hatake"
+    }
+  ],
+  "jiraiya": [
+    {
+      "name": "Needle Jizo",
+      "desc": "Verhardt zijn haar tot scherpe naalden.",
+      "kind": "guard",
+      "damage": 0,
+      "cooldown": 5,
+      "windup": 0.18,
+      "duration": 6,
+      "range": 155,
+      "character": "Jiraiya"
+    },
+    {
+      "name": "Sage Art: Goemon",
+      "desc": "Stuurt een stroom brandende olie vooruit.",
+      "kind": "stream",
+      "damage": 30,
+      "cooldown": 16,
+      "windup": 0.65,
+      "duration": 2.4,
+      "range": 270,
+      "character": "Jiraiya"
+    }
+  ],
+  "gaara": [
+    {
+      "name": "Sand Coffin",
+      "desc": "Grijpt een vijand met zand en houdt die kort vast.",
+      "kind": "stun",
+      "damage": 14,
+      "cooldown": 5,
+      "windup": 0.18,
+      "duration": 0.65,
+      "range": 155,
+      "character": "Gaara"
+    },
+    {
+      "name": "Sand Burial",
+      "desc": "Perst zand samen voor een zware aanval.",
+      "kind": "delayed",
+      "damage": 30,
+      "cooldown": 16,
+      "windup": 0.65,
+      "duration": 1.8,
+      "range": 270,
+      "character": "Gaara"
+    }
+  ],
+  "shikamaru": [
+    {
+      "name": "Shadow Possession",
+      "desc": "Immobiliseert een tegenstander met zijn schaduw.",
+      "kind": "stun",
+      "damage": 14,
+      "cooldown": 5,
+      "windup": 0.18,
+      "duration": 0.65,
+      "range": 155,
+      "character": "Shikamaru Nara"
+    },
+    {
+      "name": "Shadow Sewing",
+      "desc": "Scherpe schaduwtentakels raken meerdere vijanden.",
+      "kind": "zone",
+      "damage": 30,
+      "cooldown": 16,
+      "windup": 0.65,
+      "duration": 2.4,
+      "range": 270,
+      "character": "Shikamaru Nara"
+    }
+  ],
+  "kiba": [
+    {
+      "name": "Fang Passing Fang",
+      "desc": "Draait als een boor vooruit.",
+      "kind": "dash",
+      "damage": 14,
+      "cooldown": 5,
+      "windup": 0.18,
+      "duration": 0.65,
+      "range": 155,
+      "character": "Kiba Inuzuka"
+    },
+    {
+      "name": "Fang Over Fang",
+      "desc": "Voert samen met Akamaru een dubbele draaiaanval uit.",
+      "kind": "combo",
+      "damage": 30,
+      "cooldown": 16,
+      "windup": 0.65,
+      "duration": 1.8,
+      "range": 270,
+      "character": "Kiba Inuzuka"
+    }
+  ],
+  "luffy": [
+    {
+      "name": "Gum-Gum Pistol",
+      "desc": "Langeafstandsstoot met uitgerekte arm.",
+      "kind": "reach",
+      "damage": 14,
+      "cooldown": 5,
+      "windup": 0.18,
+      "duration": 0.65,
+      "range": 155,
+      "character": "Monkey D. Luffy"
+    },
+    {
+      "name": "Gum-Gum Bajrang Gun",
+      "desc": "Gigantische, met Haki versterkte Gear 5-vuist.",
+      "kind": "heavy",
+      "damage": 30,
+      "cooldown": 16,
+      "windup": 0.65,
+      "duration": 1.8,
+      "range": 270,
+      "character": "Monkey D. Luffy"
+    }
+  ],
+  "zoro": [
+    {
+      "name": "Oni Giri",
+      "desc": "Sprintende aanval met drie zwaarden.",
+      "kind": "dash",
+      "damage": 14,
+      "cooldown": 5,
+      "windup": 0.18,
+      "duration": 0.65,
+      "range": 155,
+      "character": "Roronoa Zoro"
+    },
+    {
+      "name": "Three Thousand Worlds",
+      "desc": "Verwoestende draaiende zwaardaanval.",
+      "kind": "spin",
+      "damage": 30,
+      "cooldown": 16,
+      "windup": 0.65,
+      "duration": 1.8,
+      "range": 270,
+      "character": "Roronoa Zoro"
+    }
+  ],
+  "sanji": [
+    {
+      "name": "Diable Jambe",
+      "desc": "Krachtige brandende trap.",
+      "kind": "melee",
+      "damage": 14,
+      "cooldown": 5,
+      "windup": 0.18,
+      "duration": 0.65,
+      "range": 155,
+      "character": "Sanji"
+    },
+    {
+      "name": "Ifrit Jambe",
+      "desc": "Reeks snelle trappen met blauwe vlammen.",
+      "kind": "combo",
+      "damage": 30,
+      "cooldown": 16,
+      "windup": 0.65,
+      "duration": 1.8,
+      "range": 270,
+      "character": "Sanji"
+    }
+  ],
+  "usopp": [
+    {
+      "name": "Exploding Star",
+      "desc": "Explosief katapultprojectiel.",
+      "kind": "explosive",
+      "damage": 14,
+      "cooldown": 5,
+      "windup": 0.18,
+      "duration": 0.65,
+      "range": 155,
+      "character": "Usopp"
+    },
+    {
+      "name": "Impact Wolf",
+      "desc": "Wolfvormige Pop Green-plant valt vijanden aan.",
+      "kind": "summon",
+      "damage": 30,
+      "cooldown": 16,
+      "windup": 0.65,
+      "duration": 2.4,
+      "range": 270,
+      "character": "Usopp"
+    }
+  ],
+  "chopper": [
+    {
+      "name": "Kung Fu Point",
+      "desc": "Snelle reeks aanvallen na transformatie.",
+      "kind": "combo",
+      "damage": 14,
+      "cooldown": 5,
+      "windup": 0.18,
+      "duration": 0.65,
+      "range": 155,
+      "character": "Tony Tony Chopper"
+    },
+    {
+      "name": "Monster Point",
+      "desc": "Tijdelijke gigantische vorm met meer kracht en bereik.",
+      "kind": "transform",
+      "damage": 0,
+      "cooldown": 16,
+      "windup": 0.65,
+      "duration": 6,
+      "range": 270,
+      "character": "Tony Tony Chopper"
+    }
+  ],
+  "nami": [
+    {
+      "name": "Thunderbolt Tempo",
+      "desc": "Blikseminslag uit onweerswolk.",
+      "kind": "lightning",
+      "damage": 14,
+      "cooldown": 5,
+      "windup": 0.18,
+      "duration": 0.65,
+      "range": 155,
+      "character": "Nami"
+    },
+    {
+      "name": "Zeus Thunderbolt",
+      "desc": "Grote bestuurbare bliksemaanval met Zeus.",
+      "kind": "guided",
+      "damage": 30,
+      "cooldown": 16,
+      "windup": 0.65,
+      "duration": 1.8,
+      "range": 270,
+      "character": "Nami"
+    }
+  ],
+  "robin": [
+    {
+      "name": "Clutch",
+      "desc": "Extra armen grijpen een vijand vast.",
+      "kind": "stun",
+      "damage": 14,
+      "cooldown": 5,
+      "windup": 0.18,
+      "duration": 0.65,
+      "range": 155,
+      "character": "Nico Robin"
+    },
+    {
+      "name": "Demonio Fleur",
+      "desc": "Demonische reuzenvorm met krachtige greep.",
+      "kind": "transform",
+      "damage": 0,
+      "cooldown": 16,
+      "windup": 0.65,
+      "duration": 6,
+      "range": 270,
+      "character": "Nico Robin"
+    }
+  ],
+  "brook": [
+    {
+      "name": "Soul Solid",
+      "desc": "IJskoude zwaardaanval.",
+      "kind": "melee",
+      "damage": 14,
+      "cooldown": 5,
+      "windup": 0.18,
+      "duration": 0.65,
+      "range": 155,
+      "character": "Brook"
+    },
+    {
+      "name": "Soul Parade",
+      "desc": "IJzige zwaardtechniek die vijanden bevriest.",
+      "kind": "freeze",
+      "damage": 30,
+      "cooldown": 16,
+      "windup": 0.65,
+      "duration": 1.8,
+      "range": 270,
+      "character": "Brook"
+    }
+  ],
+  "goku": [
+    {
+      "name": "Kamehameha",
+      "desc": "Blauwe energiebundel.",
+      "kind": "beam",
+      "damage": 14,
+      "cooldown": 5,
+      "windup": 0.18,
+      "duration": 0.65,
+      "range": 155,
+      "character": "Goku"
+    },
+    {
+      "name": "Spirit Bomb (Genki Dama)",
+      "desc": "Gigantische verzamelde energiebol.",
+      "kind": "bomb",
+      "damage": 30,
+      "cooldown": 16,
+      "windup": 0.65,
+      "duration": 1.8,
+      "range": 270,
+      "character": "Goku"
+    }
+  ],
+  "vegeta": [
+    {
+      "name": "Galick Gun",
+      "desc": "Paarse energiebundel.",
+      "kind": "beam",
+      "damage": 14,
+      "cooldown": 5,
+      "windup": 0.18,
+      "duration": 0.65,
+      "range": 155,
+      "character": "Vegeta"
+    },
+    {
+      "name": "Final Flash",
+      "desc": "Enorme opgeladen gouden energiestraal.",
+      "kind": "beam",
+      "damage": 30,
+      "cooldown": 16,
+      "windup": 0.65,
+      "duration": 1.8,
+      "range": 270,
+      "character": "Vegeta"
+    }
+  ],
+  "gohan": [
+    {
+      "name": "Masenko",
+      "desc": "Snelle gele energiegolf.",
+      "kind": "beam",
+      "damage": 14,
+      "cooldown": 5,
+      "windup": 0.18,
+      "duration": 0.65,
+      "range": 155,
+      "character": "Gohan"
+    },
+    {
+      "name": "Special Beam Cannon (Beast)",
+      "desc": "Geconcentreerde straal in Beast-vorm.",
+      "kind": "beam",
+      "damage": 30,
+      "cooldown": 16,
+      "windup": 0.65,
+      "duration": 1.8,
+      "range": 270,
+      "character": "Gohan"
+    }
+  ],
+  "piccolo": [
+    {
+      "name": "Special Beam Cannon",
+      "desc": "Spiraalvormige doordringende energiestraal.",
+      "kind": "beam",
+      "damage": 14,
+      "cooldown": 5,
+      "windup": 0.18,
+      "duration": 0.65,
+      "range": 155,
+      "character": "Piccolo"
+    },
+    {
+      "name": "Hellzone Grenade",
+      "desc": "Omringt vijand met exploderende energieballen.",
+      "kind": "orbit",
+      "damage": 30,
+      "cooldown": 16,
+      "windup": 0.65,
+      "duration": 1.8,
+      "range": 270,
+      "character": "Piccolo"
+    }
+  ],
+  "trunks": [
+    {
+      "name": "Burning Attack",
+      "desc": "Energiebal na snelle handbewegingen.",
+      "kind": "projectile",
+      "damage": 14,
+      "cooldown": 5,
+      "windup": 0.18,
+      "duration": 0.65,
+      "range": 155,
+      "character": "Trunks"
+    },
+    {
+      "name": "Sword of Hope",
+      "desc": "Gigantisch energiezwaard met verticale slag.",
+      "kind": "sword",
+      "damage": 30,
+      "cooldown": 16,
+      "windup": 0.65,
+      "duration": 1.8,
+      "range": 270,
+      "character": "Trunks"
+    }
+  ],
+  "hit": [
+    {
+      "name": "Time-Skip",
+      "desc": "Teleporteert kort naar vijand en slaat toe.",
+      "kind": "teleport",
+      "damage": 14,
+      "cooldown": 5,
+      "windup": 0.18,
+      "duration": 0.65,
+      "range": 155,
+      "character": "Hit"
+    },
+    {
+      "name": "Time Prison",
+      "desc": "Tijdgevangenis gevolgd door aanvallen.",
+      "kind": "stun",
+      "damage": 30,
+      "cooldown": 16,
+      "windup": 0.65,
+      "duration": 1.8,
+      "range": 270,
+      "character": "Hit"
+    }
+  ],
+  "frieza": [
+    {
+      "name": "Death Beam",
+      "desc": "Snelle dunne paarse straal.",
+      "kind": "beam",
+      "damage": 14,
+      "cooldown": 5,
+      "windup": 0.18,
+      "duration": 0.65,
+      "range": 155,
+      "character": "Frieza"
+    },
+    {
+      "name": "Death Ball",
+      "desc": "Grote exploderende energiebol.",
+      "kind": "bomb",
+      "damage": 30,
+      "cooldown": 16,
+      "windup": 0.65,
+      "duration": 1.8,
+      "range": 270,
+      "character": "Frieza"
+    }
+  ],
+  "beerus": [
+    {
+      "name": "Hakai",
+      "desc": "Zware vernietigingsenergie.",
+      "kind": "heavy",
+      "damage": 14,
+      "cooldown": 5,
+      "windup": 0.18,
+      "duration": 0.65,
+      "range": 155,
+      "character": "Beerus"
+    },
+    {
+      "name": "Sphere of Destruction",
+      "desc": "Gigantische bol vernietigingsenergie.",
+      "kind": "bomb",
+      "damage": 30,
+      "cooldown": 16,
+      "windup": 0.65,
+      "duration": 1.8,
+      "range": 270,
+      "character": "Beerus"
+    }
+  ],
+  "jiren": [
+    {
+      "name": "Power Impact",
+      "desc": "Compacte exploderende energieaanval.",
+      "kind": "explosive",
+      "damage": 14,
+      "cooldown": 5,
+      "windup": 0.18,
+      "duration": 0.65,
+      "range": 155,
+      "character": "Jiren"
+    },
+    {
+      "name": "Power Rush",
+      "desc": "Razendsnelle reeks krachtige stoten.",
+      "kind": "combo",
+      "damage": 30,
+      "cooldown": 16,
+      "windup": 0.65,
+      "duration": 1.8,
+      "range": 270,
+      "character": "Jiren"
+    }
+  ],
+  "gojo": [
+    {
+      "name": "Cursed Technique Blue",
+      "desc": "Trekt vijanden naar één punt.",
+      "kind": "pull",
+      "damage": 14,
+      "cooldown": 5,
+      "windup": 0.18,
+      "duration": 0.65,
+      "range": 155,
+      "character": "Satoru Gojo"
+    },
+    {
+      "name": "Hollow Purple",
+      "desc": "Gigantische paarse energiemassa schiet vooruit.",
+      "kind": "projectile",
+      "damage": 30,
+      "cooldown": 16,
+      "windup": 0.65,
+      "duration": 1.8,
+      "range": 270,
+      "character": "Satoru Gojo"
+    }
+  ],
+  "sukuna": [
+    {
+      "name": "Dismantle",
+      "desc": "Onzichtbare snijaanvallen vooruit.",
+      "kind": "slash",
+      "damage": 14,
+      "cooldown": 5,
+      "windup": 0.18,
+      "duration": 0.65,
+      "range": 155,
+      "character": "Ryomen Sukuna"
+    },
+    {
+      "name": "Malevolent Shrine",
+      "desc": "Groot gebied met herhaalde snijaanvallen.",
+      "kind": "zone",
+      "damage": 30,
+      "cooldown": 16,
+      "windup": 0.65,
+      "duration": 2.4,
+      "range": 270,
+      "character": "Ryomen Sukuna"
+    }
+  ],
+  "yuji": [
+    {
+      "name": "Divergent Fist",
+      "desc": "Stoot met vertraagde tweede impact.",
+      "kind": "double",
+      "damage": 14,
+      "cooldown": 5,
+      "windup": 0.18,
+      "duration": 0.65,
+      "range": 155,
+      "character": "Yuji Itadori"
+    },
+    {
+      "name": "Black Flash",
+      "desc": "Perfect getimede zware stoot met zwarte energie.",
+      "kind": "heavy",
+      "damage": 30,
+      "cooldown": 16,
+      "windup": 0.65,
+      "duration": 1.8,
+      "range": 270,
+      "character": "Yuji Itadori"
+    }
+  ],
+  "jinwoo": [
+    {
+      "name": "Shadow Exchange",
+      "desc": "Wisselt plaats met schaduw en valt aan.",
+      "kind": "teleport",
+      "damage": 14,
+      "cooldown": 5,
+      "windup": 0.18,
+      "duration": 0.65,
+      "range": 155,
+      "character": "Sung Jinwoo"
+    },
+    {
+      "name": "Shadow Army",
+      "desc": "Roept tijdelijk aanvallende schaduwsoldaten op.",
+      "kind": "summon",
+      "damage": 30,
+      "cooldown": 16,
+      "windup": 0.65,
+      "duration": 2.4,
+      "range": 270,
+      "character": "Sung Jinwoo"
+    }
+  ],
+  "cha": [
+    {
+      "name": "Sword Dance",
+      "desc": "Snelle zwaardcombinatie.",
+      "kind": "combo",
+      "damage": 14,
+      "cooldown": 5,
+      "windup": 0.18,
+      "duration": 0.65,
+      "range": 155,
+      "character": "Cha Hae-in"
+    },
+    {
+      "name": "Sword of Light",
+      "desc": "Krachtige lichtgevende zwaardaanval.",
+      "kind": "sword",
+      "damage": 30,
+      "cooldown": 16,
+      "windup": 0.65,
+      "duration": 1.8,
+      "range": 270,
+      "character": "Cha Hae-in"
+    }
+  ],
+  "beru": [
+    {
+      "name": "Predator Claws",
+      "desc": "Snelle sprong en klauwaanval.",
+      "kind": "leap",
+      "damage": 14,
+      "cooldown": 5,
+      "windup": 0.18,
+      "duration": 0.65,
+      "range": 155,
+      "character": "Beru"
+    },
+    {
+      "name": "Ant King Rampage",
+      "desc": "Reeks razendsnelle klauwaanvallen.",
+      "kind": "combo",
+      "damage": 30,
+      "cooldown": 16,
+      "windup": 0.65,
+      "duration": 1.8,
+      "range": 270,
+      "character": "Beru"
+    }
+  ],
+  "deku": [
+    {
+      "name": "Delaware Smash",
+      "desc": "Luchtdrukprojectiel met vingerbeweging.",
+      "kind": "projectile",
+      "damage": 14,
+      "cooldown": 5,
+      "windup": 0.18,
+      "duration": 0.65,
+      "range": 155,
+      "character": "Izuku Midoriya (Deku)"
+    },
+    {
+      "name": "Detroit Smash",
+      "desc": "Enorme One For All-stoot met schokgolf.",
+      "kind": "ground",
+      "damage": 30,
+      "cooldown": 16,
+      "windup": 0.65,
+      "duration": 1.8,
+      "range": 270,
+      "character": "Izuku Midoriya (Deku)"
+    }
+  ],
+  "bakugo": [
+    {
+      "name": "AP Shot",
+      "desc": "Geconcentreerde explosie vooruit.",
+      "kind": "beam",
+      "damage": 14,
+      "cooldown": 5,
+      "windup": 0.18,
+      "duration": 0.65,
+      "range": 155,
+      "character": "Katsuki Bakugo"
+    },
+    {
+      "name": "Howitzer Impact",
+      "desc": "Draaiende luchtaanval met grote explosie.",
+      "kind": "slam",
+      "damage": 30,
+      "cooldown": 16,
+      "windup": 0.65,
+      "duration": 1.8,
+      "range": 270,
+      "character": "Katsuki Bakugo"
+    }
+  ],
+  "todoroki": [
+    {
+      "name": "Heaven-Piercing Ice Wall",
+      "desc": "Gigantische ijsmuur uit de grond.",
+      "kind": "ice",
+      "damage": 14,
+      "cooldown": 5,
+      "windup": 0.18,
+      "duration": 0.65,
+      "range": 155,
+      "character": "Shoto Todoroki"
+    },
+    {
+      "name": "Flashfreeze Heatwave",
+      "desc": "Schokgolf van extreme kou en hitte.",
+      "kind": "ground",
+      "damage": 30,
+      "cooldown": 16,
+      "windup": 0.65,
+      "duration": 1.8,
+      "range": 270,
+      "character": "Shoto Todoroki"
+    }
+  ],
+  "asta": [
+    {
+      "name": "Black Meteorite",
+      "desc": "Vliegt met anti-magisch zwaard naar vijand.",
+      "kind": "leap",
+      "damage": 14,
+      "cooldown": 5,
+      "windup": 0.18,
+      "duration": 0.65,
+      "range": 155,
+      "character": "Asta"
+    },
+    {
+      "name": "Black Divider",
+      "desc": "Gigantische anti-magische zwaardslag.",
+      "kind": "sword",
+      "damage": 30,
+      "cooldown": 16,
+      "windup": 0.65,
+      "duration": 1.8,
+      "range": 270,
+      "character": "Asta"
+    }
+  ],
+  "yuno": [
+    {
+      "name": "Wind Blade Shower",
+      "desc": "Meerdere scherpe windprojectielen.",
+      "kind": "volley",
+      "damage": 14,
+      "cooldown": 5,
+      "windup": 0.18,
+      "duration": 0.65,
+      "range": 155,
+      "character": "Yuno Grinbellior"
+    },
+    {
+      "name": "Spirit of Zephyr",
+      "desc": "Krachtige slag met magisch windzwaard.",
+      "kind": "sword",
+      "damage": 30,
+      "cooldown": 16,
+      "windup": 0.65,
+      "duration": 1.8,
+      "range": 270,
+      "character": "Yuno Grinbellior"
+    }
+  ],
+  "noelle": [
+    {
+      "name": "Sea Dragon's Roar",
+      "desc": "Gigantische waterdraak vooruit.",
+      "kind": "stream",
+      "damage": 14,
+      "cooldown": 5,
+      "windup": 0.18,
+      "duration": 2.4,
+      "range": 155,
+      "character": "Noelle Silva"
+    },
+    {
+      "name": "Valkyrie Dress",
+      "desc": "Tijdelijk waterpantser met snelle lansaanvallen.",
+      "kind": "transform",
+      "damage": 0,
+      "cooldown": 16,
+      "windup": 0.65,
+      "duration": 6,
+      "range": 270,
+      "character": "Noelle Silva"
+    }
+  ],
+  "tanjiro": [
+    {
+      "name": "Water Breathing: Water Wheel",
+      "desc": "Draaiende zwaardaanval.",
+      "kind": "spin",
+      "damage": 14,
+      "cooldown": 5,
+      "windup": 0.18,
+      "duration": 0.65,
+      "range": 155,
+      "character": "Tanjiro Kamado"
+    },
+    {
+      "name": "Hinokami Kagura: Dragon Sun Halo Head Dance",
+      "desc": "Vuurachtige zwaardcombinatie in drakenvorm.",
+      "kind": "combo",
+      "damage": 30,
+      "cooldown": 16,
+      "windup": 0.65,
+      "duration": 1.8,
+      "range": 270,
+      "character": "Tanjiro Kamado"
+    }
+  ],
+  "nezuko": [
+    {
+      "name": "Exploding Blood",
+      "desc": "Roze demonenvlammen.",
+      "kind": "zone",
+      "damage": 14,
+      "cooldown": 5,
+      "windup": 0.18,
+      "duration": 2.4,
+      "range": 155,
+      "character": "Nezuko Kamado"
+    },
+    {
+      "name": "Awakened Demon Form",
+      "desc": "Tijdelijke kracht- en snelheidsboost met klauwen en trappen.",
+      "kind": "transform",
+      "damage": 0,
+      "cooldown": 16,
+      "windup": 0.65,
+      "duration": 6,
+      "range": 270,
+      "character": "Nezuko Kamado"
+    }
+  ],
+  "zenitsu": [
+    {
+      "name": "Thunderclap and Flash",
+      "desc": "Bliksemsnelle zwaarddash.",
+      "kind": "dash",
+      "damage": 14,
+      "cooldown": 5,
+      "windup": 0.18,
+      "duration": 0.65,
+      "range": 155,
+      "character": "Zenitsu Agatsuma"
+    },
+    {
+      "name": "Thunderclap and Flash: Sixfold",
+      "desc": "Zes snelle zwaardaanvallen.",
+      "kind": "combo",
+      "damage": 30,
+      "cooldown": 16,
+      "windup": 0.65,
+      "duration": 1.8,
+      "range": 270,
+      "character": "Zenitsu Agatsuma"
+    }
+  ],
+  "natsu": [
+    {
+      "name": "Fire Dragon's Roar",
+      "desc": "Stroom drakenvuur vooruit.",
+      "kind": "stream",
+      "damage": 14,
+      "cooldown": 5,
+      "windup": 0.18,
+      "duration": 2.4,
+      "range": 155,
+      "character": "Natsu Dragneel"
+    },
+    {
+      "name": "Fire Dragon King's Demolition Fist",
+      "desc": "Explosieve vuistslag met drakenvuur.",
+      "kind": "heavy",
+      "damage": 30,
+      "cooldown": 16,
+      "windup": 0.65,
+      "duration": 1.8,
+      "range": 270,
+      "character": "Natsu Dragneel"
+    }
+  ],
+  "erza": [
+    {
+      "name": "Requip: Heaven's Wheel",
+      "desc": "Meerdere vliegende zwaarden.",
+      "kind": "volley",
+      "damage": 14,
+      "cooldown": 5,
+      "windup": 0.18,
+      "duration": 0.65,
+      "range": 155,
+      "character": "Erza Scarlet"
+    },
+    {
+      "name": "Nakagami Armor",
+      "desc": "Krachtige magische zwaardaanval in speciaal pantser.",
+      "kind": "transform",
+      "damage": 0,
+      "cooldown": 16,
+      "windup": 0.65,
+      "duration": 6,
+      "range": 270,
+      "character": "Erza Scarlet"
+    }
+  ],
+  "gray": [
+    {
+      "name": "Ice-Make: Lance",
+      "desc": "Meerdere scherpe ijslansen.",
+      "kind": "volley",
+      "damage": 14,
+      "cooldown": 5,
+      "windup": 0.18,
+      "duration": 0.65,
+      "range": 155,
+      "character": "Gray Fullbuster"
+    },
+    {
+      "name": "Ice Devil's Zeroth Destruction Bow",
+      "desc": "Enorme ijzige pijl.",
+      "kind": "projectile",
+      "damage": 30,
+      "cooldown": 16,
+      "windup": 0.65,
+      "duration": 1.8,
+      "range": 270,
+      "character": "Gray Fullbuster"
+    }
+  ],
+  "sonic": [
+    {
+      "name": "Spin Dash",
+      "desc": "Razendsnelle rollende aanval.",
+      "kind": "dash",
+      "damage": 14,
+      "cooldown": 5,
+      "windup": 0.18,
+      "duration": 0.65,
+      "range": 155,
+      "character": "Sonic"
+    },
+    {
+      "name": "Super Sonic",
+      "desc": "Tijdelijke gouden supervorm met meer snelheid en kracht.",
+      "kind": "transform",
+      "damage": 0,
+      "cooldown": 16,
+      "windup": 0.65,
+      "duration": 6,
+      "range": 270,
+      "character": "Sonic"
+    }
+  ],
+  "shadow": [
+    {
+      "name": "Chaos Spear",
+      "desc": "Gele chaosenergie-speren.",
+      "kind": "volley",
+      "damage": 14,
+      "cooldown": 5,
+      "windup": 0.18,
+      "duration": 0.65,
+      "range": 155,
+      "character": "Shadow"
+    },
+    {
+      "name": "Chaos Blast",
+      "desc": "Grote rode chaosenergie-explosie rondom Shadow.",
+      "kind": "ground",
+      "damage": 30,
+      "cooldown": 16,
+      "windup": 0.65,
+      "duration": 1.8,
+      "range": 270,
+      "character": "Shadow"
+    }
+  ],
+  "knuckles": [
+    {
+      "name": "Drill Claw",
+      "desc": "Voorwaartse booraanval met vuisten.",
+      "kind": "dash",
+      "damage": 14,
+      "cooldown": 5,
+      "windup": 0.18,
+      "duration": 0.65,
+      "range": 155,
+      "character": "Knuckles"
+    },
+    {
+      "name": "Maximum Heat Knuckles Attack",
+      "desc": "Opgeladen vurige stoot.",
+      "kind": "heavy",
+      "damage": 30,
+      "cooldown": 16,
+      "windup": 0.65,
+      "duration": 1.8,
+      "range": 270,
+      "character": "Knuckles"
+    }
+  ],
+  "mario": [
+    {
+      "name": "Fireball",
+      "desc": "Stuiterende vuurbal.",
+      "kind": "bounce",
+      "damage": 14,
+      "cooldown": 5,
+      "windup": 0.18,
+      "duration": 0.65,
+      "range": 155,
+      "character": "Mario"
+    },
+    {
+      "name": "Super Jump Punch",
+      "desc": "Opwaartse vuistslag met meerdere treffers.",
+      "kind": "uppercut",
+      "damage": 30,
+      "cooldown": 16,
+      "windup": 0.65,
+      "duration": 1.8,
+      "range": 270,
+      "character": "Mario"
+    }
+  ],
+  "bowser": [
+    {
+      "name": "Fire Breath",
+      "desc": "Aanhoudende vuuradem.",
+      "kind": "stream",
+      "damage": 14,
+      "cooldown": 5,
+      "windup": 0.18,
+      "duration": 2.4,
+      "range": 155,
+      "character": "Bowser"
+    },
+    {
+      "name": "Bowser Bomb",
+      "desc": "Zware duik op de grond met schokgolf.",
+      "kind": "slam",
+      "damage": 30,
+      "cooldown": 16,
+      "windup": 0.65,
+      "duration": 1.8,
+      "range": 270,
+      "character": "Bowser"
+    }
+  ],
+  "dk": [
+    {
+      "name": "Giant Punch",
+      "desc": "Opgeladen reuzenstoot.",
+      "kind": "heavy",
+      "damage": 14,
+      "cooldown": 5,
+      "windup": 0.18,
+      "duration": 0.65,
+      "range": 155,
+      "character": "Donkey Kong"
+    },
+    {
+      "name": "Hand Slap",
+      "desc": "Herhaalde grondslagen met schokgolven.",
+      "kind": "ground",
+      "damage": 30,
+      "cooldown": 16,
+      "windup": 0.65,
+      "duration": 1.8,
+      "range": 270,
+      "character": "Donkey Kong"
+    }
+  ],
+  "cloud": [
+    {
+      "name": "Blade Beam",
+      "desc": "Groene energiegolf met Buster Sword.",
+      "kind": "slash",
+      "damage": 14,
+      "cooldown": 5,
+      "windup": 0.18,
+      "duration": 0.65,
+      "range": 155,
+      "character": "Cloud Strife"
+    },
+    {
+      "name": "Omnislash",
+      "desc": "Reeks razendsnelle zwaardaanvallen.",
+      "kind": "combo",
+      "damage": 30,
+      "cooldown": 16,
+      "windup": 0.65,
+      "duration": 1.8,
+      "range": 270,
+      "character": "Cloud Strife"
+    }
+  ],
+  "sephiroth": [
+    {
+      "name": "Shadow Flare",
+      "desc": "Exploderende donkere energieballen.",
+      "kind": "orbit",
+      "damage": 14,
+      "cooldown": 5,
+      "windup": 0.18,
+      "duration": 0.65,
+      "range": 155,
+      "character": "Sephiroth"
+    },
+    {
+      "name": "Octaslash",
+      "desc": "Acht snelle slagen met Masamune.",
+      "kind": "combo",
+      "damage": 30,
+      "cooldown": 16,
+      "windup": 0.65,
+      "duration": 1.8,
+      "range": 270,
+      "character": "Sephiroth"
+    }
+  ],
+  "tifa": [
+    {
+      "name": "Beat Rush",
+      "desc": "Snelle stoten- en trappencombinatie.",
+      "kind": "combo",
+      "damage": 14,
+      "cooldown": 5,
+      "windup": 0.18,
+      "duration": 0.65,
+      "range": 155,
+      "character": "Tifa Lockhart"
+    },
+    {
+      "name": "Final Heaven",
+      "desc": "Zeer krachtige opgeladen eindstoot.",
+      "kind": "heavy",
+      "damage": 30,
+      "cooldown": 16,
+      "windup": 0.65,
+      "duration": 1.8,
+      "range": 270,
+      "character": "Tifa Lockhart"
+    }
+  ],
+  "denji": [
+    {
+      "name": "Chainsaw Rush",
+      "desc": "Sprint met draaiende kettingzagen.",
+      "kind": "dash",
+      "damage": 14,
+      "cooldown": 5,
+      "windup": 0.18,
+      "duration": 0.65,
+      "range": 155,
+      "character": "Denji (Chainsaw Man)"
+    },
+    {
+      "name": "Chainsaw Frenzy",
+      "desc": "Wilde reeks kettingzaagaanvallen.",
+      "kind": "combo",
+      "damage": 30,
+      "cooldown": 16,
+      "windup": 0.65,
+      "duration": 1.8,
+      "range": 270,
+      "character": "Denji (Chainsaw Man)"
+    }
+  ],
+  "power": [
+    {
+      "name": "Blood Hammer",
+      "desc": "Slaat met hamer van bloed.",
+      "kind": "heavy",
+      "damage": 14,
+      "cooldown": 5,
+      "windup": 0.18,
+      "duration": 0.65,
+      "range": 155,
+      "character": "Power"
+    },
+    {
+      "name": "Thousand Tera Blood Rain",
+      "desc": "Regen van scherpe bloedwapens.",
+      "kind": "rain",
+      "damage": 30,
+      "cooldown": 16,
+      "windup": 0.65,
+      "duration": 1.8,
+      "range": 270,
+      "character": "Power"
+    }
+  ],
+  "aki": [
+    {
+      "name": "Kon (Fox Devil)",
+      "desc": "Roept een gigantische vossenkop op.",
+      "kind": "summon",
+      "damage": 14,
+      "cooldown": 5,
+      "windup": 0.18,
+      "duration": 2.4,
+      "range": 155,
+      "character": "Aki Hayakawa"
+    },
+    {
+      "name": "Curse Devil: Nail Sword",
+      "desc": "Zwaardtreffers activeren zware Curse Devil-aanval.",
+      "kind": "delayed",
+      "damage": 30,
+      "cooldown": 16,
+      "windup": 0.65,
+      "duration": 1.8,
+      "range": 270,
+      "character": "Aki Hayakawa"
+    }
+  ]
+}
