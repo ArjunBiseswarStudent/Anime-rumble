@@ -611,6 +611,13 @@ select:focus-visible {
 .result-panel { width:min(760px,100%); padding:clamp(22px,4vw,40px); border:1px solid #f5ad32; border-radius:20px; background:linear-gradient(145deg,#192641,#0a1121); box-shadow:0 25px 90px #000b; text-align:center; color:#f8fafc; }
 .result-eyebrow { color:#f5ad32; font-weight:900; letter-spacing:3px; font-size:12px; }
 .result-panel h2 { font:900 clamp(34px,6vw,60px)/1 'Barlow Condensed',sans-serif; margin:12px 0; color:#f5ad32; }
+.music-controls { display: flex; align-items: center; flex-wrap: wrap; gap: 12px; margin: 16px 0; padding: 12px 16px; border: 1px solid #334155; border-radius: 10px; background: #111d30; color: #c3d0e2; font-size: 13px; }
+.music-controls button { min-width: 110px; padding: 9px 14px; border: 1px solid #a28349; border-radius: 7px; background: #293248; color: #ffe0a4; cursor: pointer; font: inherit; font-weight: 700; }
+.music-controls button[aria-pressed="false"] { color: #b7c5d8; border-color: #58667d; }
+.music-controls input { width: 130px; accent-color: #f5ad32; cursor: pointer; }
+.music-controls [data-music-status] { margin-left: auto; color: #a7bbd3; }
+.music-controls :focus-visible { outline: 2px solid #f5ad32; outline-offset: 4px; }
+@media(max-width:580px) { .music-controls [data-music-status] { width: 100%; margin-left: 0; } }
 .result-time {color:#9aabc4;}
 .result-stats-grid {display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:15px;margin:24px 0;}
 .result-stats-grid article {padding:18px;border-radius:12px;background:#0d1526;border:1px solid #263550;text-align:left;}

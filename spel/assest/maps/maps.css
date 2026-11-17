@@ -9,10 +9,13 @@
 .maps-gallery { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 24px; }
 .map-card { overflow: hidden; border: 1px solid #334155; border-radius: 18px; background: #141f31; }
 .map-art { position: relative; height: 250px; overflow: hidden; background: linear-gradient(150deg, var(--sky), var(--land)); color: var(--accent); }
-.map-frog { --sky: #afd9a4; --land: #365c50; --accent: #e4ba7e; }
-.map-namek { --sky: #b8ed93; --land: #237a9e; --accent: #c1ffff; }
-.map-beerus { --sky: #6b4d86; --land: #19182d; --accent: #f7d598; }
-.map-arlong { --sky: #b0ecf3; --land: #167da6; --accent: #ffebba; }
+.map-frog { --sky: #53c7cf; --land: #659831; --accent: #d5ad35; }
+.map-namek { --sky: #6eaa78; --land: #2799b6; --accent: #d2be67; }
+.map-beerus { --sky: #d77d86; --land: #7436bb; --accent: #b279eb; }
+.map-preview { position: absolute; inset: 0; width: 100%; height: 100%; object-fit: cover; }
+.map-art:has(.map-preview) .map-symbol { display: none; }
+.map-art:has(.map-preview) .map-platforms { opacity: .45; }
+.map-arlong { --sky: #208de0; --land: #087ed0; --accent: #d3bd72; }
 .map-number { position: absolute; top: 20px; left: 22px; font-size: 12px; font-weight: bold; letter-spacing: 3px; }
 .map-symbol { position: absolute; top: 24px; right: 35px; font-size: 100px; opacity: .5; }
 .map-platforms { position: absolute; inset: 0; }

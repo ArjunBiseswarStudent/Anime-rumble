@@ -19,56 +19,7 @@
      { key: 'Dragon Ball', label: 'Dragon Ball' }
  ];
 
- const ARENAS = {
-     dojo: {
-         name: 'Anime Dojo',
-         bgTop: '#1e1b4b',
-         bgBottom: '#0f172a',
-         accentColor: '#f59e0b',
-         platforms: [
-             { x: 180, y: 420, w: 600, main: true },
-             { x: 230, y: 310, w: 160, main: false },
-             { x: 570, y: 310, w: 160, main: false },
-             { x: 400, y: 215, w: 160, main: false }
-         ]
-     },
-     castle: {
-         name: 'Schaduw Kasteel',
-         bgTop: '#2e1065',
-         bgBottom: '#090d16',
-         accentColor: '#a855f7',
-         platforms: [
-             { x: 160, y: 430, w: 640, main: true },
-             { x: 210, y: 305, w: 180, main: false },
-             { x: 570, y: 305, w: 180, main: false }
-         ]
-     },
-     island: {
-         name: 'Zwevend Eiland',
-         bgTop: '#0369a1',
-         bgBottom: '#0f172a',
-         accentColor: '#38bdf8',
-         platforms: [
-             { x: 210, y: 425, w: 540, main: true },
-             { x: 120, y: 325, w: 140, main: false },
-             { x: 700, y: 325, w: 140, main: false },
-             { x: 410, y: 240, w: 140, main: false }
-         ]
-     },
-     neon: {
-         name: 'Neon Stad',
-         bgTop: '#311042',
-         bgBottom: '#090d16',
-         accentColor: '#f43f5e',
-         platforms: [
-             { x: 150, y: 420, w: 660, main: true },
-             { x: 280, y: 315, w: 400, main: false },
-             { x: 410, y: 210, w: 140, main: false }
-         ]
-     }
- };
-
- Object.assign(ARENAS, window.AnimeMaps.arenas);
+ const ARENAS = window.AnimeMaps.arenas;
 
  const ROSTER = [
      {
@@ -1544,6 +1495,7 @@ function makeFighter(character, playerIndex) {
 }
 
 function startMatch() {
+    window.ArenaMusic?.stop();
     if (typeof THREE === 'undefined') {
         window.alert('De 3D-engine kan niet worden geladen. Controleer je internetverbinding en laad de pagina opnieuw.');
         return;
@@ -1581,6 +1533,7 @@ function startMatch() {
         return;
     }
     updateBattleHud();
+    window.ArenaMusic?.start(document.getElementById('arena-select').value);
     animationFrame = requestAnimationFrame(battleLoop);
 }
 
@@ -1588,6 +1541,11 @@ function initBattleScene(canvas) {
     if (!battleRenderer) {
         battleRenderer = new THREE.WebGLRenderer({ canvas, antialias: true });
         battleRenderer.setPixelRatio(Math.min(window.devicePixelRatio || 1, 2));
+        battleRenderer.outputEncoding = THREE.sRGBEncoding;
+        battleRenderer.toneMapping = THREE.ACESFilmicToneMapping;
+        battleRenderer.toneMappingExposure = 1;
+        battleRenderer.shadowMap.enabled = true;
+        battleRenderer.shadowMap.type = THREE.PCFSoftShadowMap;
     }
     battleScene = new THREE.Scene();
     battleScene.background = new THREE.Color(currentArena.bgBottom);
@@ -1597,10 +1555,18 @@ function initBattleScene(canvas) {
     battleCamera.position.set(0, 6, 15);
     battleCamera.lookAt(0, 2.5, 0);
 
-    battleScene.add(new THREE.HemisphereLight(0xffffff, 0x18223a, 1.5));
-    const keyLight = new THREE.DirectionalLight(0xffffff, 2);
+    battleScene.add(new THREE.HemisphereLight(0xffffff, currentArena.ambientColor || 0x77766e, 1.3));
+    const keyLight = new THREE.DirectionalLight(currentArena.sunColor || 0xffffff, currentArena.sunColor ? 1.6 : 2);
     keyLight.position.set(-4, 9, 7);
+    keyLight.castShadow = true;
+    keyLight.shadow.mapSize.set(1024, 1024);
+    Object.assign(keyLight.shadow.camera, { left: -16, right: 16, top: 16, bottom: -8, near: 0.5, far: 50 });
+    keyLight.shadow.normalBias = 0.04;
+    keyLight.shadow.bias = -0.0003;
     battleScene.add(keyLight);
+    const rimLight = new THREE.DirectionalLight(currentArena.sunColor || 0xffffff, currentArena.sunColor ? 1.1 : 0.35);
+    rimLight.position.set(5, 6, -10);
+    battleScene.add(rimLight);
 
     const accent = new THREE.Color(currentArena.accentColor);
     currentArena.platforms.forEach((platform) => {
@@ -1609,12 +1575,27 @@ function initBattleScene(canvas) {
         const material = new THREE.MeshStandardMaterial({
             color: currentArena.surface || (platform.main ? '#202b42' : '#28334d'),
             emissive: accent,
-            emissiveIntensity: 0.16,
-            roughness: 0.68
+            emissiveIntensity: 0.025,
+            roughness: 0.84,
+            map: window.AnimeMaps.surfaceTexture(THREE, currentArena.surfaceType || 'stone'),
+            bumpMap: window.AnimeMaps.surfaceTexture(THREE, currentArena.surfaceType || 'stone'),
+            bumpScale: 0.045
         });
         const mesh = new THREE.Mesh(new THREE.BoxGeometry(width, 0.22, 2.2), material);
         mesh.position.set((platform.x + platform.w / 2 - 480) / 65, top - 0.11, 0);
+        mesh.receiveShadow = true;
+        mesh.castShadow = true;
         battleScene.add(mesh);
+
+        const foundation = new THREE.Mesh(
+            new THREE.BoxGeometry(width * 0.98, platform.main ? 0.48 : 0.28, 2.05),
+            new THREE.MeshStandardMaterial({ color: currentArena.surface, roughness: 0.95,
+                map: window.AnimeMaps.surfaceTexture(THREE, 'rock'),
+                bumpMap: window.AnimeMaps.surfaceTexture(THREE, 'rock'), bumpScale: 0.12 })
+        );
+        foundation.position.set(mesh.position.x, top - (platform.main ? 0.43 : 0.33), 0);
+        foundation.castShadow = foundation.receiveShadow = true;
+        battleScene.add(foundation);
 
         const edge = new THREE.Mesh(
             new THREE.BoxGeometry(width, 0.045, 2.24),
@@ -1626,18 +1607,10 @@ function initBattleScene(canvas) {
 
     window.AnimeMaps.buildScenery(THREE, battleScene, document.getElementById('arena-select').value);
 
-    const starGeometry = new THREE.BufferGeometry();
-    const starPositions = [];
-    for (let index = 0; index < 90; index++) {
-        starPositions.push(((index * 47) % 28) - 14, 2 + ((index * 29) % 12), -4);
-    }
-    starGeometry.setAttribute('position', new THREE.Float32BufferAttribute(starPositions, 3));
-    battleScene.add(new THREE.Points(
-        starGeometry,
-        new THREE.PointsMaterial({ color: accent, size: 0.055, transparent: true, opacity: 0.75 })
-    ));
-
-    fighters.forEach((fighter) => battleScene.add(fighter.model));
+    fighters.forEach((fighter) => {
+        fighter.model.traverse(part => { if (part.isMesh) part.castShadow = part.receiveShadow = true; });
+        battleScene.add(fighter.model);
+    });
     resizeBattleRenderer();
 }
 
@@ -1726,6 +1699,7 @@ function loseStock(fighter) {
 }
 
 function finishMatch(winner) {
+    window.ArenaMusic?.stop();
     window.SpecialMoves.reset();
     window.CombatActions?.reset();
     window.TrowItems?.reset();
@@ -1755,6 +1729,7 @@ function replayMatch() {
 }
 
 function returnToSelection() {
+    window.ArenaMusic?.stop();
     window.SpecialMoves.reset();
     window.CombatActions?.reset();
     window.TrowItems?.reset();
@@ -1901,6 +1876,7 @@ function normalizeGameKey(code) {
 
 window.addEventListener('keydown', (event) => {
     if (!gameRunning) return;
+    if (event.target?.matches('input, select, textarea')) return;
     const code = normalizeGameKey(event.code);
     if (!GAME_KEYS.has(code)) return;
     event.preventDefault();
