@@ -68,6 +68,8 @@
      }
  };
 
+ Object.assign(ARENAS, window.AnimeMaps.arenas);
+
  const ROSTER = [
      {
          id: 'gojo', name: 'Satoru Gojo', franchise: 'Jujutsu Kaisen',
@@ -772,7 +774,7 @@ function initBattleScene(canvas) {
         const width = platform.w / 65;
         const top = (540 - platform.y) / 65;
         const material = new THREE.MeshStandardMaterial({
-            color: platform.main ? '#202b42' : '#28334d',
+            color: currentArena.surface || (platform.main ? '#202b42' : '#28334d'),
             emissive: accent,
             emissiveIntensity: 0.16,
             roughness: 0.68
@@ -788,6 +790,8 @@ function initBattleScene(canvas) {
         edge.position.set(mesh.position.x, top - 0.01, 0);
         battleScene.add(edge);
     });
+
+    window.AnimeMaps.buildScenery(THREE, battleScene, document.getElementById('arena-select').value);
 
     const starGeometry = new THREE.BufferGeometry();
     const starPositions = [];
@@ -1084,6 +1088,7 @@ function battleLoop(now) {
     dropRequests[1] = false;
     if (gameRunning) {
         updateSpecialEffects(dt);
+        window.AnimeMaps.updateScenery(battleScene, (now - matchStartedAt) / 1000);
         drawBattle();
         updateBattleHud();
         animationFrame = requestAnimationFrame(battleLoop);

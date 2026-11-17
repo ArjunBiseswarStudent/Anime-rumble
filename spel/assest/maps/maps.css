@@ -1,0 +1,28 @@
+.maps-link { color: #f5c678; font: 700 12px/1.5 Arial, sans-serif; text-decoration: none; }
+.maps-link:hover { text-decoration: underline; }
+.maps-page { margin: 0; background: #0b1220; color: #eef3fa; font-family: Arial, sans-serif; }
+.maps-container { width: min(1120px, calc(100% - 40px)); margin: 36px auto; }
+.maps-header { margin: 60px 0 36px; }
+.maps-header > p:first-child { color: #f5c678; font-size: 12px; letter-spacing: 3px; }
+.maps-header h1 { margin: 16px 0; font-size: clamp(40px, 7vw, 76px); line-height: 1.05; }
+.maps-header > p:last-child, .maps-help { color: #a8b7cb; line-height: 1.7; }
+.maps-gallery { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 24px; }
+.map-card { overflow: hidden; border: 1px solid #334155; border-radius: 18px; background: #141f31; }
+.map-art { position: relative; height: 250px; overflow: hidden; background: linear-gradient(150deg, var(--sky), var(--land)); color: var(--accent); }
+.map-frog { --sky: #afd9a4; --land: #365c50; --accent: #e4ba7e; }
+.map-namek { --sky: #b8ed93; --land: #237a9e; --accent: #c1ffff; }
+.map-beerus { --sky: #6b4d86; --land: #19182d; --accent: #f7d598; }
+.map-arlong { --sky: #b0ecf3; --land: #167da6; --accent: #ffebba; }
+.map-number { position: absolute; top: 20px; left: 22px; font-size: 12px; font-weight: bold; letter-spacing: 3px; }
+.map-symbol { position: absolute; top: 24px; right: 35px; font-size: 100px; opacity: .5; }
+.map-platforms { position: absolute; inset: 0; }
+.map-platforms i { position: absolute; height: 9px; border-radius: 3px; background: var(--accent); box-shadow: 0 10px 0 #12213266, 0 15px 25px #0004; }
+.map-details { padding: 26px; }
+.map-details p { color: #afbed0; font-size: 14px; line-height: 1.65; }
+.map-details p:first-child { margin: 0; color: var(--accent); font-size: 11px; letter-spacing: 1.5px; text-transform: uppercase; }
+.map-details h2 { margin: 10px 0; font-size: 28px; }
+.map-details a { display: inline-block; margin-top: 12px; padding: 12px 18px; border-radius: 7px; background: var(--accent); color: #142033; font-size: 13px; font-weight: bold; text-decoration: none; }
+.map-details a:hover { filter: brightness(1.1); }
+.map-details a:focus-visible, .maps-link:focus-visible { outline: 3px solid white; outline-offset: 4px; }
+.maps-help { margin-top: 30px; font-size: 12px; }
+@media (max-width: 650px) { .maps-gallery { grid-template-columns: 1fr; } .maps-header { margin-top: 36px; } }
