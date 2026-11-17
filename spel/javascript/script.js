@@ -1234,6 +1234,7 @@ let matchElapsed = 0;
 let fighters = [];
 let currentArena = ARENAS.dojo;
 const pressedKeys = new Set();
+const inputSources = new Map();
 const jumpRequests = [false, false];
 const PLAYER_CONTROLS = [
     { left: 'KeyA', right: 'KeyD', jump: 'KeyW', shield: 'KeyS', attack: 'KeyF', super1: 'KeyG', super2: 'KeyC' },
@@ -1502,6 +1503,7 @@ function buildRosterUI() {
 
 function setGameMode(mode) {
     gameMode = mode;
+    window.TouchControls?.updateMode(mode === '2p');
     document.getElementById('random-character-status').textContent = '';
     document.getElementById('mode-cpu-btn').classList.toggle('active', mode === 'cpu');
     document.getElementById('mode-2p-btn').classList.toggle('active', mode === '2p');
@@ -1552,8 +1554,7 @@ function startMatch() {
     window.SpecialMoves.reset();
     window.CombatActions?.reset();
     window.TrowItems?.reset();
-    pressedKeys.clear();
-    jumpRequests.fill(false);
+    resetGameInput();
     currentArena = ARENAS[document.getElementById('arena-select').value] || ARENAS.dojo;
     fighters = [makeFighter(selection[0], 0), makeFighter(selection[1], 1)];
     gameRunning = true;
@@ -1588,9 +1589,10 @@ function startMatch() {
 }
 
 function initBattleScene(canvas) {
+    const touchDevice = window.matchMedia?.('(any-pointer: coarse)').matches || false;
     if (!battleRenderer) {
-        battleRenderer = new THREE.WebGLRenderer({ canvas, antialias: true });
-        battleRenderer.setPixelRatio(Math.min(window.devicePixelRatio || 1, 2));
+        battleRenderer = new THREE.WebGLRenderer({ canvas, antialias: !touchDevice });
+        battleRenderer.setPixelRatio(Math.min(window.devicePixelRatio || 1, touchDevice ? 1.5 : 2));
         battleRenderer.outputEncoding = THREE.sRGBEncoding;
         battleRenderer.toneMapping = THREE.ACESFilmicToneMapping;
         battleRenderer.toneMappingExposure = 1;
@@ -1609,7 +1611,7 @@ function initBattleScene(canvas) {
     const keyLight = new THREE.DirectionalLight(currentArena.sunColor || 0xffffff, currentArena.sunColor ? 1.6 : 2);
     keyLight.position.set(-4, 9, 7);
     keyLight.castShadow = true;
-    keyLight.shadow.mapSize.set(1024, 1024);
+    keyLight.shadow.mapSize.set(touchDevice ? 512 : 1024, touchDevice ? 512 : 1024);
     Object.assign(keyLight.shadow.camera, { left: -16, right: 16, top: 16, bottom: -8, near: 0.5, far: 50 });
     keyLight.shadow.normalBias = 0.04;
     keyLight.shadow.bias = -0.0003;
@@ -1755,6 +1757,7 @@ function loseStock(fighter) {
 }
 
 function finishMatch(winner, reason = 'time') {
+    resetGameInput();
     window.ArenaMusic?.stop();
     window.SpecialMoves.reset();
     window.CombatActions?.reset();
@@ -1792,8 +1795,7 @@ function returnToSelection() {
     window.TrowItems?.reset();
     gameRunning = false;
     cancelAnimationFrame(animationFrame);
-    pressedKeys.clear();
-    jumpRequests.fill(false);
+    resetGameInput();
     document.getElementById('result-overlay').classList.add('hidden');
     document.getElementById('arena-screen').classList.add('hidden');
     document.getElementById('select-screen').classList.remove('hidden');
@@ -1972,15 +1974,12 @@ function normalizeGameKey(code) {
     return /^Numpad[12345]$/.test(code) ? code.replace('Numpad', 'Digit') : code;
 }
 
-window.addEventListener('keydown', (event) => {
+function pressGameInput(rawCode, source, repeat = false) {
     if (!gameRunning) return;
-    if (event.target?.matches('input, select, textarea')) return;
-    const code = normalizeGameKey(event.code);
-    if (!GAME_KEYS.has(code)) return;
-    event.preventDefault();
+    const code = normalizeGameKey(rawCode);
+    if (!GAME_KEYS.has(code) || repeat || inputSources.has(source)) return;
+    inputSources.set(source, code);
     pressedKeys.add(code);
-    if (event.repeat) return;
-
     PLAYER_CONTROLS.forEach((controls, index) => {
         if (index === 1 && gameMode !== '2p') return;
         if (code === (index === 0 ? 'KeyH' : 'Digit4') && window.CombatActions?.cycle(fighters[index])) {
@@ -1992,12 +1991,31 @@ window.addEventListener('keydown', (event) => {
         if (code === controls.super1) performAttack(fighters[index], fighters[1 - index], true, 'neutral');
         if (code === controls.super2) performAttack(fighters[index], fighters[1 - index], true, 'side');
     });
+}
+function releaseGameInput(source) {
+    const code = inputSources.get(source);
+    inputSources.delete(source);
+    if (code && !Array.from(inputSources.values()).includes(code)) pressedKeys.delete(code);
+}
+function resetGameInput() {
+    inputSources.clear();
+    pressedKeys.clear();
+    jumpRequests.fill(false);
+    window.TouchControls?.reset();
+}
+window.addEventListener('keydown', event => {
+    if (!gameRunning || event.target?.matches('input, select, textarea')) return;
+    const code = normalizeGameKey(event.code);
+    if (!GAME_KEYS.has(code)) return;
+    event.preventDefault();
+    pressGameInput(code, `keyboard:${code}`, event.repeat);
 });
-
-window.addEventListener('keyup', (event) => pressedKeys.delete(normalizeGameKey(event.code)));
-window.addEventListener('blur', () => pressedKeys.clear());
-
+window.addEventListener('keyup', event => releaseGameInput(`keyboard:${normalizeGameKey(event.code)}`));
+window.addEventListener('blur', resetGameInput);
+document.addEventListener('visibilitychange', () => { if (document.hidden) resetGameInput(); });
 document.addEventListener('DOMContentLoaded', () => {
+    window.TouchControls?.init({ press: pressGameInput, release: releaseGameInput, isRunning: () => gameRunning });
+    window.TouchControls?.updateMode(gameMode === '2p');
     document.getElementById('roster-grid').addEventListener('keydown', event => {
         if (event.altKey || event.ctrlKey || event.metaKey || !['ArrowLeft', 'ArrowRight', 'ArrowUp', 'ArrowDown', 'Home', 'End'].includes(event.key)) return;
         const cards = Array.from(event.currentTarget.querySelectorAll('.char-card'));

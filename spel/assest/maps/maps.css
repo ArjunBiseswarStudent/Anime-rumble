@@ -29,3 +29,11 @@
 .map-details a:focus-visible, .maps-link:focus-visible { outline: 3px solid white; outline-offset: 4px; }
 .maps-help { margin-top: 30px; font-size: 12px; }
 @media (max-width: 650px) { .maps-gallery { grid-template-columns: 1fr; } .maps-header { margin-top: 36px; } }
+@media (max-width: 700px) {
+    .maps-container { width: calc(100% - 24px); margin-top: 24px; }
+    .maps-gallery { gap: 16px; }
+    .map-details { padding: 20px; }
+    .map-details h2 { overflow-wrap: anywhere; }
+    .map-art { height: auto; aspect-ratio: 2 / 1; }
+    .map-details a { min-height: 44px; box-sizing: border-box; }
+}
