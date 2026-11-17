@@ -1247,6 +1247,7 @@ const portraitCanvases = [
 const portraitViewers = new Map();
 const rosterPortraitCache = new Map();
 let rosterPortraitStudio = null;
+const portraitMotionPreference = window.matchMedia?.('(prefers-reduced-motion: reduce)');
 let battleRenderer = null;
 let battleScene = null;
 let battleCamera = null;
@@ -1296,7 +1297,7 @@ function set3DPortrait(canvas, character) {
 function animatePortraits() {
     const selectionVisible = !document.hidden && !document.getElementById('select-screen').classList.contains('hidden');
     portraitViewers.forEach((viewer) => {
-        if (!viewer.model || !selectionVisible) { viewer.lastFrame = 0; return; }
+        if (!viewer.model || !selectionVisible || portraitMotionPreference?.matches) { viewer.lastFrame = 0; return; }
         const now = performance.now();
         const dt = Math.min((now - (viewer.lastFrame || now)) / 1000, 0.04);
         viewer.lastFrame = now;

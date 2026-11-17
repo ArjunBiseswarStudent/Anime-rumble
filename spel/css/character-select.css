@@ -85,4 +85,5 @@
     .arcade-select .select-footer p { margin: 0; font-size: 10px; }
     .arcade-select .start-btn { width: 100%; }
 }
+@media (max-width: 420px) { .arcade-select .roster-grid { grid-template-columns: repeat(6, minmax(0, 1fr)); } .arcade-select .fighter-info canvas { height: 190px; } }
 @media (prefers-reduced-motion: reduce) { .arcade-select .char-card { transition: none; } }
