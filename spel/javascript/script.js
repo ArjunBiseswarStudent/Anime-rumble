@@ -1292,6 +1292,8 @@ const portraitCanvases = [
     document.getElementById('p2-portrait-canvas')
 ];
 const portraitViewers = new Map();
+const rosterPortraitCache = new Map();
+let rosterPortraitStudio = null;
 let battleRenderer = null;
 let battleScene = null;
 let battleCamera = null;
@@ -1321,7 +1323,10 @@ function set3DPortrait(canvas, character) {
             return false;
         }
     }
-    if (viewer.model) viewer.scene.remove(viewer.model);
+    if (viewer.model) {
+        viewer.scene.remove(viewer.model);
+        disposePortraitModel(viewer.model);
+    }
     viewer.model = createCharacterModel(character);
     viewer.scene.add(viewer.model);
     viewer.renderer.render(viewer.scene, viewer.camera);
@@ -1344,6 +1349,8 @@ requestAnimationFrame(animatePortraits);
 
 function drawPortrait(canvas, character) {
     if (!canvas || !character) return;
+    canvas.dataset.characterId = character.id;
+    canvas.setAttribute('aria-label', `Portret van ${character.name}`);
     if (canvas.id.startsWith('p') && typeof THREE !== 'undefined' &&
         canvas.id.endsWith('-portrait-canvas') && set3DPortrait(canvas, character)) return;
     const ctx = canvas.getContext('2d');
@@ -1353,33 +1360,69 @@ function drawPortrait(canvas, character) {
     }
     const { width, height } = canvas;
     ctx.clearRect(0, 0, width, height);
-    const glow = ctx.createRadialGradient(width / 2, height / 2, 8, width / 2, height / 2, width / 2);
-    glow.addColorStop(0, character.aura || '#38bdf8');
-    glow.addColorStop(1, '#10182c');
-    ctx.fillStyle = glow;
+    if (typeof THREE !== 'undefined') {
+        try {
+            if (!rosterPortraitCache.has(character.id)) {
+                if (!rosterPortraitStudio) {
+                    const renderer = new THREE.WebGLRenderer({ alpha: true, antialias: true, preserveDrawingBuffer: true });
+                    renderer.setSize(180, 180);
+                    renderer.setPixelRatio(1);
+                    const scene = new THREE.Scene();
+                    scene.add(new THREE.HemisphereLight(0xffffff, 0x334155, 1.7));
+                    const light = new THREE.DirectionalLight(0xffffff, 1.8);
+                    light.position.set(-2, 4, 5);
+                    scene.add(light);
+                    const camera = new THREE.PerspectiveCamera(32, 1, 0.1, 20);
+                    camera.position.set(0, 1.85, 2.9);
+                    camera.lookAt(0, 1.68, 0);
+                    rosterPortraitStudio = { renderer, scene, camera };
+                }
+                const { renderer, scene, camera } = rosterPortraitStudio;
+                const model = createCharacterModel(character);
+                model.rotation.y = -0.14;
+                scene.add(model);
+                try {
+                    renderer.render(scene, camera);
+                    const snapshot = document.createElement('canvas');
+                    snapshot.width = snapshot.height = 180;
+                    snapshot.getContext('2d').drawImage(renderer.domElement, 0, 0);
+                    rosterPortraitCache.set(character.id, snapshot);
+                } finally {
+                    scene.remove(model);
+                    disposePortraitModel(model);
+                }
+            }
+            const glow = ctx.createRadialGradient(width / 2, height / 2, 0, width / 2, height / 2, width * 0.7);
+            glow.addColorStop(0, character.aura);
+            glow.addColorStop(1, '#10182c');
+            ctx.fillStyle = glow;
+            ctx.fillRect(0, 0, width, height);
+            ctx.drawImage(rosterPortraitCache.get(character.id), 0, 0, width, height);
+            return;
+        } catch (error) {
+            console.warn(`Portret voor ${character.id} kon niet worden gerenderd.`, error);
+        }
+    }
+    ctx.fillStyle = '#17233a';
     ctx.fillRect(0, 0, width, height);
+    ctx.fillStyle = character.aura;
+    ctx.font = 'bold ' + Math.round(width * 0.24) + 'px Arial';
+    ctx.textAlign = 'center';
+    ctx.textBaseline = 'middle';
+    ctx.fillText(character.name.split(' ').map(part => part[0]).slice(0, 2).join(''), width / 2, height / 2);
+    canvas.title = '3D-portret niet beschikbaar: ' + character.name;
+}
 
-    ctx.fillStyle = character.primary || '#1e293b';
-    ctx.beginPath();
-    ctx.ellipse(width / 2, height * 0.79, width * 0.25, height * 0.29, 0, 0, Math.PI * 2);
-    ctx.fill();
-
-    ctx.fillStyle = character.skin || '#fed7aa';
-    ctx.beginPath();
-    ctx.arc(width / 2, height * 0.38, width * 0.2, 0, Math.PI * 2);
-    ctx.fill();
-
-    ctx.fillStyle = character.hair || '#1e293b';
-    ctx.beginPath();
-    ctx.arc(width / 2, height * 0.32, width * 0.21, Math.PI, Math.PI * 2);
-    ctx.lineTo(width * 0.72, height * 0.4);
-    ctx.lineTo(width * 0.28, height * 0.4);
-    ctx.closePath();
-    ctx.fill();
-    ctx.fillStyle = character.secondary || '#fff';
-    ctx.fillRect(width * 0.37, height * 0.39, width * 0.08, 3);
-    ctx.fillRect(width * 0.55, height * 0.39, width * 0.08, 3);
-  }
+function disposePortraitModel(model) {
+    const geometries = new Set();
+    const materials = new Set();
+    model.traverse(object => {
+        if (object.geometry) geometries.add(object.geometry);
+        if (object.material) (Array.isArray(object.material) ? object.material : [object.material]).forEach(material => materials.add(material));
+    });
+    geometries.forEach(geometry => geometry.dispose());
+    materials.forEach(material => material.dispose());
+}
 
 function updateSelectionCards() {
     selection.forEach((character, index) => {
@@ -1437,6 +1480,8 @@ function buildRosterUI() {
         const button = document.createElement('button');
         button.type = 'button';
         button.className = 'char-card';
+        button.dataset.characterId = character.id;
+        button.title = `${character.name} — ${character.franchise}`;
         button.setAttribute('aria-label', `Kies ${character.name}`);
         const portrait = document.createElement('canvas');
         portrait.width = 100;

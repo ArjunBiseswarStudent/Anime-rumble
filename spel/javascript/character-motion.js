@@ -42,14 +42,123 @@ window.CharacterMotion = (() => {
             brow.rotation.z = side * -0.12;
         });
         ellipsoid(head, dark, 0, -0.035, 0.19, 0.055, 0.007, 0.01);
-        ellipsoid(head, hair, 0, 0.29, -0.025, 0.23, 0.12, 0.21);
-        for (let i = 0; i < 9; i++) {
+        const bald = ['piccolo', 'hit', 'frieza', 'beerus', 'jiren', 'brook', 'chopper', 'dk', 'bowser', 'beru', 'sonic', 'shadow', 'knuckles'].includes(character.id);
+        const longHair = ['sakura', 'jiraiya', 'cha', 'noelle', 'nezuko', 'erza', 'sephiroth', 'tifa', 'power', 'nami', 'robin', 'itachi'].includes(character.id);
+        if (!bald) ellipsoid(head, hair, 0, 0.29, -0.025, 0.23, 0.12, 0.21);
+        for (let i = 0; i < (bald ? 0 : 9); i++) {
             const spike = new THREE.Mesh(new THREE.ConeGeometry(0.075, 0.24, 5), hair);
             const angle = i / 9 * Math.PI * 2;
             spike.position.set(Math.sin(angle) * 0.16, 0.36 + (i % 2) * 0.045, Math.cos(angle) * 0.14);
             spike.rotation.z = -Math.sin(angle) * 0.7;
             spike.rotation.x = Math.cos(angle) * 0.5;
             head.add(spike);
+        }
+        if (longHair) {
+            ellipsoid(head, hair, 0, -0.02, -0.14, 0.245, 0.36, 0.14);
+            [-1, 1].forEach(side => ellipsoid(head, hair, side * 0.19, -0.04, -0.015, 0.07, 0.28, 0.09));
+        }
+        // Signature details are attached to the same rig used by portraits and combat.
+        const detail = (parent, color, x, y, z, sx, sy, sz) => ellipsoid(parent, material(color), x, y, z, sx, sy, sz);
+        function horn(parent, color, x, y, z, radius, height, tilt = 0) {
+            const mesh = new THREE.Mesh(new THREE.ConeGeometry(radius, height, 12), material(color));
+            mesh.position.set(x, y, z);
+            mesh.rotation.z = tilt;
+            parent.add(mesh);
+            return mesh;
+        }
+        const id = character.id;
+        if (id === 'gojo') detail(head, '#111827', 0, 0.13, 0.16, 0.225, 0.065, 0.075);
+        if (id === 'kakashi') detail(head, '#273449', 0, -0.035, 0.13, 0.205, 0.11, 0.1);
+        if (['sukuna', 'yuji', 'gaara', 'kiba', 'jiraiya', 'tanjiro'].includes(id)) {
+            [-1, 1].forEach(side => {
+                const mark = detail(head, id === 'tanjiro' ? '#7c2828' : '#992f33', side * 0.14, id === 'tanjiro' ? 0.22 : 0, 0.175, 0.018, 0.07, 0.008);
+                mark.rotation.z = side * 0.25;
+            });
+        }
+        if (id === 'nezuko') {
+            const bamboo = new THREE.Mesh(new THREE.CylinderGeometry(0.035, 0.035, 0.3, 16), material('#5f9748'));
+            bamboo.rotation.z = Math.PI / 2;
+            bamboo.position.set(0, -0.04, 0.22);
+            head.add(bamboo);
+        }
+        if (['luffy', 'mario', 'usopp', 'chopper'].includes(id)) {
+            const color = id === 'luffy' ? '#dfb858' : id === 'mario' ? '#d42b31' : id === 'chopper' ? '#e36eab' : '#b49a65';
+            detail(head, color, 0, 0.33, 0, id === 'luffy' ? 0.39 : 0.29, 0.035, 0.3);
+            detail(head, color, 0, 0.39, -0.01, 0.245, 0.14, 0.23);
+            if (id === 'luffy') detail(head, '#b23533', 0, 0.355, 0, 0.25, 0.035, 0.235);
+            if (id === 'mario' || id === 'chopper') {
+                detail(head, '#ffffff', 0, 0.4, 0.217, 0.08, 0.07, 0.014);
+                if (id === 'chopper') {
+                    [-1, 1].forEach(side => {
+                        horn(head, '#885c36', side * 0.32, 0.5, 0, 0.045, 0.3, side * -0.65);
+                        horn(head, '#885c36', side * 0.4, 0.57, 0, 0.03, 0.16, side * 0.4);
+                    });
+                    detail(head, '#3288be', 0, 0.02, 0.23, 0.045, 0.035, 0.035);
+                }
+            }
+        }
+        if (id === 'mario') {
+            detail(head, '#573721', 0, -0.01, 0.21, 0.13, 0.035, 0.025);
+            detail(head, '#efbc94', 0, 0.06, 0.23, 0.07, 0.065, 0.06);
+        }
+        if (id === 'usopp') detail(head, character.skin, 0, 0.045, 0.29, 0.035, 0.035, 0.16);
+        if (id === 'sanji') detail(head, '#e6c94f', -0.09, 0.19, 0.2, 0.1, 0.15, 0.035);
+        if (id === 'zoro') {
+            [-1, 0, 1].forEach(i => detail(head, '#e8c34a', -0.235, -0.035 + i * 0.035, 0.04, 0.009, 0.025, 0.009));
+        }
+        if (id === 'todoroki') detail(head, '#b94542', -0.12, 0.29, 0, 0.12, 0.14, 0.2);
+        if (['power', 'bowser', 'beru'].includes(id)) {
+            [-1, 1].forEach(side => horn(head, id === 'power' ? '#b73345' : '#e9d9b2', side * 0.18, 0.48, 0, 0.055, 0.26, side * -0.2));
+        }
+        if (id === 'piccolo') {
+            [-1, 1].forEach(side => {
+                horn(head, character.skin, side * 0.13, 0.36, 0.1, 0.025, 0.22, side * -0.3);
+                detail(head, character.skin, side * 0.28, 0.13, 0, 0.13, 0.05, 0.05);
+            });
+            detail(torso, '#eee8d9', 0, 0.48, -0.14, 0.43, 0.12, 0.19);
+        }
+        if (id === 'beerus') {
+            [-1, 1].forEach(side => {
+                horn(head, character.skin, side * 0.15, 0.5, 0, 0.08, 0.48, side * -0.12);
+                detail(head, '#65508a', side * 0.15, 0.48, 0.04, 0.035, 0.14, 0.02);
+            });
+            detail(head, character.skin, 0, -0.01, 0.19, 0.12, 0.08, 0.08);
+        }
+        if (id === 'frieza') detail(head, '#8644ab', 0, 0.29, 0, 0.18, 0.09, 0.175);
+        if (id === 'hit') detail(head, '#8970a8', 0, 0.27, 0, 0.205, 0.1, 0.19);
+        if (id === 'jiren') {
+            [-1, 1].forEach(side => detail(head, '#171820', side * 0.09, 0.14, 0.19, 0.068, 0.06, 0.015));
+        }
+        if (id === 'brook') {
+            detail(head, '#11121c', 0, 0.32, -0.09, 0.36, 0.3, 0.23);
+            [-1, 1].forEach(side => detail(head, '#161723', side * 0.085, 0.13, 0.195, 0.06, 0.065, 0.02));
+            detail(head, '#161723', 0, 0.015, 0.205, 0.025, 0.03, 0.015);
+            for (let i = -2; i <= 2; i++) detail(head, '#33323b', i * 0.026, -0.065, 0.19, 0.004, 0.025, 0.007);
+        }
+        if (['sonic', 'shadow', 'knuckles'].includes(id)) {
+            detail(head, character.primary, 0, 0.18, -0.03, 0.26, 0.25, 0.22);
+            [-1, 1].forEach(side => {
+                horn(head, character.primary, side * 0.17, 0.42, 0, 0.075, 0.2, side * -0.25);
+                detail(head, '#faf5e3', side * 0.085, 0.14, 0.195, 0.08, 0.09, 0.025);
+                detail(head, '#202027', side * 0.07, 0.13, 0.22, 0.025, 0.055, 0.01);
+            });
+            detail(head, '#e7b68a', 0, -0.005, 0.18, 0.17, 0.095, 0.085);
+            detail(head, '#22232b', 0, 0.04, 0.27, 0.035, 0.03, 0.04);
+            for (let i = -1; i <= 1; i++) horn(head, character.primary, i * 0.18, 0.14, -0.24, 0.12, 0.4, i * 0.8 + Math.PI);
+        }
+        if (id === 'dk' || id === 'bowser') {
+            detail(head, id === 'dk' ? '#a97850' : '#e6be78', 0, -0.015, 0.18, 0.21, 0.13, 0.12);
+            if (id === 'dk') detail(torso, '#c63232', 0, 0.3, 0.19, 0.06, 0.24, 0.025);
+        }
+        if (id === 'deku') {
+            detail(torso, '#b6c6bf', 0, 0.53, 0.12, 0.23, 0.11, 0.12);
+            [-1, 1].forEach(side => detail(head, '#4b5243', side * 0.14, 0.02, 0.18, 0.025, 0.008, 0.008));
+        }
+        if (id === 'bakugo' || id === 'asta') detail(head, '#252b32', 0, id === 'asta' ? 0.24 : 0.13, 0.16, 0.23, 0.04, 0.07);
+        if (id === 'denji') detail(torso, '#232831', 0, 0.28, 0.18, 0.025, 0.25, 0.02);
+        if (['goku', 'gohan', 'vegeta', 'trunks'].includes(id)) {
+            detail(torso, character.secondary, 0, 0.53, 0.12, 0.2, 0.065, 0.12);
+            if (id === 'vegeta') detail(torso, '#e7e5d9', 0, 0.27, 0.16, 0.245, 0.22, 0.055);
         }
         if (character.franchise === 'Naruto') {
             ellipsoid(head, dark, 0, 0.25, 0, 0.225, 0.05, 0.212);
