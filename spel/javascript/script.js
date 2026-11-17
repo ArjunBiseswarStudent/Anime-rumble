@@ -1,9 +1,9 @@
 
  // =========================================================================
- // 1. FRANCHISES, ARENAS & ALL 30 CHARACTERS ROSTER DATA
+ // 1. FRANCHISES, ARENAS & CHARACTER ROSTER DATA
  // =========================================================================
  const FRANCHISES = [
-     { key: 'all', label: 'Alle 30' },
+     { key: 'all', label: 'Alle' },
      { key: 'Jujutsu Kaisen', label: 'Jujutsu Kaisen' },
      { key: 'Solo Leveling', label: 'Solo Leveling' },
      { key: 'My Hero Academia', label: 'My Hero Academia' },
@@ -431,6 +431,844 @@
     }
 ];
 
+// Personages uit extra_personages.json, aangevuld met spelwaarden en specials.
+ROSTER.push(...[
+    {
+        "id": "naruto",
+        "name": "Naruto Uzumaki",
+        "franchise": "Naruto",
+        "skin": "#f3bf8f",
+        "primary": "#f97316",
+        "secondary": "#1e293b",
+        "hair": "#facc15",
+        "aura": "#f59e0b",
+        "desc": "De ninja van Konoha met schaduwklonen en de kracht van Kurama.",
+        "speed": 6.2,
+        "jump": 13,
+        "weight": 1,
+        "moves": {
+            "neutral": {
+                "name": "Rasengan",
+                "desc": "Een krachtige speciale aanval voor je vechter."
+            },
+            "side": {
+                "name": "Schaduwkloon-aanval",
+                "desc": "Een gerichte aanval met extra zijwaarts bereik."
+            },
+            "up": {
+                "name": "Chakra-sprong",
+                "desc": "Een speciale aanval die je omhoog lanceert."
+            },
+            "down": {
+                "name": "Kurama-uitbarsting",
+                "desc": "Een krachtige aanval op tegenstanders dichtbij."
+            }
+        }
+    },
+    {
+        "id": "sasuke",
+        "name": "Sasuke Uchiha",
+        "franchise": "Naruto",
+        "skin": "#f3c5a5",
+        "primary": "#64748b",
+        "secondary": "#312e81",
+        "hair": "#171717",
+        "aura": "#8b5cf6",
+        "desc": "Uchiha-zwaardvechter met Sharingan, bliksem en zwarte vlammen.",
+        "speed": 6.3,
+        "jump": 12.8,
+        "weight": 0.98,
+        "moves": {
+            "neutral": {
+                "name": "Chidori",
+                "desc": "Een krachtige speciale aanval voor je vechter."
+            },
+            "side": {
+                "name": "Zwaardflits",
+                "desc": "Een gerichte aanval met extra zijwaarts bereik."
+            },
+            "up": {
+                "name": "Hemelse sprong",
+                "desc": "Een speciale aanval die je omhoog lanceert."
+            },
+            "down": {
+                "name": "Amaterasu",
+                "desc": "Een krachtige aanval op tegenstanders dichtbij."
+            }
+        }
+    },
+    {
+        "id": "sakura",
+        "name": "Sakura Haruno",
+        "franchise": "Naruto",
+        "skin": "#f4c4a3",
+        "primary": "#ec4899",
+        "secondary": "#991b1b",
+        "hair": "#f9a8d4",
+        "aura": "#22c55e",
+        "desc": "Medische ninja die haar chakra bundelt in verwoestende vuistslagen.",
+        "speed": 5.8,
+        "jump": 12.4,
+        "weight": 1.08,
+        "moves": {
+            "neutral": {
+                "name": "Chakra-vuist",
+                "desc": "Een krachtige speciale aanval voor je vechter."
+            },
+            "side": {
+                "name": "Kersenbloesem-stoot",
+                "desc": "Een gerichte aanval met extra zijwaarts bereik."
+            },
+            "up": {
+                "name": "Opwaartse mokerslag",
+                "desc": "Een speciale aanval die je omhoog lanceert."
+            },
+            "down": {
+                "name": "Grondverbrijzelaar",
+                "desc": "Een krachtige aanval op tegenstanders dichtbij."
+            }
+        }
+    },
+    {
+        "id": "itachi",
+        "name": "Itachi Uchiha",
+        "franchise": "Naruto",
+        "skin": "#e8b899",
+        "primary": "#18181b",
+        "secondary": "#991b1b",
+        "hair": "#111827",
+        "aura": "#dc2626",
+        "desc": "Sharingan-meester van de Akatsuki met illusies en zwarte vlammen.",
+        "speed": 6,
+        "jump": 12.6,
+        "weight": 0.96,
+        "moves": {
+            "neutral": {
+                "name": "Vuurbol-jutsu",
+                "desc": "Een krachtige speciale aanval voor je vechter."
+            },
+            "side": {
+                "name": "Kraaienaanval",
+                "desc": "Een gerichte aanval met extra zijwaarts bereik."
+            },
+            "up": {
+                "name": "Kraaienvlucht",
+                "desc": "Een speciale aanval die je omhoog lanceert."
+            },
+            "down": {
+                "name": "Tsukuyomi",
+                "desc": "Een krachtige aanval op tegenstanders dichtbij."
+            }
+        }
+    },
+    {
+        "id": "kakashi",
+        "name": "Kakashi Hatake",
+        "franchise": "Naruto",
+        "skin": "#eac4a4",
+        "primary": "#334155",
+        "secondary": "#64748b",
+        "hair": "#cbd5e1",
+        "aura": "#38bdf8",
+        "desc": "De Copy Ninja combineert tactiek met zijn bliksemsnelle Raikiri.",
+        "speed": 6.1,
+        "jump": 12.7,
+        "weight": 1,
+        "moves": {
+            "neutral": {
+                "name": "Raikiri",
+                "desc": "Een krachtige speciale aanval voor je vechter."
+            },
+            "side": {
+                "name": "Bliksemhond",
+                "desc": "Een gerichte aanval met extra zijwaarts bereik."
+            },
+            "up": {
+                "name": "Bliksemsprong",
+                "desc": "Een speciale aanval die je omhoog lanceert."
+            },
+            "down": {
+                "name": "Kamui",
+                "desc": "Een krachtige aanval op tegenstanders dichtbij."
+            }
+        }
+    },
+    {
+        "id": "jiraiya",
+        "name": "Jiraiya",
+        "franchise": "Naruto",
+        "skin": "#e8c5a4",
+        "primary": "#991b1b",
+        "secondary": "#64748b",
+        "hair": "#f8fafc",
+        "aura": "#ef4444",
+        "desc": "Legendarische Sannin en paddenwijze van Mount Myoboku.",
+        "speed": 5.5,
+        "jump": 12.5,
+        "weight": 1.2,
+        "moves": {
+            "neutral": {
+                "name": "Rasengan",
+                "desc": "Een krachtige speciale aanval voor je vechter."
+            },
+            "side": {
+                "name": "Paddenolie-vuur",
+                "desc": "Een gerichte aanval met extra zijwaarts bereik."
+            },
+            "up": {
+                "name": "Paddensprong",
+                "desc": "Een speciale aanval die je omhoog lanceert."
+            },
+            "down": {
+                "name": "Wijzenstoot",
+                "desc": "Een krachtige aanval op tegenstanders dichtbij."
+            }
+        }
+    },
+    {
+        "id": "gaara",
+        "name": "Gaara",
+        "franchise": "Naruto",
+        "skin": "#efc3a4",
+        "primary": "#7f1d1d",
+        "secondary": "#92400e",
+        "hair": "#991b1b",
+        "aura": "#d97706",
+        "desc": "De Kazekage beheerst zand als wapen en schild.",
+        "speed": 5.2,
+        "jump": 12,
+        "weight": 1.15,
+        "moves": {
+            "neutral": {
+                "name": "Zandkogel",
+                "desc": "Een krachtige speciale aanval voor je vechter."
+            },
+            "side": {
+                "name": "Zandgolf",
+                "desc": "Een gerichte aanval met extra zijwaarts bereik."
+            },
+            "up": {
+                "name": "Zandlift",
+                "desc": "Een speciale aanval die je omhoog lanceert."
+            },
+            "down": {
+                "name": "Zandbegrafenis",
+                "desc": "Een krachtige aanval op tegenstanders dichtbij."
+            }
+        }
+    },
+    {
+        "id": "shikamaru",
+        "name": "Shikamaru Nara",
+        "franchise": "Naruto",
+        "skin": "#e8bc99",
+        "primary": "#4b5563",
+        "secondary": "#14532d",
+        "hair": "#1f2937",
+        "aura": "#64748b",
+        "desc": "Slimme strateeg die tegenstanders met schaduwtechnieken verrast.",
+        "speed": 5.6,
+        "jump": 12.2,
+        "weight": 1,
+        "moves": {
+            "neutral": {
+                "name": "Schaduwstoot",
+                "desc": "Een krachtige speciale aanval voor je vechter."
+            },
+            "side": {
+                "name": "Schaduwgreep",
+                "desc": "Een gerichte aanval met extra zijwaarts bereik."
+            },
+            "up": {
+                "name": "Tactische sprong",
+                "desc": "Een speciale aanval die je omhoog lanceert."
+            },
+            "down": {
+                "name": "Schaduwnekbinding",
+                "desc": "Een krachtige aanval op tegenstanders dichtbij."
+            }
+        }
+    },
+    {
+        "id": "kiba",
+        "name": "Kiba Inuzuka",
+        "franchise": "Naruto",
+        "skin": "#e8bc99",
+        "primary": "#64748b",
+        "secondary": "#292524",
+        "hair": "#422006",
+        "aura": "#ef4444",
+        "desc": "Snelle ninja die met Akamaru zijn beestachtige vechtstijl inzet.",
+        "speed": 6.5,
+        "jump": 13,
+        "weight": 0.96,
+        "moves": {
+            "neutral": {
+                "name": "Klauwcombo",
+                "desc": "Een krachtige speciale aanval voor je vechter."
+            },
+            "side": {
+                "name": "Gatsuga",
+                "desc": "Een gerichte aanval met extra zijwaarts bereik."
+            },
+            "up": {
+                "name": "Beestensprong",
+                "desc": "Een speciale aanval die je omhoog lanceert."
+            },
+            "down": {
+                "name": "Dubbele wolventand",
+                "desc": "Een krachtige aanval op tegenstanders dichtbij."
+            }
+        }
+    },
+    {
+        "id": "luffy",
+        "name": "Monkey D. Luffy",
+        "franchise": "One Piece",
+        "skin": "#eeb88b",
+        "primary": "#dc2626",
+        "secondary": "#2563eb",
+        "hair": "#171717",
+        "aura": "#f59e0b",
+        "desc": "Kapitein van de Straw Hats met een elastisch lichaam.",
+        "speed": 6.1,
+        "jump": 13.2,
+        "weight": 1.08,
+        "moves": {
+            "neutral": {
+                "name": "Gum-Gum Pistol",
+                "desc": "Een krachtige speciale aanval voor je vechter."
+            },
+            "side": {
+                "name": "Gum-Gum Bazooka",
+                "desc": "Een gerichte aanval met extra zijwaarts bereik."
+            },
+            "up": {
+                "name": "Gum-Gum Rocket",
+                "desc": "Een speciale aanval die je omhoog lanceert."
+            },
+            "down": {
+                "name": "Gum-Gum Gatling",
+                "desc": "Een krachtige aanval op tegenstanders dichtbij."
+            }
+        }
+    },
+    {
+        "id": "zoro",
+        "name": "Roronoa Zoro",
+        "franchise": "One Piece",
+        "skin": "#eac09a",
+        "primary": "#15803d",
+        "secondary": "#111827",
+        "hair": "#22c55e",
+        "aura": "#22c55e",
+        "desc": "Zwaardvechter die met drie zwaarden de sterkste wil worden.",
+        "speed": 5.9,
+        "jump": 12.3,
+        "weight": 1.15,
+        "moves": {
+            "neutral": {
+                "name": "Oni Giri",
+                "desc": "Een krachtige speciale aanval voor je vechter."
+            },
+            "side": {
+                "name": "108 Pound Phoenix",
+                "desc": "Een gerichte aanval met extra zijwaarts bereik."
+            },
+            "up": {
+                "name": "Drakentornado",
+                "desc": "Een speciale aanval die je omhoog lanceert."
+            },
+            "down": {
+                "name": "Asura",
+                "desc": "Een krachtige aanval op tegenstanders dichtbij."
+            }
+        }
+    },
+    {
+        "id": "sanji",
+        "name": "Sanji",
+        "franchise": "One Piece",
+        "skin": "#f0c5a3",
+        "primary": "#171717",
+        "secondary": "#1e293b",
+        "hair": "#facc15",
+        "aura": "#f59e0b",
+        "desc": "Kok van de Straw Hats met vurige trappen en luchtacrobatiek.",
+        "speed": 6.5,
+        "jump": 13.4,
+        "weight": 0.98,
+        "moves": {
+            "neutral": {
+                "name": "Diable Jambe",
+                "desc": "Een krachtige speciale aanval voor je vechter."
+            },
+            "side": {
+                "name": "Collier Shoot",
+                "desc": "Een gerichte aanval met extra zijwaarts bereik."
+            },
+            "up": {
+                "name": "Sky Walk",
+                "desc": "Een speciale aanval die je omhoog lanceert."
+            },
+            "down": {
+                "name": "Ifrit Jambe",
+                "desc": "Een krachtige aanval op tegenstanders dichtbij."
+            }
+        }
+    },
+    {
+        "id": "usopp",
+        "name": "Usopp",
+        "franchise": "One Piece",
+        "skin": "#b77c54",
+        "primary": "#92400e",
+        "secondary": "#eab308",
+        "hair": "#1f2937",
+        "aura": "#f59e0b",
+        "desc": "Scherpschutter met zijn Kabuto-katapult en verrassende Pop Greens.",
+        "speed": 5.7,
+        "jump": 12.2,
+        "weight": 0.94,
+        "moves": {
+            "neutral": {
+                "name": "Kabuto-schot",
+                "desc": "Een krachtige speciale aanval voor je vechter."
+            },
+            "side": {
+                "name": "Pop Green",
+                "desc": "Een gerichte aanval met extra zijwaarts bereik."
+            },
+            "up": {
+                "name": "Springspruit",
+                "desc": "Een speciale aanval die je omhoog lanceert."
+            },
+            "down": {
+                "name": "Exploderende ster",
+                "desc": "Een krachtige aanval op tegenstanders dichtbij."
+            }
+        }
+    },
+    {
+        "id": "chopper",
+        "name": "Tony Tony Chopper",
+        "franchise": "One Piece",
+        "skin": "#b7835d",
+        "primary": "#ec4899",
+        "secondary": "#7c3aed",
+        "hair": "#78350f",
+        "aura": "#f472b6",
+        "desc": "De scheepsdokter verandert met zijn Rumble Ball in een sterke vechter.",
+        "speed": 6,
+        "jump": 13,
+        "weight": 0.85,
+        "scaleW": 28,
+        "scaleH": 38,
+        "moves": {
+            "neutral": {
+                "name": "Hoefslag",
+                "desc": "Een krachtige speciale aanval voor je vechter."
+            },
+            "side": {
+                "name": "Horn Point",
+                "desc": "Een gerichte aanval met extra zijwaarts bereik."
+            },
+            "up": {
+                "name": "Jumping Point",
+                "desc": "Een speciale aanval die je omhoog lanceert."
+            },
+            "down": {
+                "name": "Monster Point",
+                "desc": "Een krachtige aanval op tegenstanders dichtbij."
+            }
+        }
+    },
+    {
+        "id": "nami",
+        "name": "Nami",
+        "franchise": "One Piece",
+        "skin": "#f2c09c",
+        "primary": "#16a34a",
+        "secondary": "#2563eb",
+        "hair": "#f97316",
+        "aura": "#38bdf8",
+        "desc": "Navigator die het weer beheerst met haar Clima-Tact.",
+        "speed": 5.9,
+        "jump": 12.5,
+        "weight": 0.92,
+        "moves": {
+            "neutral": {
+                "name": "Thunderbolt Tempo",
+                "desc": "Een krachtige speciale aanval voor je vechter."
+            },
+            "side": {
+                "name": "Gust Sword",
+                "desc": "Een gerichte aanval met extra zijwaarts bereik."
+            },
+            "up": {
+                "name": "Windlift",
+                "desc": "Een speciale aanval die je omhoog lanceert."
+            },
+            "down": {
+                "name": "Zeus Thunder",
+                "desc": "Een krachtige aanval op tegenstanders dichtbij."
+            }
+        }
+    },
+    {
+        "id": "robin",
+        "name": "Nico Robin",
+        "franchise": "One Piece",
+        "skin": "#e9b795",
+        "primary": "#4c1d95",
+        "secondary": "#1f2937",
+        "hair": "#111827",
+        "aura": "#a855f7",
+        "desc": "Archeoloog die met haar duivelsvrucht extra ledematen laat bloeien.",
+        "speed": 5.6,
+        "jump": 12.2,
+        "weight": 1,
+        "moves": {
+            "neutral": {
+                "name": "Dos Fleur",
+                "desc": "Een krachtige speciale aanval voor je vechter."
+            },
+            "side": {
+                "name": "Treinta Fleur",
+                "desc": "Een gerichte aanval met extra zijwaarts bereik."
+            },
+            "up": {
+                "name": "Wings",
+                "desc": "Een speciale aanval die je omhoog lanceert."
+            },
+            "down": {
+                "name": "Gigantesco Mano",
+                "desc": "Een krachtige aanval op tegenstanders dichtbij."
+            }
+        }
+    },
+    {
+        "id": "brook",
+        "name": "Brook",
+        "franchise": "One Piece",
+        "skin": "#f8fafc",
+        "primary": "#111827",
+        "secondary": "#f8fafc",
+        "hair": "#09090b",
+        "aura": "#e2e8f0",
+        "desc": "Muzikale skeletzwaardvechter met ijskoude zielskrachten.",
+        "speed": 6.4,
+        "jump": 13.1,
+        "weight": 0.86,
+        "moves": {
+            "neutral": {
+                "name": "Soul Solid",
+                "desc": "Een krachtige speciale aanval voor je vechter."
+            },
+            "side": {
+                "name": "Hanauta Sancho",
+                "desc": "Een gerichte aanval met extra zijwaarts bereik."
+            },
+            "up": {
+                "name": "Zielensprong",
+                "desc": "Een speciale aanval die je omhoog lanceert."
+            },
+            "down": {
+                "name": "Soul King",
+                "desc": "Een krachtige aanval op tegenstanders dichtbij."
+            }
+        }
+    },
+    {
+        "id": "goku",
+        "name": "Goku",
+        "franchise": "Dragon Ball",
+        "skin": "#eeb88b",
+        "primary": "#f97316",
+        "secondary": "#2563eb",
+        "hair": "#171717",
+        "aura": "#facc15",
+        "desc": "Saiyan met ontembare vechtlust en de legendarische Kamehameha.",
+        "speed": 6.2,
+        "jump": 13.2,
+        "weight": 1.08,
+        "moves": {
+            "neutral": {
+                "name": "Kamehameha",
+                "desc": "Een krachtige speciale aanval voor je vechter."
+            },
+            "side": {
+                "name": "Dragon Fist",
+                "desc": "Een gerichte aanval met extra zijwaarts bereik."
+            },
+            "up": {
+                "name": "Instant Transmission",
+                "desc": "Een speciale aanval die je omhoog lanceert."
+            },
+            "down": {
+                "name": "Spirit Bomb",
+                "desc": "Een krachtige aanval op tegenstanders dichtbij."
+            }
+        }
+    },
+    {
+        "id": "vegeta",
+        "name": "Vegeta",
+        "franchise": "Dragon Ball",
+        "skin": "#eeb88b",
+        "primary": "#1d4ed8",
+        "secondary": "#f8fafc",
+        "hair": "#171717",
+        "aura": "#facc15",
+        "desc": "De trotse Saiyan-prins met explosieve ki-aanvallen.",
+        "speed": 6.1,
+        "jump": 13,
+        "weight": 1.1,
+        "moves": {
+            "neutral": {
+                "name": "Galick Gun",
+                "desc": "Een krachtige speciale aanval voor je vechter."
+            },
+            "side": {
+                "name": "Big Bang Attack",
+                "desc": "Een gerichte aanval met extra zijwaarts bereik."
+            },
+            "up": {
+                "name": "Saiyan-vlucht",
+                "desc": "Een speciale aanval die je omhoog lanceert."
+            },
+            "down": {
+                "name": "Final Flash",
+                "desc": "Een krachtige aanval op tegenstanders dichtbij."
+            }
+        }
+    },
+    {
+        "id": "gohan",
+        "name": "Gohan",
+        "franchise": "Dragon Ball",
+        "skin": "#eeb88b",
+        "primary": "#7c3aed",
+        "secondary": "#ef4444",
+        "hair": "#171717",
+        "aura": "#facc15",
+        "desc": "Gokus zoon ontketent zijn verborgen kracht wanneer het nodig is.",
+        "speed": 6,
+        "jump": 13,
+        "weight": 1.06,
+        "moves": {
+            "neutral": {
+                "name": "Masenko",
+                "desc": "Een krachtige speciale aanval voor je vechter."
+            },
+            "side": {
+                "name": "Beast Rush",
+                "desc": "Een gerichte aanval met extra zijwaarts bereik."
+            },
+            "up": {
+                "name": "Ki-vlucht",
+                "desc": "Een speciale aanval die je omhoog lanceert."
+            },
+            "down": {
+                "name": "Special Beam Cannon",
+                "desc": "Een krachtige aanval op tegenstanders dichtbij."
+            }
+        }
+    },
+    {
+        "id": "piccolo",
+        "name": "Piccolo",
+        "franchise": "Dragon Ball",
+        "skin": "#65a30d",
+        "primary": "#7c3aed",
+        "secondary": "#db2777",
+        "hair": "#365314",
+        "aura": "#a3e635",
+        "desc": "Namekiaanse krijger met rekbare armen en geconcentreerde ki.",
+        "speed": 5.7,
+        "jump": 12.8,
+        "weight": 1.18,
+        "moves": {
+            "neutral": {
+                "name": "Special Beam Cannon",
+                "desc": "Een krachtige speciale aanval voor je vechter."
+            },
+            "side": {
+                "name": "Demon Hand",
+                "desc": "Een gerichte aanval met extra zijwaarts bereik."
+            },
+            "up": {
+                "name": "Namekiaanse vlucht",
+                "desc": "Een speciale aanval die je omhoog lanceert."
+            },
+            "down": {
+                "name": "Hellzone Grenade",
+                "desc": "Een krachtige aanval op tegenstanders dichtbij."
+            }
+        }
+    },
+    {
+        "id": "trunks",
+        "name": "Trunks",
+        "franchise": "Dragon Ball",
+        "skin": "#eeb88b",
+        "primary": "#1d4ed8",
+        "secondary": "#64748b",
+        "hair": "#c4b5fd",
+        "aura": "#facc15",
+        "desc": "Tijdreizende Saiyan die zwaardkunst met krachtige ki combineert.",
+        "speed": 6.2,
+        "jump": 13,
+        "weight": 1.02,
+        "moves": {
+            "neutral": {
+                "name": "Burning Attack",
+                "desc": "Een krachtige speciale aanval voor je vechter."
+            },
+            "side": {
+                "name": "Shining Sword",
+                "desc": "Een gerichte aanval met extra zijwaarts bereik."
+            },
+            "up": {
+                "name": "Saiyan-sprong",
+                "desc": "Een speciale aanval die je omhoog lanceert."
+            },
+            "down": {
+                "name": "Heat Dome Attack",
+                "desc": "Een krachtige aanval op tegenstanders dichtbij."
+            }
+        }
+    },
+    {
+        "id": "hit",
+        "name": "Hit",
+        "franchise": "Dragon Ball",
+        "skin": "#a78bfa",
+        "primary": "#4c1d95",
+        "secondary": "#312e81",
+        "hair": "#6d28d9",
+        "aura": "#a78bfa",
+        "desc": "Koelbloedige vechter die met Time-Skip onverwacht toeslaat.",
+        "speed": 6.4,
+        "jump": 12.6,
+        "weight": 1.04,
+        "moves": {
+            "neutral": {
+                "name": "Flash Fist",
+                "desc": "Een krachtige speciale aanval voor je vechter."
+            },
+            "side": {
+                "name": "Time-Skip",
+                "desc": "Een gerichte aanval met extra zijwaarts bereik."
+            },
+            "up": {
+                "name": "Tijdsprong",
+                "desc": "Een speciale aanval die je omhoog lanceert."
+            },
+            "down": {
+                "name": "Time Cage",
+                "desc": "Een krachtige aanval op tegenstanders dichtbij."
+            }
+        }
+    },
+    {
+        "id": "frieza",
+        "name": "Frieza",
+        "franchise": "Dragon Ball",
+        "skin": "#f8fafc",
+        "primary": "#f8fafc",
+        "secondary": "#7e22ce",
+        "hair": "#f8fafc",
+        "aura": "#c084fc",
+        "desc": "Gevaarlijke keizer met precieze ki-stralen en vernietigende kracht.",
+        "speed": 6.1,
+        "jump": 13.2,
+        "weight": 0.98,
+        "moves": {
+            "neutral": {
+                "name": "Death Beam",
+                "desc": "Een krachtige speciale aanval voor je vechter."
+            },
+            "side": {
+                "name": "Death Slicer",
+                "desc": "Een gerichte aanval met extra zijwaarts bereik."
+            },
+            "up": {
+                "name": "Keizervlucht",
+                "desc": "Een speciale aanval die je omhoog lanceert."
+            },
+            "down": {
+                "name": "Supernova",
+                "desc": "Een krachtige aanval op tegenstanders dichtbij."
+            }
+        }
+    },
+    {
+        "id": "beerus",
+        "name": "Beerus",
+        "franchise": "Dragon Ball",
+        "skin": "#a78bfa",
+        "primary": "#1e293b",
+        "secondary": "#38bdf8",
+        "hair": "#7c3aed",
+        "aura": "#a78bfa",
+        "desc": "De God of Destruction gebruikt goddelijke ki en Hakai.",
+        "speed": 6.3,
+        "jump": 13.4,
+        "weight": 1.08,
+        "moves": {
+            "neutral": {
+                "name": "Hakai",
+                "desc": "Een krachtige speciale aanval voor je vechter."
+            },
+            "side": {
+                "name": "Goddelijke stoot",
+                "desc": "Een gerichte aanval met extra zijwaarts bereik."
+            },
+            "up": {
+                "name": "Godenvlucht",
+                "desc": "Een speciale aanval die je omhoog lanceert."
+            },
+            "down": {
+                "name": "Sphere of Destruction",
+                "desc": "Een krachtige aanval op tegenstanders dichtbij."
+            }
+        }
+    },
+    {
+        "id": "jiren",
+        "name": "Jiren",
+        "franchise": "Dragon Ball",
+        "skin": "#9ca3af",
+        "primary": "#dc2626",
+        "secondary": "#171717",
+        "hair": "#9ca3af",
+        "aura": "#ef4444",
+        "desc": "De machtige Pride Trooper overweldigt vijanden met pure kracht.",
+        "speed": 5.8,
+        "jump": 12.6,
+        "weight": 1.3,
+        "moves": {
+            "neutral": {
+                "name": "Power Impact",
+                "desc": "Een krachtige speciale aanval voor je vechter."
+            },
+            "side": {
+                "name": "Justice Rush",
+                "desc": "Een gerichte aanval met extra zijwaarts bereik."
+            },
+            "up": {
+                "name": "Power Rise",
+                "desc": "Een speciale aanval die je omhoog lanceert."
+            },
+            "down": {
+                "name": "Overheat Magnetron",
+                "desc": "Een krachtige aanval op tegenstanders dichtbij."
+            }
+        }
+    }
+]);
+
 const selection = [ROSTER[0], ROSTER[1]];
 let selectionTarget = 0;
 let gameMode = 'cpu';
@@ -639,7 +1477,7 @@ function buildFranchiseTabs() {
     availableFranchises.forEach((franchise) => {
         const button = document.createElement('button');
         button.type = 'button';
-        button.textContent = franchise.label;
+        button.textContent = franchise.key === 'all' ? `Alle ${ROSTER.length}` : franchise.label;
         button.classList.toggle('active', activeFranchise === franchise.key);
         button.addEventListener('click', () => {
             activeFranchise = franchise.key;
@@ -1122,6 +1960,7 @@ window.addEventListener('keyup', (event) => pressedKeys.delete(event.code));
 window.addEventListener('blur', () => pressedKeys.clear());
 
 document.addEventListener('DOMContentLoaded', () => {
+    document.getElementById('roster-count').textContent = `${ROSTER.length} HELDEN · ${new Set(ROSTER.map(character => character.franchise)).size} WERELDEN`;
     document.getElementById('target-p1-btn').addEventListener('click', () => setSelectorTarget(0));
     document.getElementById('target-p2-btn').addEventListener('click', () => setSelectorTarget(1));
     document.getElementById('mode-cpu-btn').addEventListener('click', () => setGameMode('cpu'));
