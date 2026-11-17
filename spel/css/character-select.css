@@ -51,6 +51,8 @@
 .arcade-select .select-footer p { flex: 1; color: #9bacc6; font-size: 11px; }
 .arcade-select .start-btn { border-radius: 2px; padding: 15px 30px; transform: skewX(-5deg); }
 .selection-settings { margin-top: 15px; border: 1px solid #35445d; background: #10192b; border-radius: 4px; }
+.player-lives-setting { display: flex; align-items: center; justify-content: space-between; flex-wrap: wrap; gap: 7px; margin: 5px 0 9px; color: #d4dfef; font-size: 11px; }
+.player-lives-setting select { padding: 6px 10px; border: 1px solid #667791; border-radius: 3px; background: #132137; color: white; font: inherit; }
 .selection-settings summary { padding: 14px 17px; cursor: pointer; font-size: 12px; font-weight: 700; color: #e3eaf5; }
 .selection-settings summary span { margin-left: 12px; color: #9fb0ca; font-size: 10px; font-weight: 400; }
 .selection-settings .mode-panel { margin: 0; padding-top: 12px; border: 0; box-shadow: none; background: transparent; }

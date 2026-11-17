@@ -37,6 +37,17 @@ test('exactly three uses, then ten seconds to refill all three; partial ammuniti
     step(owner, target, 9.99); assert.equal(owner.throwState.ammo, 0); assert(!fire(owner, target));
     step(owner, target, 0.02); assert.equal(owner.throwState.ammo, 3); assert.equal(owner.throwState.reload, 0); assert(fire(owner, target)); api.reset();
 });
+test('CPU damage reduction applies to thrown projectiles', () => {
+    const damage = multiplier => {
+        const { fighter, fire, step } = setup();
+        const owner = fighter('naruto'), target = fighter('goku', 440);
+        owner.damageMultiplier = multiplier; fire(owner, target); step(owner, target, 2.7);
+        return target.damage;
+    };
+    assert.ok(Math.abs(damage(0.8) - damage(1) * 0.8) < 0.0001);
+    assert.ok(damage(1) > 0);
+});
+
 test('all 33 character loadouts and every projectile type render, hit once and clean up', () => {
     for (const [id, items] of Object.entries(setup().data)) for (let index = 0; index < items.length; index++) {
         const { api, scene, fighter, fire, step } = setup(); const owner = fighter(id), target = fighter('goku', 440);
@@ -88,17 +99,17 @@ test('game integration: X and 5/numpad5 consume independent ammo, ignore repeats
     const { context, scene, api } = setup();
     const handlers = {}, elements = new Map();
     context.THREE = THREE;
-    context.window.AnimeMaps = { arenas: {} };
     context.window.CharacterMotion = { create: () => new Group(), attack() {}, update() {} };
     context.window.addEventListener = (event, callback) => { handlers[event] = callback; };
     context.requestAnimationFrame = () => 1; context.cancelAnimationFrame = () => {};
     context.performance = { now: () => 1000 };
     context.document = { addEventListener() {}, getElementById(id) {
-        if (!elements.has(id)) elements.set(id, { value: id === 'stocks-select' ? '3' : 'normal', textContent: '', classList: { add() {}, remove() {}, toggle() {} } });
+        if (!elements.has(id)) elements.set(id, { value: id.endsWith('stocks-select') ? '3' : 'normal', textContent: '', style: { setProperty() {} }, setAttribute() {}, classList: { add() {}, remove() {}, toggle() {} } });
         return elements.get(id);
     } };
     for (const file of ['moves-data.js', 'special-moves.js']) vm.runInContext(fs.readFileSync(path.join(__dirname, '../../../special-moves/javascript', file), 'utf8'), context);
-    vm.runInContext(fs.readFileSync(path.join(__dirname, '../../../../javascript/script.js'), 'utf8'), context);
+    for (const file of ['assest/maps/maps.js', 'javascript/battle-rules.js', 'javascript/script.js'])
+        vm.runInContext(fs.readFileSync(path.join(__dirname, '../../../..', file), 'utf8'), context);
     context.testScene = scene;
     vm.runInContext(`battleScene=testScene;gameMode='2p';gameRunning=true;
         fighters=[makeFighter(ROSTER.find(c=>c.id==='naruto'),0),makeFighter(ROSTER.find(c=>c.id==='goku'),1)];

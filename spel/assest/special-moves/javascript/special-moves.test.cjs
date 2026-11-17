@@ -83,6 +83,17 @@ test('each move casts, has a cooldown, produces finite transforms, applies gamep
     }
 });
 
+test('CPU damage reduction applies to special attacks', () => {
+    const damage = multiplier => {
+        const { fighter, cast, step } = setup();
+        const owner = fighter('goku', 300), target = fighter('hit', 355);
+        owner.damageMultiplier = multiplier; cast(owner, target, 0); step(owner, target, 70);
+        return target.damage - 40;
+    };
+    assert.ok(Math.abs(damage(0.8) - damage(1) * 0.8) < 0.0001);
+    assert.ok(damage(1) > 0);
+});
+
 test('independent cooldowns, immunity, blocking, stun and healing clamps', () => {
     const { api, fighter, step, cast, scene } = setup();
     const owner = fighter('goku', 300), target = fighter('hit', 355);
@@ -118,7 +129,6 @@ test('a target can dodge a locked spell; projectiles do not hit behind the caste
 test('game integration: G/C, Q/E, 2/3, numpad, CPU cooldowns and returning to selection', () => {
     const { api, context, scene } = setup();
     const handlers = {}, elements = new Map();
-    context.window.AnimeMaps = { arenas: {} };
     context.window.addEventListener = (name, callback) => { handlers[name] = callback; };
     context.window.CharacterMotion = { create: () => new Group(), attack() {}, update() {} };
     context.THREE = THREE;
@@ -128,12 +138,12 @@ test('game integration: G/C, Q/E, 2/3, numpad, CPU cooldowns and returning to se
     context.document = {
         addEventListener() {},
         getElementById(id) {
-            if (!elements.has(id)) elements.set(id, { value: id === 'stocks-select' ? '3' : 'normal', textContent: '', classList: { add() {}, remove() {} } });
+            if (!elements.has(id)) elements.set(id, { value: id.endsWith('stocks-select') ? '3' : 'normal', textContent: '', style: { setProperty() {} }, setAttribute() {}, classList: { add() {}, remove() {}, toggle() {} } });
             return elements.get(id);
         }
     };
-    const script = fs.readFileSync(path.join(__dirname, '../../../javascript/script.js'), 'utf8');
-    vm.runInContext(script, context);
+    for (const file of ['assest/maps/maps.js', 'javascript/battle-rules.js', 'javascript/script.js'])
+        vm.runInContext(fs.readFileSync(path.join(__dirname, '../../..', file), 'utf8'), context);
     context.testScene = scene;
     vm.runInContext(`
         battleScene = testScene;

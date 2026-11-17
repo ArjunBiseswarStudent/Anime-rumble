@@ -35,6 +35,17 @@ test('every listed weapon has a functional attack, finite effects and eventual c
         assert.equal(scene.children.length, 0); api.reset();
     }
 });
+test('CPU damage reduction applies to weapon hits', () => {
+    const damage = multiplier => {
+        const { fighter, attack, step } = setup();
+        const owner = fighter('naruto', 300), target = fighter('gojo', 350);
+        owner.damageMultiplier = multiplier; attack(owner, target); step(owner, target, 0.7);
+        return target.damage;
+    };
+    assert.ok(Math.abs(damage(0.8) - damage(1) * 0.8) < 0.0001);
+    assert.ok(damage(1) > 0);
+});
+
 test('melee misses behind or outside reach; spear reaches further than fists', () => {
     const { fighter, attack, step, api } = setup();
     const owner = fighter('noelle', 300), target = fighter('gojo', 450);

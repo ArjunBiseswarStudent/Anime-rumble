@@ -116,7 +116,7 @@ window.TrowItems = (() => {
         const { target, owner, item } = effect;
         if (target.invulnerable > 0) return false;
         const shield = effect.isShielded(target);
-        target.damage += item.damage * (owner.specialStatus?.buff > 0 ? 1.3 : 1) * (target.specialStatus?.armor > 0 ? 0.65 : 1) * (shield ? 0.25 : 1);
+        target.damage += item.damage * (owner.damageMultiplier ?? 1) * (owner.specialStatus?.buff > 0 ? 1.3 : 1) * (target.specialStatus?.armor > 0 ? 0.65 : 1) * (shield ? 0.25 : 1);
         target.vx = effect.facing * (3.5 + target.damage / 25) * (shield ? 0.3 : 1);
         target.vy = shield ? -1 : -3.5; target.grounded = false;
         target.invulnerable = 0.15;

@@ -1230,6 +1230,7 @@ let gameRunning = false;
 let animationFrame = 0;
 let lastFrameTime = 0;
 let matchStartedAt = 0;
+let matchElapsed = 0;
 let fighters = [];
 let currentArena = ARENAS.dojo;
 const pressedKeys = new Set();
@@ -1510,10 +1511,13 @@ function setGameMode(mode) {
 }
 
 function makeFighter(character, playerIndex) {
+    const requestedStocks = Number(document.getElementById(`p${playerIndex + 1}-stocks-select`).value);
+    const stocks = requestedStocks === 5 ? 5 : 3;
     return {
         character,
         model: createCharacterModel(character),
         playerIndex,
+        damageMultiplier: gameMode === 'cpu' && playerIndex === 1 ? 0.8 : 1,
         x: playerIndex === 0 ? 330 : 630,
         y: 180,
         vx: 0,
@@ -1522,8 +1526,11 @@ function makeFighter(character, playerIndex) {
         dropThroughTimer: 0,
         width: character.scaleW || 34,
         height: character.scaleH || 48,
-        stocks: Number(document.getElementById('stocks-select').value) || 3,
+        stocks,
+        maxStocks: stocks,
         damage: 0,
+        get health() { return window.BattleRules.health(this); },
+        defeats: 0,
         facing: playerIndex === 0 ? 1 : -1,
         attackCooldown: 0,
         specialCooldowns: [0, 0],
@@ -1550,16 +1557,16 @@ function startMatch() {
     currentArena = ARENAS[document.getElementById('arena-select').value] || ARENAS.dojo;
     fighters = [makeFighter(selection[0], 0), makeFighter(selection[1], 1)];
     gameRunning = true;
-    matchStartedAt = performance.now();
-    lastFrameTime = matchStartedAt;
+    matchElapsed = 0;
     document.getElementById('select-screen').classList.add('hidden');
     document.getElementById('arena-screen').classList.remove('hidden');
     document.getElementById('result-overlay').classList.add('hidden');
     document.getElementById('arena-note').textContent =
-        `${currentArena.name} · Duw je tegenstander van de platforms af om te winnen.`;
+        `${currentArena.name} · Maximaal 3 minuten · 100% gezondheid per leven · Geen levens meer? Dan is het gevecht voorbij.`;
     document.getElementById('p1-hud-name').textContent = selection[0].name;
     document.getElementById('p2-hud-name').textContent = selection[1].name;
     document.getElementById('p2-hud-role').textContent = gameMode === 'cpu' ? 'CPU' : 'PLAYER 2';
+    selection.forEach((character, index) => drawPortrait(document.getElementById(`p${index + 1}-hud-portrait`), character));
     const canvas = document.getElementById('gameCanvas');
     canvas.width = 960;
     canvas.height = 540;
@@ -1573,6 +1580,8 @@ function startMatch() {
         window.alert('De 3D-arena kon niet starten. Controleer of WebGL in je browser is ingeschakeld.');
         return;
     }
+    matchStartedAt = performance.now();
+    lastFrameTime = matchStartedAt;
     updateBattleHud();
     window.ArenaMusic?.start(document.getElementById('arena-select').value);
     animationFrame = requestAnimationFrame(battleLoop);
@@ -1706,7 +1715,7 @@ function performAttack(attacker, target, isSpecial, specialMove = 'neutral') {
     if (distanceX > (status.buff > 0 ? 110 : 82) || distanceY > 82 || target.invulnerable > 0) return;
     const shielding = isFighterShielded(target);
     const targetStatus = window.SpecialMoves.prepare(target);
-    target.damage += 8 * (status.buff > 0 ? 1.3 : 1) * (targetStatus.armor > 0 ? 0.65 : 1) * (shielding ? 0.25 : 1);
+    target.damage += 8 * (attacker.damageMultiplier ?? 1) * (status.buff > 0 ? 1.3 : 1) * (targetStatus.armor > 0 ? 0.65 : 1) * (shielding ? 0.25 : 1);
     const direction = Math.sign(target.x - attacker.x) || attacker.facing;
     target.vx = direction * (4.5 + target.damage / 18) * (shielding ? 0.35 : 1);
     target.vy = shielding ? -2 : -4;
@@ -1720,14 +1729,15 @@ function loseStock(fighter) {
     window.CombatActions?.clearFighter(fighter);
     window.TrowItems?.clearFighter(fighter);
     fighter.weaponSlow = 0;
-    fighter.stocks--;
-    fighter.damage = 0;
-    if (fighter.stocks <= 0) {
-        const winner = fighters[1 - fighter.playerIndex];
-        winner.knockouts++;
-        finishMatch(winner);
+    fighter.defeats++;
+    fighter.stocks = Math.max(0, fighter.maxStocks - fighter.defeats);
+    fighters[1 - fighter.playerIndex].knockouts++;
+    if (fighter.stocks === 0) {
+        fighter.damage = 100;
+        fighter.model.visible = false;
         return;
     }
+    fighter.damage = 0;
 
     fighter.x = fighter.playerIndex === 0 ? 330 : 630;
     fighter.y = 125;
@@ -1736,28 +1746,34 @@ function loseStock(fighter) {
     fighter.grounded = false;
     fighter.dropThroughTimer = 0;
     fighter.invulnerable = 2;
+    fighter.blocking = false;
+    fighter.attackCooldown = 0;
+    fighter.specialCooldowns.fill(0);
+    fighter.model.visible = true;
+    fighter.model.position.set((fighter.x + fighter.width / 2 - 480) / 65, (540 - fighter.y - fighter.height) / 65, 0);
     updateBattleHud();
 }
 
-function finishMatch(winner) {
+function finishMatch(winner, reason = 'time') {
     window.ArenaMusic?.stop();
     window.SpecialMoves.reset();
     window.CombatActions?.reset();
     window.TrowItems?.reset();
     gameRunning = false;
     cancelAnimationFrame(animationFrame);
-    const elapsed = Math.max(0, Math.floor((performance.now() - matchStartedAt) / 1000));
-    document.getElementById('result-winner').textContent = `${winner.character.name} wint!`;
+    const elapsed = Math.floor(matchElapsed);
+    document.getElementById('result-winner').textContent = winner ? `${winner.character.name} wint!` : 'Gelijkspel!';
     document.getElementById('result-subtitle').textContent =
-        gameMode === 'cpu' && winner.playerIndex === 1
-            ? 'De CPU heeft de arena veroverd.'
-            : `${winner.playerIndex === 0 ? 'Speler 1' : 'Speler 2'} heeft de arena veroverd.`;
+        reason === 'elimination'
+            ? (winner ? 'De tegenstander heeft geen levens meer over.' : 'Beide spelers zijn tegelijk hun laatste leven kwijt.')
+            : (winner ? 'Tijd om! Meeste resterende levens wint; bij gelijke levens telt de gezondheid.' : 'Tijd om! Beide spelers hebben evenveel levens en gezondheid.');
     document.getElementById('result-duration').textContent =
         `${Math.floor(elapsed / 60)}:${String(elapsed % 60).padStart(2, '0')}`;
     fighters.forEach((fighter, index) => {
         document.getElementById(`result-p${index + 1}-name`).textContent = fighter.character.name;
         document.getElementById(`result-p${index + 1}-stats`).innerHTML =
             `<span>Levens over <b>${fighter.stocks}</b></span>` +
+            `<span>Gezondheid <b>${Math.ceil(fighter.health)}%</b></span>` +
             `<span>Aanvallen <b>${fighter.attacks}</b></span>` +
             `<span>Treffers <b>${fighter.hits}</b></span>` +
             `<span>Uitschakelingen <b>${fighter.knockouts}</b></span>`;
@@ -1861,7 +1877,6 @@ function updateFighter(fighter, target, dt) {
     window.CharacterMotion.update(fighter.model, fighter, dt);
     if (fighter.model.userData.shield) fighter.model.userData.shield.visible = fighter.blocking;
     fighter.model.visible = fighter.invulnerable <= 0 || Math.floor(performance.now() / 90) % 2 === 0;
-    if (fighter.x < -fighter.width || fighter.x > 960 || fighter.y > 630) loseStock(fighter);
 }
 
 function drawBattle() {
@@ -1881,6 +1896,7 @@ function battleLoop(now) {
     if (!gameRunning) return;
     const dt = Math.min((now - lastFrameTime) / 1000, 0.04);
     lastFrameTime = now;
+    matchElapsed = Math.min(window.BattleRules.durationSeconds, Math.max(0, (now - matchStartedAt) / 1000));
     updateFighter(fighters[0], fighters[1], dt);
     jumpRequests[0] = false;
     if (gameRunning) updateFighter(fighters[1], fighters[0], dt);
@@ -1889,22 +1905,63 @@ function battleLoop(now) {
         window.SpecialMoves.update(dt);
         window.CombatActions?.update(dt);
         window.TrowItems?.update(dt);
+        // Resolve both fighters after all damage sources, including simultaneous KOs.
+        const defeated = fighters.filter(fighter => window.BattleRules.isDefeated(fighter));
+        defeated.forEach(loseStock);
         window.AnimeMaps.updateScenery(battleScene, (now - matchStartedAt) / 1000);
         drawBattle();
         updateBattleHud();
+        if (fighters.some(fighter => fighter.stocks === 0)) {
+            finishMatch(window.BattleRules.chooseWinner(fighters), 'elimination');
+            return;
+        }
+        if (matchElapsed >= window.BattleRules.durationSeconds) {
+            finishMatch(window.BattleRules.chooseWinner(fighters));
+            return;
+        }
         animationFrame = requestAnimationFrame(battleLoop);
     }
 }
 
 function updateBattleHud() {
+    const elapsed = Math.max(0, Math.ceil(window.BattleRules.durationSeconds - matchElapsed));
+    const clock = document.getElementById('battle-clock');
+    const time = `${String(Math.floor(elapsed / 60)).padStart(2, '0')}:${String(elapsed % 60).padStart(2, '0')}`;
+    if (clock.textContent !== time) clock.textContent = time;
     fighters.forEach((fighter, index) => {
-        const label = document.getElementById(`p${index + 1}-hud-stats`);
-        const ammo = document.getElementById(`p${index + 1}-throw-ammo`);
+        const prefix = `p${index + 1}`;
+        const label = document.getElementById(`${prefix}-hud-stats`);
+        const ammo = document.getElementById(`${prefix}-throw-ammo`);
         if (ammo && window.TrowItems) {
-            ammo.textContent = (index === 0 ? 'X: ' : '5: ') + window.TrowItems.label(fighter);
+            const text = (index === 0 ? 'X: ' : '5: ') + window.TrowItems.label(fighter);
+            if (ammo.textContent !== text) ammo.textContent = text;
             ammo.classList.toggle('reloading', (fighter.throwState?.reload || 0) > 0);
         }
-        label.textContent = `${'♥ '.repeat(Math.max(0, fighter.stocks))} · ${Math.floor(fighter.damage)}% schade | Super 1: ${window.SpecialMoves.cooldownLabel(fighter, 0)} | Super 2: ${window.SpecialMoves.cooldownLabel(fighter, 1)}${window.CombatActions?.equipped(fighter) ? ' | ' + window.CombatActions.equipped(fighter).name : ''}`;
+        const stocks = Math.max(0, fighter.stocks);
+        const health = fighter.health;
+        const text = `${stocks} ${stocks === 1 ? 'leven' : 'levens'} · ${Math.ceil(health)}% leven`;
+        if (label.textContent !== text) label.textContent = text;
+        const weapon = window.CombatActions?.equipped(fighter);
+        label.title = weapon ? `Wapen: ${weapon.name}` : 'Ongewapend';
+        const meter = document.getElementById(`${prefix}-stock-meter`);
+        meter.setAttribute('aria-valuemax', '100');
+        meter.setAttribute('aria-valuenow', String(Math.round(health)));
+        meter.classList.toggle('health-low', health <= 25);
+        document.getElementById(`${prefix}-stock-fill`).style.width = `${health}%`;
+        ['neutral', 'side'].forEach((direction, slot) => {
+            const cooldown = fighter.character.moves[direction].cooldown || 1;
+            const remaining = Math.max(0, fighter.specialCooldowns[slot]);
+            const ready = Math.max(0, Math.min(100, (1 - remaining / cooldown) * 100));
+            const bar = document.getElementById(`${prefix}-super-${slot}`);
+            bar.style.setProperty('--ready', `${ready}%`);
+            bar.classList.toggle('is-ready', remaining <= 0);
+            bar.setAttribute('aria-valuenow', String(Math.round(ready)));
+            bar.setAttribute('aria-valuetext', remaining <= 0 ? 'Klaar' : `Nog ${Math.ceil(remaining)} seconden`);
+            bar.title = `${fighter.character.moves[direction].name}: ${window.SpecialMoves.cooldownLabel(fighter, slot)}`;
+            const caption = document.getElementById(`${prefix}-super-${slot}-label`);
+            const text = `S${slot + 1} ${remaining <= 0 ? 'klaar' : `${Math.ceil(remaining)}s`}`;
+            if (caption.textContent !== text) caption.textContent = text;
+        });
     });
 }
 

@@ -80,7 +80,7 @@ window.CombatActions = (() => {
         const { owner, target, stats, combo } = effect;
         if (target.invulnerable > 0) return false;
         const shield = effect.isShielded(target);
-        const amount = stats.damage * (combo === 3 ? 1.35 : 1) * (owner.specialStatus?.buff > 0 ? 1.3 : 1) * (target.specialStatus?.armor > 0 ? 0.65 : 1) * (shield ? 0.25 : 1);
+        const amount = stats.damage * (owner.damageMultiplier ?? 1) * (combo === 3 ? 1.35 : 1) * (owner.specialStatus?.buff > 0 ? 1.3 : 1) * (target.specialStatus?.armor > 0 ? 0.65 : 1) * (shield ? 0.25 : 1);
         target.damage += amount;
         target.vx = effect.facing * (3 + target.damage / 22 + (stats.kind === 'heavy' ? 3 : 0)) * (shield ? 0.3 : 1);
         target.vy = shield ? -1 : combo === 3 ? -7 : -3;

@@ -1,0 +1,61 @@
+.battle-viewport { position: relative; }
+.battle-hud-overlay { position: absolute; z-index: 3; top: 12px; left: 14px; right: 14px; display: grid; grid-template-columns: minmax(0, 1fr) 64px minmax(0, 1fr); gap: 14px; margin: 0; align-items: start; pointer-events: none; filter: drop-shadow(0 3px 5px #0009); }
+.hud-fighter { --hud-color: #f1777d; display: grid; grid-template-columns: 64px minmax(0, 1fr); align-items: center; gap: 8px; min-width: 0; padding: 5px 9px 6px 5px; border-top: 2px solid var(--hud-color); border-radius: 35px 4px 12px 35px; background: linear-gradient(100deg, #101723ed, #101723a3); }
+.hud-right { --hud-color: #76b7ff; grid-template-columns: minmax(0, 1fr) 64px; padding: 5px 5px 6px 9px; border-radius: 4px 35px 35px 12px; background: linear-gradient(260deg, #101723ed, #101723a3); text-align: right; }
+.game-frame .hud-portrait { display: block; width: 64px; height: 64px; min-height: 0; aspect-ratio: 1; border: 2px solid #b9a479; border-radius: 50%; background: #202d3d; }
+.hud-right .hud-portrait { grid-column: 2; grid-row: 1; }
+.hud-right .hud-data { grid-column: 1; grid-row: 1; }
+.hud-data { min-width: 0; }
+.hud-name-row { display: flex; align-items: baseline; gap: 8px; margin-bottom: 4px; }
+.hud-right .hud-name-row { flex-direction: row-reverse; }
+.hud-name-row strong { overflow: hidden; color: #fff; font-size: clamp(11px, 1.7vw, 18px); font-weight: 800; text-overflow: ellipsis; white-space: nowrap; text-shadow: 0 2px 3px #000; }
+.hud-name-row .hud-role { flex: none; color: var(--hud-color); font-size: 8px; font-weight: 800; letter-spacing: 1px; }
+.hud-stock-meter { height: 12px; overflow: hidden; border: 1px solid #c2b68d; border-radius: 2px; background: #191e27; box-shadow: 0 1px 0 #0008; transform: skewX(-13deg); }
+.hud-stock-meter > i { display: block; width: 100%; height: 100%; background: linear-gradient(#d8f1a0, #8aba69 45%, #5c9555 55%, #9ac27b); transition: width .25s ease-out; }
+.hud-right .hud-stock-meter { transform: skewX(13deg); }
+.hud-stock-meter.health-low > i { background: linear-gradient(#ffc184, #de6b44 55%, #a93838); }
+.hud-right .hud-stock-meter > i { margin-left: auto; }
+.hud-specials { display: flex; gap: 5px; margin-top: 4px; }
+.hud-super { --ready: 100%; position: relative; flex: 1; min-width: 0; height: 13px; border: 1px solid #6f859c; border-radius: 2px; background: #101b2b; overflow: hidden; }
+.hud-super > i { position: absolute; inset: 0 auto 0 0; width: var(--ready); background: linear-gradient(90deg, #2c678a, #78bad2); }
+.hud-super.is-ready > i { background: linear-gradient(90deg, #497c9e, #a0e7eb); }
+.hud-super > span { position: relative; display: block; padding: 1px 3px; color: #fff; font-size: 8px; font-weight: 700; line-height: 9px; text-shadow: 0 1px 2px #000; }
+.hud-right .hud-super > i { right: 0; left: auto; }
+.hud-detail-row { display: flex; justify-content: space-between; align-items: baseline; gap: 5px; margin-top: 4px; }
+.hud-right .hud-detail-row { flex-direction: row-reverse; }
+.hud-detail-row small { min-width: 0; color: #f1e6c9; font-size: 9px; font-weight: 700; white-space: nowrap; }
+.hud-detail-row .throw-ammo { margin: 0; color: #bde8f1; font-size: 8px; }
+.hud-clock { padding-top: 9px; color: #eaf8ff; text-align: center; text-shadow: 0 0 12px #56a2ef, 0 2px 4px #000; }
+.hud-clock > span { display: block; margin-bottom: 2px; font-size: 7px; font-weight: 800; letter-spacing: 2px; }
+.hud-clock > strong { font-size: 22px; font-variant-numeric: tabular-nums; }
+.battle-controls { margin-top: 12px; padding: 10px 14px; border: 1px solid #33415a; border-radius: 7px; color: #bac9dc; background: #10192a; font-size: 11px; line-height: 1.6; }
+.battle-controls summary { cursor: pointer; color: #e2eaf6; font-weight: 700; }
+.battle-controls p { margin: 8px 0 0; }
+@media (max-width: 700px) {
+    .battle-hud-overlay { top: 7px; left: 7px; right: 7px; grid-template-columns: minmax(0, 1fr) 44px minmax(0, 1fr); gap: 5px; }
+    .hud-fighter { grid-template-columns: 42px minmax(0, 1fr); gap: 5px; padding: 4px 6px 5px 4px; }
+    .hud-right { grid-template-columns: minmax(0, 1fr) 42px; padding: 4px 4px 5px 6px; }
+    .game-frame .hud-portrait { width: 42px; height: 42px; }
+    .hud-name-row { gap: 3px; margin-bottom: 3px; }
+    .hud-name-row strong { font-size: 11px; }
+    .hud-name-row .hud-role { font-size: 7px; letter-spacing: 0; }
+    .hud-stock-meter { height: 8px; }
+    .hud-super { height: 11px; }
+    .hud-super > span { padding: 0 2px; font-size: 7px; }
+    .hud-detail-row small { font-size: 8px; }
+    .hud-detail-row .throw-ammo { font-size: 7px; }
+    .hud-clock { padding-top: 7px; }
+    .hud-clock > strong { font-size: 15px; }
+}
+@media (max-width: 440px) {
+    .hud-fighter { grid-template-columns: 28px minmax(0, 1fr); gap: 4px; padding-left: 3px; }
+    .hud-right { grid-template-columns: minmax(0, 1fr) 28px; padding-left: 5px; padding-right: 3px; }
+    .game-frame .hud-portrait { width: 28px; height: 28px; border-width: 1px; }
+    .hud-name-row strong { font-size: 9px; }
+    .hud-name-row .hud-role { display: none; }
+    .hud-detail-row { flex-wrap: wrap; gap: 1px; margin-top: 2px; }
+    .hud-detail-row .throw-ammo { font-size: 6px; }
+    .hud-specials { gap: 2px; margin-top: 3px; }
+    .hud-super > span { font-size: 6px; }
+}
+@media (prefers-reduced-motion: reduce) { .hud-stock-meter > i { transition: none; } }
