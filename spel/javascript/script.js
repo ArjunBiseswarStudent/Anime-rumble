@@ -1281,7 +1281,11 @@ let fighters = [];
 let currentArena = ARENAS.dojo;
 const pressedKeys = new Set();
 const jumpRequests = [false, false];
-const dropRequests = [false, false];
+const PLAYER_CONTROLS = [
+    { left: 'KeyA', right: 'KeyD', jump: 'KeyW', shield: 'KeyS', attack: 'KeyF', super1: 'KeyG', super2: 'KeyC' },
+    { left: 'ArrowLeft', right: 'ArrowRight', jump: 'ArrowUp', shield: 'ArrowDown', attack: 'Digit1', super1: 'Digit2', super2: 'Digit3' }
+];
+const GAME_KEYS = new Set(PLAYER_CONTROLS.flatMap(controls => Object.values(controls)));
 const activeSpecialEffects = [];
 const portraitCanvases = [
     document.getElementById('p1-portrait-canvas'),
@@ -1449,8 +1453,6 @@ function updateSelectionCards() {
         document.getElementById(`${prefix}-char-desc`).textContent = character.desc;
         document.getElementById(`${prefix}-move-n`).textContent = character.moves.neutral.name;
         document.getElementById(`${prefix}-move-s`).textContent = character.moves.side.name;
-        document.getElementById(`${prefix}-move-u`).textContent = character.moves.up.name;
-        document.getElementById(`${prefix}-move-d`).textContent = character.moves.down.name;
         drawPortrait(portraitCanvases[index], character);
     });
 
@@ -1558,7 +1560,6 @@ function startMatch() {
     cancelAnimationFrame(animationFrame);
     pressedKeys.clear();
     jumpRequests.fill(false);
-    dropRequests.fill(false);
     currentArena = ARENAS[document.getElementById('arena-select').value] || ARENAS.dojo;
     fighters = [makeFighter(selection[0], 0), makeFighter(selection[1], 1)];
     gameRunning = true;
@@ -1656,32 +1657,22 @@ function resizeBattleRenderer() {
     battleCamera.updateProjectionMatrix();
 }
 
-function performAttack(attacker, target, isSpecial) {
+function performAttack(attacker, target, isSpecial, specialMove = 'neutral') {
     const cooldown = isSpecial ? 1.1 : 0.48;
     if ((isSpecial && attacker.specialCooldown > 0) || (!isSpecial && attacker.attackCooldown > 0)) return;
     if (isSpecial) attacker.specialCooldown = cooldown;
     else attacker.attackCooldown = cooldown;
     attacker.attacks++;
 
-    let moveDirection = 'neutral';
+    const moveDirection = isSpecial ? specialMove : 'neutral';
     if (isSpecial) {
-        const upKey = attacker.playerIndex === 0 ? 'KeyW' : 'KeyI';
-        const downKey = attacker.playerIndex === 0 ? 'KeyS' : 'KeyK';
-        const leftKey = attacker.playerIndex === 0 ? 'KeyA' : 'KeyJ';
-        const rightKey = attacker.playerIndex === 0 ? 'KeyD' : 'KeyL';
-        if (pressedKeys.has(upKey)) moveDirection = 'up';
-        else if (pressedKeys.has(downKey)) moveDirection = 'down';
-        else if (pressedKeys.has(leftKey) || pressedKeys.has(rightKey)) moveDirection = 'side';
-
-        if (moveDirection === 'side') {
-            if (pressedKeys.has(leftKey)) attacker.facing = -1;
-            if (pressedKeys.has(rightKey)) attacker.facing = 1;
-        }
+        const controls = PLAYER_CONTROLS[attacker.playerIndex];
+        if (pressedKeys.has(controls.left)) attacker.facing = -1;
+        if (pressedKeys.has(controls.right)) attacker.facing = 1;
         const move = attacker.character.moves[moveDirection];
         document.getElementById('arena-note').textContent =
             `${attacker.character.name} gebruikt ${move.name}!`;
         createSpecialEffect(attacker, moveDirection);
-        if (moveDirection === 'down') dropRequests[attacker.playerIndex] = false;
         if (moveDirection === 'up') {
             attacker.vy = -attacker.character.jump * 1.1;
             attacker.grounded = false;
@@ -1696,7 +1687,7 @@ function performAttack(attacker, target, isSpecial) {
     const reachY = !isSpecial ? 82 : moveDirection === 'up' || moveDirection === 'down' ? 150 : 105;
     if (distanceX > reachX || distanceY > reachY || target.invulnerable > 0) return;
 
-    const shieldKey = target.playerIndex === 0 ? 'KeyX' : 'KeyK';
+    const shieldKey = PLAYER_CONTROLS[target.playerIndex].shield;
     const shielding = target.playerIndex === 0 || gameMode === '2p'
         ? target.blocking || pressedKeys.has(shieldKey)
         : false;
@@ -1801,7 +1792,6 @@ function returnToSelection() {
     cancelAnimationFrame(animationFrame);
     pressedKeys.clear();
     jumpRequests.fill(false);
-    dropRequests.fill(false);
     document.getElementById('result-overlay').classList.add('hidden');
     document.getElementById('arena-screen').classList.add('hidden');
     document.getElementById('select-screen').classList.remove('hidden');
@@ -1813,11 +1803,7 @@ function returnToHome() {
 
 function updateFighter(fighter, target, dt) {
     const isPlayerOne = fighter.playerIndex === 0;
-    const leftKey = isPlayerOne ? 'KeyA' : 'KeyJ';
-    const rightKey = isPlayerOne ? 'KeyD' : 'KeyL';
-    const upKey = isPlayerOne ? 'KeyW' : 'KeyI';
-    const downKey = isPlayerOne ? 'KeyS' : 'KeyK';
-    const shieldKey = isPlayerOne ? 'KeyX' : 'KeyK';
+    const { left: leftKey, right: rightKey, shield: shieldKey } = PLAYER_CONTROLS[fighter.playerIndex];
     const isCpu = gameMode === 'cpu' && !isPlayerOne;
     let move = 0;
     fighter.blocking = !isCpu && pressedKeys.has(shieldKey);
@@ -1833,7 +1819,7 @@ function updateFighter(fighter, target, dt) {
             performAttack(fighter, target, false);
         }
         if (Math.abs(distance) < attackRange + 40 && fighter.specialCooldown <= 0 && Math.random() < specialChance) {
-            performAttack(fighter, target, true);
+            performAttack(fighter, target, true, Math.random() < 0.5 ? 'neutral' : 'side');
         }
         if (fighter.grounded && Math.random() < 0.025) {
             fighter.vy = -fighter.character.jump;
@@ -1842,26 +1828,10 @@ function updateFighter(fighter, target, dt) {
     } else {
         if (!fighter.blocking && pressedKeys.has(leftKey)) move--;
         if (!fighter.blocking && pressedKeys.has(rightKey)) move++;
-        if (jumpRequests[fighter.playerIndex] && fighter.grounded) {
+        if (jumpRequests[fighter.playerIndex] && fighter.grounded && !fighter.blocking) {
             fighter.vy = -fighter.character.jump;
             fighter.grounded = false;
-        } else if (isPlayerOne && pressedKeys.has(upKey) && fighter.grounded) {
-            fighter.vy = -fighter.character.jump * 0.4;
-            fighter.grounded = false;
         }
-        if (isPlayerOne && dropRequests[0] && fighter.grounded) {
-            fighter.dropThroughTimer = 0.28;
-            fighter.y += 4;
-            fighter.vy = 2;
-            fighter.grounded = false;
-        }
-    }
-
-    if (!fighter.grounded && !isCpu && isPlayerOne) {
-        if (pressedKeys.has(upKey)) {
-            fighter.vy = Math.max(-fighter.character.jump * 1.1, fighter.vy - 30 * dt);
-        }
-        if (pressedKeys.has(downKey)) fighter.vy = Math.min(18, fighter.vy + 30 * dt);
     }
 
     if (move) fighter.facing = move;
@@ -1920,10 +1890,8 @@ function battleLoop(now) {
     lastFrameTime = now;
     updateFighter(fighters[0], fighters[1], dt);
     jumpRequests[0] = false;
-    dropRequests[0] = false;
     if (gameRunning) updateFighter(fighters[1], fighters[0], dt);
     jumpRequests[1] = false;
-    dropRequests[1] = false;
     if (gameRunning) {
         updateSpecialEffects(dt);
         window.AnimeMaps.updateScenery(battleScene, (now - matchStartedAt) / 1000);
@@ -1941,22 +1909,28 @@ function updateBattleHud() {
 }
 
 window.addEventListener('resize', resizeBattleRenderer);
+function normalizeGameKey(code) {
+    return /^Numpad[123]$/.test(code) ? code.replace('Numpad', 'Digit') : code;
+}
+
 window.addEventListener('keydown', (event) => {
     if (!gameRunning) return;
-    pressedKeys.add(event.code);
-    if (event.code === 'Space') event.preventDefault();
+    const code = normalizeGameKey(event.code);
+    if (!GAME_KEYS.has(code)) return;
+    event.preventDefault();
+    pressedKeys.add(code);
     if (event.repeat) return;
 
-    if (event.code === 'Space') jumpRequests[0] = true;
-    if (gameMode === '2p' && event.code === 'KeyI') jumpRequests[1] = true;
-    if (event.code === 'KeyS') dropRequests[0] = true;
-    if (event.code === 'KeyF') performAttack(fighters[0], fighters[1], false);
-    if (event.code === 'KeyG') performAttack(fighters[0], fighters[1], true);
-    if (gameMode === '2p' && event.code === 'KeyO') performAttack(fighters[1], fighters[0], false);
-    if (gameMode === '2p' && event.code === 'KeyP') performAttack(fighters[1], fighters[0], true);
+    PLAYER_CONTROLS.forEach((controls, index) => {
+        if (index === 1 && gameMode !== '2p') return;
+        if (code === controls.jump) jumpRequests[index] = true;
+        if (code === controls.attack) performAttack(fighters[index], fighters[1 - index], false);
+        if (code === controls.super1) performAttack(fighters[index], fighters[1 - index], true, 'neutral');
+        if (code === controls.super2) performAttack(fighters[index], fighters[1 - index], true, 'side');
+    });
 });
 
-window.addEventListener('keyup', (event) => pressedKeys.delete(event.code));
+window.addEventListener('keyup', (event) => pressedKeys.delete(normalizeGameKey(event.code)));
 window.addEventListener('blur', () => pressedKeys.clear());
 
 document.addEventListener('DOMContentLoaded', () => {
