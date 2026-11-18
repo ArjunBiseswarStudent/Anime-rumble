@@ -43,12 +43,15 @@ body { margin: 0; min-width: 280px; overflow-x: hidden; }
 @keyframes orb-pulse { 50% { opacity: .6; transform: scale(1.08); } }
 @keyframes start-glow { 50% { filter: drop-shadow(0 0 17px #ffcb53); } }
 @keyframes petal-fall { 0% { opacity: 0; transform: translate3d(0, 0, 0) rotate(0); } 12% { opacity: .8; } 85% { opacity: .7; } 100% { opacity: 0; transform: translate3d(var(--drift), 110vh, 0) rotate(390deg); } }
-@media (max-width: 700px) and (orientation: portrait) {
+@media (orientation: portrait) {
     .press-start, .has-artwork .press-start { top: 78%; left: 50%; width: min(80vw, 340px); height: 58px; transform: translateX(-50%); border: 2px solid #ffe187; background: linear-gradient(#46240c, #181018 50%, #56300c); }
     .has-artwork .press-start span { opacity: 1; }
     .start-fallback img { width: 34vw; }
     .start-fallback h1 { font-size: 28px; }
     .start-footer { font-size: 9px; gap: 8px; }
+}
+@media (max-height: 450px) and (orientation: portrait) {
+    .press-start, .has-artwork .press-start { top: 60%; }
 }
 @media (min-aspect-ratio: 21/9) {
     .press-start, .has-artwork .press-start { top: calc(50% + 18svh); left: 50%; width: min(45vw, 480px); height: 56px; transform: translateX(-50%); border: 2px solid #ffe187; background: linear-gradient(#46240c, #181018 50%, #56300c); }

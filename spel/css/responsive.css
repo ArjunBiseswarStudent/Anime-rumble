@@ -6,7 +6,7 @@ button, a, input, select, summary { -webkit-tap-highlight-color: transparent; }
 .arena-screen #gameCanvas { display: block; width: 100%; height: auto; min-height: 0; aspect-ratio: 16 / 9; }
 .touch-controls { display: none; gap: 10px; margin-top: 12px; }
 .touch-tip { grid-column: 1 / -1; margin: 0; color: #a9bdd6; font-size: 11px; text-align: center; line-height: 1.5; }
-.touch-player { min-width: 0; margin: 0; padding: 8px 12px 12px; border: 1px solid #794751; border-radius: 12px; background: #111a2a; }
+.touch-player { min-width: 0; container-type: inline-size; margin: 0; padding: 8px 12px 12px; border: 1px solid #794751; border-radius: 12px; background: #111a2a; }
 .touch-player[hidden] { display: none !important; }
 .touch-player[data-touch-player="1"] { border-color: #426b9e; }
 .touch-player legend { padding: 0 7px; color: #f2a5af; font-size: 10px; font-weight: 800; }
@@ -24,6 +24,12 @@ button, a, input, select, summary { -webkit-tap-highlight-color: transparent; }
 .touch-actions .touch-action-5, .touch-actions .touch-action-6 { background: linear-gradient(#485681, #2e3554); }
 .touch-actions .touch-action-7 { grid-column: 2; }
 .touch-actions .touch-action-8 { grid-column: 3; }
+@container (max-width: 330px) {
+    .touch-player-buttons { grid-template-columns: minmax(0, 1fr); gap: 8px; }
+    .touch-movement { width: 144px; justify-self: center; }
+    .touch-actions { grid-template-columns: repeat(5, minmax(0, 1fr)); grid-template-rows: 46px; }
+    .touch-actions .touch-action-7, .touch-actions .touch-action-8 { grid-column: auto; }
+}
 @media (any-pointer: coarse), (max-width: 900px) {
     .touch-controls { display: grid; grid-template-columns: minmax(0, 1fr); }
     .choice-btn, .target-btn, .back-btn, .random-character-btn, .music-controls button, .result-actions button, .selection-settings summary, .battle-controls summary { min-height: 44px; }
@@ -63,10 +69,14 @@ button, a, input, select, summary { -webkit-tap-highlight-color: transparent; }
     .arena-top .back-btn { padding: 9px; font-size: 10px; }
     .result-actions { display: grid; grid-template-columns: 1fr; }
     .result-actions button { width: 100%; }
+    .result-panel h2, .result-stats-grid h3 { overflow-wrap: anywhere; }
     .battle-controls p, .combat-help, .arena-note { overflow-wrap: anywhere; }
     .hud-detail-row { flex-wrap: wrap; gap: 1px; }
-    .hud-detail-row small { font-size: 7px; }
-    .hud-detail-row .throw-ammo { font-size: 6px; }
+    .hud-detail-row small { font-size: 9px; }
+    .hud-detail-row .throw-ammo { font-size: 7px; }
+    .hud-detail-row [id$="-hud-stats"] { font-size: 0; }
+    .hud-detail-row [id$="-hud-stats"]::after { content: attr(data-compact); font-size: 10px; }
+    .hud-super > span { font-size: 8px; }
     .hud-name-row .hud-role { display: none; }
 }
 @media (max-width: 400px) {
@@ -76,7 +86,9 @@ button, a, input, select, summary { -webkit-tap-highlight-color: transparent; }
     .touch-actions .touch-action-7, .touch-actions .touch-action-8 { grid-column: auto; }
     .selection-settings .mode-panel { grid-template-columns: minmax(0, 1fr); }
     .arena-top h1 { font-size: 24px; }
-    .hud-detail-row small { font-size: 6px; }
+    .hud-detail-row small { font-size: 9px; }
+    .hud-detail-row [id$="-hud-stats"] { font-size: 0; }
+    .hud-detail-row .throw-ammo { font-size: 7px; }
 }
 @media (max-height: 520px) and (orientation: landscape) and (max-width: 1100px) {
     .screen.arena-screen { width: min(100% - 20px, 850px); padding-top: 6px; }

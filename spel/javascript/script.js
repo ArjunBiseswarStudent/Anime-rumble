@@ -1943,7 +1943,10 @@ function updateBattleHud() {
         const stocks = Math.max(0, fighter.stocks);
         const health = fighter.health;
         const text = `${stocks} ${stocks === 1 ? 'leven' : 'levens'} · ${Math.ceil(health)}% leven`;
-        if (label.textContent !== text) label.textContent = text;
+        if (label.textContent !== text) {
+            label.textContent = text;
+            label.setAttribute('data-compact', `${stocks} ♥ · ${Math.ceil(health)}%`);
+        }
         const weapon = window.CombatActions?.equipped(fighter);
         label.title = weapon ? `Wapen: ${weapon.name}` : 'Ongewapend';
         const meter = document.getElementById(`${prefix}-stock-meter`);
