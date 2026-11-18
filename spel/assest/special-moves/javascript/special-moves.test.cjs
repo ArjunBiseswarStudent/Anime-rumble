@@ -40,11 +40,29 @@ function setup() {
             });
         }
     }
-    function cast(owner, target, slot, blocked = false) {
-        return api.cast({ THREE, scene, owner, target, slot, isShielded: f => blocked && f === target, onNotice() {} });
+    function cast(owner, target, slot, blocked = false, onHit) {
+        return api.cast({ THREE, scene, owner, target, slot, isShielded: f => blocked && f === target, onNotice() {}, onHit });
     }
     return { api, data, scene, fighter, step, cast, context };
 }
+
+test('a special reports its first successful impact only, including for multi-hit moves', () => {
+    const { data, fighter, cast, step } = setup();
+    const [id, moves] = Object.entries(data).find(([, moves]) => moves.some(move => move.kind === 'stream'));
+    const slot = moves.findIndex(move => move.kind === 'stream');
+    let reactions = 0;
+    const first = fighter(id, 300);
+    const distant = fighter('goku', 1500);
+    cast(first, distant, slot, false, () => reactions++);
+    step(first, distant, 180);
+    assert.equal(reactions, 0);
+    const second = fighter(id, 300);
+    const nearby = fighter('goku', 355);
+    cast(second, nearby, slot, false, () => reactions++);
+    step(second, nearby, 180);
+    assert.ok(second.hits > 1);
+    assert.equal(reactions, 1);
+});
 
 test('all 112 moves map to exactly the 56 roster IDs and preserve source names', () => {
     const { api, data, context } = setup();

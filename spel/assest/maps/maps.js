@@ -39,6 +39,17 @@ window.AnimeMaps = (() => {
                 }
             }
         }
+        if (type === 'fabric') {
+            for (let y = 0; y < 128; y += 4) {
+                for (let x = 0; x < 128; x += 4) {
+                    const vertical = (x + y) % 8 === 0;
+                    ctx.fillStyle = '#bfbfbf';
+                    ctx.fillRect(x, y, vertical ? 1 : 4, vertical ? 4 : 1);
+                    ctx.fillStyle = '#f4f4f4';
+                    ctx.fillRect(x + 1, y + 1, vertical ? 1 : 3, vertical ? 3 : 1);
+                }
+            }
+        }
         const texture = new THREE.CanvasTexture(canvas);
         texture.wrapS = texture.wrapT = THREE.RepeatWrapping;
         surfaceTextures.set(type, texture);
@@ -335,8 +346,30 @@ window.AnimeMaps = (() => {
                 const hat = ball('#56633a', x, y + size * 0.98, z, size, 1.45, 0.12, 0.8);
                 hat.rotation.z = 0.15;
             }
-            toad(-6.4, 2, -7, 2);
-            water('#d9ad29', -6.4, 0.7, -5.65, 0.24, 2.4);
+            const gamakichi = window.Gamakichi.build(THREE);
+            group.add(gamakichi);
+            scene.userData.gamakichi = gamakichi;
+            animations.push(gamakichi.userData.animate);
+            const sageRock = { x: .45, y: 4.8, z: -8.1 };
+            const spire = mesh(new THREE.CylinderGeometry(1.48, 2.04, 5.1, 9, 6),
+                '#73785c', sageRock.x, 2.25, sageRock.z);
+            spire.scale.set(1.34, 1, .78);
+            spire.rotation.y = .24;
+            const vertices = spire.geometry.attributes.position;
+            for (let i = 0; i < vertices.count; i++) {
+                const x = vertices.getX(i), y = vertices.getY(i), z = vertices.getZ(i);
+                const erosion = 1 + .13 * Math.cos(3 * x + 3 * z + 2 * y) + .05 * Math.sin(7 * y);
+                vertices.setXYZ(i, x * erosion + y * .04, y, z * erosion);
+            }
+            spire.geometry.computeVertexNormals();
+            ball('#888973', sageRock.x, 4.66, sageRock.z, 1, 2.26, .22, 1.06);
+            for (let i = 0; i < 5; i++) {
+                ball(i % 2 ? '#626956' : '#777d63', sageRock.x + .12 * Math.sin(i), .65 + i * .85,
+                    sageRock.z + .84 - i * .06, 1, 1.73 - i * .12, .29, .71).rotation.z = -.11;
+            }
+            scene.userData.reactFrogSages = window.FrogSages.build(THREE, group, animations, sageRock, {
+                fabric: surfaceTexture(THREE, 'fabric'), skin: surfaceTexture(THREE, 'rock')
+            });
             toad(2.2, 0.9, -13, 1.5);
             for (let i = 0; i < 13; i++) {
                 const x = -2 + i * 1.1, y = 2.2 + i % 4 * 0.7, z = -8 - i % 3 * 2;

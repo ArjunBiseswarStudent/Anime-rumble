@@ -16,6 +16,7 @@ window.HealingItems = (() => {
     const INTERVAL = 10, LIFETIME = 35, MAX_DROPS = 2;
     const AIR_MAPS = new Set(['dojo', 'castle', 'island', 'neon']);
     const FLIGHT_INTERVAL = 15, RELEASE_AT = 3, FLIGHT_DURATION = 6.4, FALL_TIME = 3.4;
+    const SYRUP_INTERVAL = 20, SYRUP_FLIGHT = .85;
     let state = null, drops = [], effects = [], nextSpawn = INTERVAL;
     function dispose(root) {
         if (!root) return;
@@ -37,11 +38,12 @@ window.HealingItems = (() => {
     function init(options) {
         reset(); state = { random: Math.random, onNotice() {}, ...options };
         state.aerial = AIR_MAPS.has(state.arenaKey);
-        nextSpawn = state.aerial ? FLIGHT_INTERVAL : INTERVAL;
+        state.gamakichi = state.arenaKey === 'frog' ? state.scene.userData.gamakichi : null;
+        state.interval = state.gamakichi ? SYRUP_INTERVAL : state.aerial ? FLIGHT_INTERVAL : INTERVAL;
+        nextSpawn = state.interval;
     }
     function randomIndex(length) { return Math.min(length - 1, Math.max(0, Math.floor(state.random() * length))); }
-    function chooseDrop() {
-        const platforms = state.platforms.filter(p => p.w >= 70);
+    function chooseDrop(platforms = state.platforms.filter(p => p.w >= 70)) {
         if (!platforms.length) return null;
         const item = items[randomIndex(items.length)];
         let platform = platforms[randomIndex(platforms.length)];
@@ -51,7 +53,7 @@ window.HealingItems = (() => {
             if (roof.y < platform.y && x >= roof.x + 10 && x <= roof.x + roof.w - 10) platform = roof;
         return { item, platform, x };
     }
-    function spawn(elapsed, destination = chooseDrop(), aerial = false, altitude = 0) {
+    function spawn(elapsed, destination = chooseDrop(), aerial = false, altitude = 0, origin = null) {
         if (!destination) return;
         while (drops.length >= MAX_DROPS) dispose(drops.shift().visual);
         const { item, platform, x } = destination;
@@ -68,9 +70,87 @@ window.HealingItems = (() => {
             drop.born = elapsed + FALL_TIME;
             visual.position.y = drop.startY; visual.position.z = -2.8; halo.visible = false;
         }
+        if (origin) {
+            drop.falling = true;
+            drop.releasedAt = elapsed;
+            drop.born = elapsed + SYRUP_FLIGHT;
+            drop.origin = origin;
+            drop.syrup = new THREE.Group();
+            const geometry = new THREE.SphereGeometry(1, 20, 12);
+            const material = new THREE.MeshPhysicalMaterial({
+                color: '#e1e7cb', roughness: .29, clearcoat: .95, clearcoatRoughness: .12
+            });
+            for (let i = 0; i < 22; i++) drop.syrup.add(new THREE.Mesh(geometry, material));
+            visual.add(drop.syrup);
+            visual.position.set(origin.x, origin.y, origin.z);
+            halo.visible = false;
+            model.visible = false;
+        }
         scene.add(visual); drops.push(drop);
+        if (origin) return;
         state.onNotice(aerial ? `Het vliegtuig dropt ${item.name} (+${item.heal} HP). Wacht tot het item landt.`
             : `${item.name} (+${item.heal} HP) is verschenen. P1: R ophalen · P2: 6 ophalen.`);
+    }
+    function castSyrup(elapsed) {
+        const platforms = state.platforms.filter(p => p.w >= 70);
+        if (!platforms.length) return;
+        const origin = state.gamakichi.userData.cast(elapsed);
+        const first = chooseDrop(platforms);
+        spawn(elapsed, first, false, 0, origin);
+        const remaining = platforms.filter(platform => platform !== first.platform);
+        if (remaining.length) spawn(elapsed, chooseDrop(remaining), false, 0, origin);
+        state.onNotice('Gamakichi gebruikt Water Style: Syrup Gun! Pak de health-items op zodra ze landen.');
+    }
+    function updateSyrup(drop, elapsed) {
+        const progress = Math.min(1, (elapsed - drop.releasedAt) / SYRUP_FLIGHT);
+        const { origin, visual, syrup } = drop;
+        const dx = (drop.x - 480) / 65 - origin.x;
+        const dy = drop.baseY - origin.y;
+        const horizontal = Math.hypot(dx, origin.z);
+        const height = 1.05;
+        const y = t => dy * t + height * 4 * t * (1 - t);
+        if (progress < 1) {
+            visual.position.set(origin.x + dx * progress, origin.y + y(progress), origin.z * (1 - progress));
+            syrup.children.forEach((blob, index) => {
+                const trail = index * .018;
+                const t = Math.max(0, progress - trail);
+                const slope = dy + height * 4 * (1 - 2 * t);
+                const breakup = Math.max(0, (index - 11) / 10);
+                const spread = breakup * Math.sin(index * 2.4) * .19;
+                const width = (.265 - index * .009) * (1 + .1 * Math.sin(t * 40 + index));
+                const length = Math.max(width, Math.hypot(horizontal, slope) * (.023 - breakup * .016));
+                blob.visible = progress >= trail;
+                blob.scale.set(length, width, width * .85);
+                blob.rotation.order = 'YXZ';
+                blob.rotation.set(0, Math.atan2(origin.z, dx), Math.atan2(slope, horizontal));
+                blob.position.set(dx * (t - progress), y(t) - y(progress) + spread,
+                    origin.z * (progress - t) + spread * Math.cos(index));
+            });
+            return;
+        }
+        visual.position.set((drop.x - 480) / 65, drop.baseY, 0);
+        drop.falling = false;
+        drop.model.visible = drop.halo.visible = true;
+    }
+    function updateSyrupSplash(drop, elapsed) {
+        const age = elapsed - drop.born;
+        if (age >= .45) {
+            dispose(drop.syrup);
+            drop.syrup = null;
+            return;
+        }
+        const ground = drop.baseY - .61 - drop.visual.position.y;
+        drop.syrup.children.forEach((blob, index) => {
+            const angle = index * 2.4;
+            const speed = 1.15 + (index % 5) * .33;
+            const lift = age * (1.6 + (index % 4) * .48 - 7.5 * age);
+            const radius = .055 + (index % 3) * .028;
+            blob.visible = lift >= 0;
+            blob.position.set(Math.cos(angle) * age * speed, ground + Math.max(0, lift), Math.sin(angle) * age * speed);
+            blob.rotation.set(0, -angle, .7 - age * 4);
+            const fade = 1 - age / .45;
+            blob.scale.set(radius * fade * 1.55, radius * fade, radius * fade);
+        });
     }
     function beginFlight(elapsed) {
         const target = chooseDrop();
@@ -140,12 +220,17 @@ window.HealingItems = (() => {
         if (!state) return;
         drops = drops.filter(drop => { if (elapsed - drop.born < LIFETIME) return true; dispose(drop.visual); return false; });
         updateFlight(elapsed);
-        const interval = state.aerial ? FLIGHT_INTERVAL : INTERVAL;
         if (elapsed >= nextSpawn && elapsed < 180) {
-            if (state.aerial) beginFlight(elapsed); else spawn(elapsed);
-            nextSpawn = (Math.floor(elapsed / interval) + 1) * interval;
+            if (state.gamakichi) castSyrup(elapsed);
+            else if (state.aerial) beginFlight(elapsed);
+            else spawn(elapsed);
+            nextSpawn = (Math.floor(elapsed / state.interval) + 1) * state.interval;
         }
         for (const drop of drops) {
+            if (drop.syrup && drop.falling) {
+                updateSyrup(drop, elapsed);
+                if (drop.falling) continue;
+            }
             if (drop.falling) {
                 const progress = Math.max(0, Math.min(1, (elapsed - drop.releasedAt) / FALL_TIME));
                 const descent = 1 - Math.pow(1 - progress, 1.5);
@@ -161,6 +246,7 @@ window.HealingItems = (() => {
                 state.onNotice(`${drop.item.name} is geland. P1: R ophalen · P2: 6 ophalen.`);
             }
             drop.visual.position.y = drop.baseY + Math.sin(elapsed * 2.1 + drop.born) * .1;
+            if (drop.syrup) updateSyrupSplash(drop, elapsed);
             drop.model.rotation.y = elapsed * .65; drop.model.rotation.z = Math.sin(elapsed * 1.5) * .035;
             drop.model.userData.animate?.(elapsed);
             drop.halo.scale.setScalar(1 + Math.sin(elapsed * 3) * .07);

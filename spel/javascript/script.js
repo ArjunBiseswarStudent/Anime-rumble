@@ -1724,7 +1724,11 @@ function performAttack(attacker, target, isSpecial, specialMove = 'neutral') {
         window.SpecialMoves.cast({
             THREE, scene: battleScene, owner: attacker, target, slot: specialMove === 'side' ? 1 : 0,
             isShielded: isFighterShielded,
-            onNotice: message => { document.getElementById('arena-note').textContent = message; }
+            onNotice: message => { document.getElementById('arena-note').textContent = message; },
+            onHit: battleScene.userData.reactFrogSages && (() => {
+                battleScene.userData.reactFrogSages(matchElapsed);
+                document.getElementById('arena-note').textContent = 'Fukasaku en Shima: “Bagga!”';
+            })
         });
         return;
     }

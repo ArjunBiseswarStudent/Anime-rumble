@@ -13,11 +13,15 @@ function setup(index = 0, arenaKey) {
     class Material { constructor(options) { Object.assign(this, options); resources.push(this); } dispose() { this.disposed = true; } }
     class Mesh extends Group { constructor(geometry, material) { super(); Object.assign(this, { geometry, material }); } }
     class Shape { moveTo() {} quadraticCurveTo() {} lineTo() {} closePath() {} }
-    const THREE = { Group, Mesh, Shape, MeshStandardMaterial: Material, MeshBasicMaterial: Material };
+    const THREE = { Group, Mesh, Shape, MeshStandardMaterial: Material, MeshBasicMaterial: Material, MeshPhysicalMaterial: Material };
     for (const name of ['SphereGeometry', 'CylinderGeometry', 'TorusGeometry', 'BoxGeometry', 'ExtrudeGeometry', 'CircleGeometry']) THREE[name] = Geometry;
     const context = { window: {}, document: {}, console }; vm.createContext(context);
     for (const file of ['healing-models.js', 'supply-plane.js', 'healing-items.js']) vm.runInContext(fs.readFileSync(path.join(__dirname, file), 'utf8'), context);
     const api = context.window.HealingItems, scene = new Group(), notices = [];
+    const casts = [];
+    if (arenaKey === 'frog') scene.userData.gamakichi = { userData: {
+        cast(time) { casts.push(time); return { x: -4.4, y: 2.2, z: -3.1 }; }
+    } };
     const fighters = [0, 1].map(playerIndex => ({ playerIndex, character: { name: 'Speler ' + playerIndex }, x: 333, y: 352, width: 34, height: 48, stocks: 3, damage: 75 }));
     let randomStep = 0;
     function init(platforms = [{ x: 200, y: 400, w: 300 }]) {
@@ -26,7 +30,7 @@ function setup(index = 0, arenaKey) {
     }
     init();
     const pickups = () => scene.children.filter(child => child.name?.startsWith('healing-pickup-'));
-    return { api, scene, fighters, notices, resources, pickups, init, context };
+    return { api, scene, fighters, notices, resources, pickups, init, context, casts };
 }
 
 test('all eleven requested items have exact healing values, unique IDs and existing illustrations', () => {
@@ -126,11 +130,44 @@ test('only the four requested maps receive aircraft every 15 seconds instead of 
         api.update(0, 30); assert.equal(scene.children.filter(o => o.name === 'anime-supply-plane').length, 1);
         api.reset();
     }
-    for (const key of ['frog', 'namek', 'beerus', 'arlong', 'kurukshetra']) {
+    for (const key of ['namek', 'beerus', 'arlong', 'kurukshetra']) {
         const { api, pickups, scene } = setup(0, key);
         api.update(0, 10); assert.equal(pickups().length, 1);
         assert.equal(scene.children.filter(o => o.name === 'anime-supply-plane').length, 0);
     }
+});
+
+test('Frog Island casts every 20 seconds and makes its platform drops collectible after landing', () => {
+    const { api, fighters, pickups, resources, init, casts } = setup(0, 'frog');
+    const platforms = [{ x: 200, y: 400, w: 300 }, { x: 560, y: 320, w: 200 }];
+    init(platforms);
+    api.update(0, 19.99);
+    assert.equal(pickups().length, 0);
+    api.update(0, 20);
+    api.update(0, 20);
+    const [first, second] = pickups();
+    assert.deepEqual(casts, [20]);
+    assert.deepEqual(first.position, second.position);
+    assert.ok(first.position.z < 0);
+    api.update(0, 20.4);
+    assert.equal(api.pickup(fighters[0]), false);
+    api.update(0, 21);
+    assert.equal(first.position.z, 0);
+    assert.equal(second.position.z, 0);
+    assert.ok(second.position.y > first.position.y);
+    const splash = second.children.find(child => child.children.length === 22);
+    assert.ok(splash.children.some(blob => blob.visible));
+    assert.equal(api.pickup(fighters[0]), true);
+    api.update(0, 21.4);
+    assert.ok(!second.children.includes(splash));
+    api.update(0, 40);
+    assert.deepEqual(casts, [20, 40]);
+    assert.equal(pickups().length, 2);
+    api.reset();
+    assert.ok(resources.every(resource => resource.disposed));
+    init(platforms);
+    api.update(0, 19.99);
+    assert.equal(pickups().length, 0);
 });
 
 test('all eleven airdropped items descend, land and become collectible only after landing', () => {

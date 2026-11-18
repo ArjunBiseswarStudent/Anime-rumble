@@ -95,7 +95,7 @@ window.SpecialMoves = (() => {
         return group;
     }
     function center(fighter) { return { x: fighter.x + fighter.width / 2, y: fighter.y + fighter.height / 2 }; }
-    function cast({ THREE, scene, owner, target, slot, isShielded, onNotice }) {
+    function cast({ THREE, scene, owner, target, slot, isShielded, onNotice, onHit }) {
         const status = prepare(owner), move = data[owner.character.id]?.[slot];
         if (!move || owner.specialCooldowns[slot] > 0 || status.stun > 0 || isShielded(owner)) return false;
         owner.specialCooldowns[slot] = move.cooldown;
@@ -110,7 +110,7 @@ window.SpecialMoves = (() => {
         const closeTarget = Math.hypot(destination.x - origin.x, destination.y - origin.y) <= move.range + 60;
         const point = targeted && closeTarget ? destination : { x: origin.x + (targeted ? facing * move.range : 0), y: origin.y };
         const effect = {
-            owner, target, move, slot, scene, isShielded, x: point.x, y: point.y, facing,
+            owner, target, move, slot, scene, isShielded, onHit, x: point.x, y: point.y, facing,
             age: 0, nextHit: move.windup, hits: 0, launched: false, area,
             visual: makeVisual(THREE, move, colors[owner.character.id]?.[slot] || owner.character.aura, facing)
         };
@@ -136,6 +136,7 @@ window.SpecialMoves = (() => {
         // Each effect tracks its own hit count; a short shared grace period avoids stacked hits.
         target.invulnerable = 0.08;
         owner.hits++;
+        if (effect.hits === 0) effect.onHit?.();
         return true;
     }
     function inRange(effect, horizontal, vertical = 85) {
