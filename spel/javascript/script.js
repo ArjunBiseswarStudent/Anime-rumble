@@ -1803,6 +1803,7 @@ function returnToSelection() {
 
 function returnToHome() {
     returnToSelection();
+    location.href = 'index.html';
 }
 
 function updateFighter(fighter, target, dt) {

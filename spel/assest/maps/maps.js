@@ -586,7 +586,7 @@ window.AnimeMaps = (() => {
             card.style.setProperty('--sky', arena.bgTop);
             card.style.setProperty('--land', arena.surface);
             card.style.setProperty('--accent', arena.accentColor);
-            card.innerHTML = `<div class="map-art" aria-hidden="true"><span class="map-number">0${index + 1}</span><span class="map-symbol">${({ kurukshetra: '⚔', dojo: '⌂', castle: '♜', island: '☁', neon: '▥', frog: '蛙', namek: '◉', beerus: '◇', arlong: '⚓' })[key]}</span><div class="map-platforms">${arena.platforms.map(p => `<i style="left:${p.x / 9.6}%;top:${p.y / 5.4}%;width:${p.w / 9.6}%"></i>`).join('')}</div></div><div class="map-details"><p>${arena.series}</p><h2>${arena.name}</h2><p>${arena.description}</p><a href="../../index.html?arena=${key}">Speel deze map →</a></div>`;
+            card.innerHTML = `<div class="map-art" aria-hidden="true"><span class="map-number">0${index + 1}</span><span class="map-symbol">${({ kurukshetra: '⚔', dojo: '⌂', castle: '♜', island: '☁', neon: '▥', frog: '蛙', namek: '◉', beerus: '◇', arlong: '⚓' })[key]}</span><div class="map-platforms">${arena.platforms.map(p => `<i style="left:${p.x / 9.6}%;top:${p.y / 5.4}%;width:${p.w / 9.6}%"></i>`).join('')}</div></div><div class="map-details"><p>${arena.series}</p><h2>${arena.name}</h2><p>${arena.description}</p><a href="../../game.html?arena=${key}">Speel deze map →</a></div>`;
             gallery.append(card);
             if (typeof THREE !== 'undefined') {
                 const art = card.querySelector('.map-art');
