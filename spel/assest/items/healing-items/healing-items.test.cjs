@@ -7,22 +7,22 @@ class Group {
     remove(child) { this.children = this.children.filter(c => c !== child); child.parent = null; }
     traverse(fn) { fn(this); this.children.forEach(child => child.traverse(fn)); }
 }
-function setup(index = 0) {
+function setup(index = 0, arenaKey) {
     const resources = [];
     class Geometry { constructor() { resources.push(this); } dispose() { this.disposed = true; } }
     class Material { constructor(options) { Object.assign(this, options); resources.push(this); } dispose() { this.disposed = true; } }
     class Mesh extends Group { constructor(geometry, material) { super(); Object.assign(this, { geometry, material }); } }
     class Shape { moveTo() {} quadraticCurveTo() {} lineTo() {} closePath() {} }
     const THREE = { Group, Mesh, Shape, MeshStandardMaterial: Material, MeshBasicMaterial: Material };
-    for (const name of ['SphereGeometry', 'CylinderGeometry', 'TorusGeometry', 'BoxGeometry', 'ExtrudeGeometry']) THREE[name] = Geometry;
+    for (const name of ['SphereGeometry', 'CylinderGeometry', 'TorusGeometry', 'BoxGeometry', 'ExtrudeGeometry', 'CircleGeometry']) THREE[name] = Geometry;
     const context = { window: {}, document: {}, console }; vm.createContext(context);
-    for (const file of ['healing-models.js', 'healing-items.js']) vm.runInContext(fs.readFileSync(path.join(__dirname, file), 'utf8'), context);
+    for (const file of ['healing-models.js', 'supply-plane.js', 'healing-items.js']) vm.runInContext(fs.readFileSync(path.join(__dirname, file), 'utf8'), context);
     const api = context.window.HealingItems, scene = new Group(), notices = [];
     const fighters = [0, 1].map(playerIndex => ({ playerIndex, character: { name: 'Speler ' + playerIndex }, x: 333, y: 352, width: 34, height: 48, stocks: 3, damage: 75 }));
     let randomStep = 0;
     function init(platforms = [{ x: 200, y: 400, w: 300 }]) {
         randomStep = 0;
-        api.init({ THREE, scene, platforms, fighters, random: () => [index / 11 + 0.00001, 0, .5][randomStep++ % 3], onNotice: text => notices.push(text) });
+        api.init({ THREE, scene, platforms, fighters, arenaKey, random: () => [index / 11 + 0.00001, 0, .5][randomStep++ % 3], onNotice: text => notices.push(text) });
     }
     init();
     const pickups = () => scene.children.filter(child => child.name?.startsWith('healing-pickup-'));
@@ -110,4 +110,63 @@ test('keyboard/touch input routes R/T and 6/7 independently and blocks CPU manua
     for (const key of ['KeyR','KeyT','Digit6','Numpad7']) app.pressGameInput(key, key);
     assert.equal(JSON.stringify(calls), JSON.stringify([['pickup',0],['use',0],['pickup',1],['use',1]]));
     app.gameMode = 'cpu'; app.releaseGameInput('Digit6'); app.pressGameInput('Digit6', 'cpu'); assert.equal(calls.length, 4);
+});
+
+test('only the four requested maps receive aircraft every 15 seconds instead of normal 10-second spawns', () => {
+    for (const key of ['dojo', 'castle', 'island', 'neon']) {
+        const { api, scene, pickups } = setup(0, key);
+        api.update(0, 10); assert.equal(scene.children.length, 0, key);
+        api.update(0, 14.999); assert.equal(scene.children.length, 0);
+        api.update(0, 15); assert.equal(scene.children.filter(o => o.name === 'anime-supply-plane').length, 1);
+        assert.equal(pickups().length, 0, 'Aircraft arrives before the parcel drops');
+        api.update(0, 18); assert.equal(pickups().length, 1);
+        api.update(0, 18); assert.equal(pickups().length, 1, 'Release happens once per flight');
+        api.update(0, 22); assert.equal(scene.children.filter(o => o.name === 'anime-supply-plane').length, 0);
+        api.update(0, 29.999); assert.equal(scene.children.filter(o => o.name === 'anime-supply-plane').length, 0);
+        api.update(0, 30); assert.equal(scene.children.filter(o => o.name === 'anime-supply-plane').length, 1);
+        api.reset();
+    }
+    for (const key of ['frog', 'namek', 'beerus', 'arlong', 'kurukshetra']) {
+        const { api, pickups, scene } = setup(0, key);
+        api.update(0, 10); assert.equal(pickups().length, 1);
+        assert.equal(scene.children.filter(o => o.name === 'anime-supply-plane').length, 0);
+    }
+});
+
+test('all eleven airdropped items descend, land and become collectible only after landing', () => {
+    for (let index = 0; index < 11; index++) {
+        const { api, fighters, pickups, resources, scene } = setup(index, 'dojo');
+        api.update(0, 15); api.update(0, 18);
+        const parcel = pickups()[0], startY = parcel.position.y, resourceCount = resources.length;
+        assert.ok(parcel.children.some(o => o.name === 'health-supply-parachute'));
+        assert.equal(api.pickup(fighters[0]), false);
+        for (const t of [18.1, 18.8, 19.5, 20.5]) api.update(.016, t);
+        assert.ok(parcel.position.y < startY);
+        scene.traverse(part => { for (const vector of [part.position, part.rotation, part.scale]) assert.ok(Object.values(vector).every(Number.isFinite)); });
+        assert.equal(resources.length, resourceCount, 'Animation never allocates geometry/materials');
+        api.update(.016, 21.5);
+        assert.equal(parcel.children.some(o => o.name === 'health-supply-parachute'), false);
+        assert.equal(api.pickup(fighters[0]), true);
+        assert.equal(fighters[0].healingItem.id, api.items[index].id);
+        api.reset(); assert.ok(resources.every(r => r.disposed));
+    }
+});
+
+test('parachutes land on the highest platform below the release point instead of passing through it', () => {
+    const { api, init, fighters } = setup(0, 'island');
+    init([{ x: 200, y: 430, w: 400 }, { x: 300, y: 300, w: 200 }]);
+    fighters[0].x = 383; fighters[0].y = 252;
+    api.update(0, 15); api.update(0, 18); api.update(0, 21.5);
+    assert.equal(api.pickup(fighters[0]), true);
+});
+
+test('round reset cleans aircraft and parachutes, and restarts the 15-second timer', () => {
+    for (const elapsed of [15, 18, 20]) {
+        const { api, scene, resources, init } = setup(0, 'neon');
+        api.update(0, 15); if (elapsed > 15) api.update(0, elapsed);
+        api.reset(); assert.equal(scene.children.length, 0); assert.ok(resources.every(r => r.disposed));
+        init(); api.update(0, 14.9); assert.equal(scene.children.length, 0);
+        api.update(0, 15); assert.ok(scene.children.some(o => o.name === 'anime-supply-plane'));
+        api.update(0, 180); assert.equal(scene.children.filter(o => o.name === 'anime-supply-plane').length, 0);
+    }
 });

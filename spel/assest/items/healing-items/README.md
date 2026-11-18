@@ -1,8 +1,16 @@
 # Health-items
 
-Een willekeurig item verschijnt na 10 seconden, daarna iedere 10 seconden tot het
-einde van de ronde. De spawn ligt op een willekeurig speelbaar platform. Een item
-verdwijnt na 35 seconden; er zijn maximaal twee wereld-items tegelijk.
+Op **Anime Dojo**, **Schaduw Kasteel**, **Zwevend Eiland** en **Neon Stad** vliegt
+iedere 15 seconden een rood-wit 3D-bevoorradingsvliegtuig over de arena. Na drie
+seconden laat het een willekeurig health-item vallen. Het item daalt in ongeveer
+3,4 seconden aan een parachute af en wordt pas na de landing oppakbaar.
+Het landt op het hoogste platform onder de gekozen drop-positie.
+
+De andere vijf maps behouden hun willekeurige spawn iedere 10 seconden.
+Een item verdwijnt na 35 seconden op het platform; er zijn maximaal twee
+wereld-items tegelijk. Er worden geen extra drops opgestapeld na een stilgevallen
+of verborgen browser-tab. Vliegtuig, parachute en inventaris worden bij het einde
+van een ronde opgeruimd.
 
 P1: **R** oppakken, **T** gebruiken. P2: **6** oppakken, **7** gebruiken, ook op het
 numpad. Op touchscreens zijn **Pak HP** en **Herstel** beschikbaar. Elke speler kan
@@ -31,3 +39,8 @@ potje, rijstbal, scroll, ramenkom, slak, medicijn, bento, vlees, flesje, spuit e
 De afbeeldingen verschijnen in de inventaris. De pick-ups zweven en draaien boven
 een lichtgevende ring. Gebruik toont een bewegende groene herstelaura. Alle
 geometrie en materialen worden bij ophalen, verdwijnen of een nieuwe ronde opgeruimd.
+
+`supply-plane.js` bouwt het vliegtuig met vier geanimeerde motorfans, cockpitramen,
+rood-witte vleugels, gouden accenten, navigatielichten en het bestaande Anime Rumble-logo.
+De parachute bestaat uit acht afwisselend rode/witte panelen met ophanglijnen.
+De afbeeldingen worden niet als platte vervanging voor het 3D-vliegtuig gebruikt.

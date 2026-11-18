@@ -1667,6 +1667,7 @@ function initBattleScene(canvas) {
         battleScene.add(fighter.model);
     });
     window.HealingItems?.init({ THREE, scene: battleScene, platforms: currentArena.platforms, fighters,
+        arenaKey: document.getElementById('arena-select').value,
         onNotice: message => { document.getElementById('arena-note').textContent = message; } });
     resizeBattleRenderer();
 }

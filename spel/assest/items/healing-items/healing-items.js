@@ -14,6 +14,8 @@ window.HealingItems = (() => {
         ['senzu', 'Dragon Ball', 'Senzu Bean', 100, '11_senzu_bean.png', 'bean']
     ].map(([id, series, name, heal, file, kind]) => Object.freeze({ id, series, name, heal, file, kind, image: base + file })));
     const INTERVAL = 10, LIFETIME = 35, MAX_DROPS = 2;
+    const AIR_MAPS = new Set(['dojo', 'castle', 'island', 'neon']);
+    const FLIGHT_INTERVAL = 15, RELEASE_AT = 3, FLIGHT_DURATION = 6.4, FALL_TIME = 3.4;
     let state = null, drops = [], effects = [], nextSpawn = INTERVAL;
     function dispose(root) {
         if (!root) return;
@@ -27,26 +29,71 @@ window.HealingItems = (() => {
         effects = effects.filter(effect => { if (effect.owner !== fighter) return true; dispose(effect.visual); return false; });
     }
     function reset() {
+        if (state?.flight) dispose(state.flight.model.visual);
         drops.forEach(drop => dispose(drop.visual)); effects.forEach(effect => dispose(effect.visual));
         if (state) state.fighters.forEach(fighter => { fighter.healingItem = null; });
         drops = []; effects = []; state = null; nextSpawn = INTERVAL;
     }
-    function init(options) { reset(); state = { random: Math.random, onNotice() {}, ...options }; }
+    function init(options) {
+        reset(); state = { random: Math.random, onNotice() {}, ...options };
+        state.aerial = AIR_MAPS.has(state.arenaKey);
+        nextSpawn = state.aerial ? FLIGHT_INTERVAL : INTERVAL;
+    }
     function randomIndex(length) { return Math.min(length - 1, Math.max(0, Math.floor(state.random() * length))); }
-    function spawn(elapsed) {
+    function chooseDrop() {
         const platforms = state.platforms.filter(p => p.w >= 70);
-        if (!platforms.length) return;
-        while (drops.length >= MAX_DROPS) dispose(drops.shift().visual);
-        const item = items[randomIndex(items.length)], platform = platforms[randomIndex(platforms.length)];
+        if (!platforms.length) return null;
+        const item = items[randomIndex(items.length)];
+        let platform = platforms[randomIndex(platforms.length)];
         const x = platform.x + 25 + Math.max(0, platform.w - 50) * Math.max(0, Math.min(1, state.random()));
+        // A descending parcel lands on the first roof below it, never through one.
+        if (state.aerial) for (const roof of platforms)
+            if (roof.y < platform.y && x >= roof.x + 10 && x <= roof.x + roof.w - 10) platform = roof;
+        return { item, platform, x };
+    }
+    function spawn(elapsed, destination = chooseDrop(), aerial = false, altitude = 0) {
+        if (!destination) return;
+        while (drops.length >= MAX_DROPS) dispose(drops.shift().visual);
+        const { item, platform, x } = destination;
         const { THREE, scene } = state;
         const visual = new THREE.Group(), model = window.HealingModels.create(THREE, item);
         visual.name = 'healing-pickup-' + item.id; visual.add(model);
         const halo = new THREE.Mesh(new THREE.TorusGeometry(.48, .018, 8, 40), new THREE.MeshStandardMaterial({ color: '#8effb6', emissive: '#42d982', emissiveIntensity: .9, roughness: .4 }));
         halo.rotation.x = -Math.PI / 2; halo.position.y = -.35; visual.add(halo);
         visual.position.set((x - 480) / 65, (540 - platform.y) / 65 + .65, 0);
-        scene.add(visual); drops.push({ item, x, y: platform.y - 25, visual, model, halo, born: elapsed, baseY: visual.position.y });
-        state.onNotice(`${item.name} (+${item.heal} HP) is verschenen. P1: R ophalen · P2: 6 ophalen.`);
+        const drop = { item, x, y: platform.y - 25, visual, model, halo, born: elapsed, baseY: visual.position.y, falling: aerial };
+        if (aerial) {
+            drop.chute = window.SupplyPlane.parachute(THREE); visual.add(drop.chute);
+            drop.releasedAt = elapsed; drop.startY = altitude - .15;
+            drop.born = elapsed + FALL_TIME;
+            visual.position.y = drop.startY; visual.position.z = -2.8; halo.visible = false;
+        }
+        scene.add(visual); drops.push(drop);
+        state.onNotice(aerial ? `Het vliegtuig dropt ${item.name} (+${item.heal} HP). Wacht tot het item landt.`
+            : `${item.name} (+${item.heal} HP) is verschenen. P1: R ophalen · P2: 6 ophalen.`);
+    }
+    function beginFlight(elapsed) {
+        const target = chooseDrop();
+        if (!target) return;
+        const direction = state.random() < .5 ? 1 : -1;
+        const altitude = Math.max(6.2, ...state.platforms.map(p => (540 - p.y) / 65 + 1.4));
+        const model = window.SupplyPlane.create(state.THREE, direction);
+        model.visual.position.set((target.x - 480) / 65 - direction * RELEASE_AT * 4.5, altitude, -2.8);
+        state.scene.add(model.visual);
+        state.flight = { target, model, direction, altitude, started: elapsed, released: false };
+        state.onNotice('Bevoorradingsvliegtuig onderweg! Er wordt een health-item gedropt.');
+    }
+    function updateFlight(elapsed) {
+        const flight = state.flight;
+        if (!flight) return;
+        const age = elapsed - flight.started;
+        if (age >= FLIGHT_DURATION) { dispose(flight.model.visual); state.flight = null; return; }
+        flight.model.visual.position.set((flight.target.x - 480) / 65 + (age - RELEASE_AT) * 4.5 * flight.direction,
+            flight.altitude + Math.sin(age * 1.3) * .04, -2.8);
+        flight.model.update(age);
+        if (!flight.released && age >= RELEASE_AT && elapsed < 180) {
+            flight.released = true; spawn(elapsed, flight.target, true, flight.altitude);
+        }
     }
     function available(fighter) { return fighter.stocks > 0 && fighter.damage < 100; }
     function nearby(fighter) {
@@ -54,6 +101,7 @@ window.HealingItems = (() => {
         const x = fighter.x + fighter.width / 2, y = fighter.y + fighter.height / 2;
         let nearest = null, best = Infinity;
         for (const drop of drops) {
+            if (drop.falling) continue;
             const dx = Math.abs(drop.x - x), dy = Math.abs(drop.y - y), distance = dx + dy;
             if (dx <= 72 && dy <= 55 && distance < best) { nearest = drop; best = distance; }
         }
@@ -91,8 +139,27 @@ window.HealingItems = (() => {
     function update(dt, elapsed) {
         if (!state) return;
         drops = drops.filter(drop => { if (elapsed - drop.born < LIFETIME) return true; dispose(drop.visual); return false; });
-        if (elapsed >= nextSpawn && elapsed < 180) { spawn(elapsed); nextSpawn = (Math.floor(elapsed / INTERVAL) + 1) * INTERVAL; }
+        updateFlight(elapsed);
+        const interval = state.aerial ? FLIGHT_INTERVAL : INTERVAL;
+        if (elapsed >= nextSpawn && elapsed < 180) {
+            if (state.aerial) beginFlight(elapsed); else spawn(elapsed);
+            nextSpawn = (Math.floor(elapsed / interval) + 1) * interval;
+        }
         for (const drop of drops) {
+            if (drop.falling) {
+                const progress = Math.max(0, Math.min(1, (elapsed - drop.releasedAt) / FALL_TIME));
+                const descent = 1 - Math.pow(1 - progress, 1.5);
+                drop.visual.position.y = drop.startY + (drop.baseY - drop.startY) * descent;
+                drop.visual.position.z = -2.8 * (1 - descent);
+                drop.visual.position.x = (drop.x - 480) / 65 + Math.sin(elapsed * 1.7) * .1 * (1 - progress);
+                drop.chute.rotation.z = Math.sin(elapsed * 2) * .08;
+                drop.chute.scale.setScalar(Math.min(1, .2 + progress * 4));
+                drop.model.rotation.y = elapsed * .4;
+                if (progress < 1) continue;
+                dispose(drop.chute); drop.chute = null; drop.falling = false; drop.halo.visible = true;
+                drop.visual.position.x = (drop.x - 480) / 65; drop.visual.position.z = 0;
+                state.onNotice(`${drop.item.name} is geland. P1: R ophalen · P2: 6 ophalen.`);
+            }
             drop.visual.position.y = drop.baseY + Math.sin(elapsed * 2.1 + drop.born) * .1;
             drop.model.rotation.y = elapsed * .65; drop.model.rotation.z = Math.sin(elapsed * 1.5) * .035;
             drop.model.userData.animate?.(elapsed);
