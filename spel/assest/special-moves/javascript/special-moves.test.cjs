@@ -46,8 +46,8 @@ function setup() {
     return { api, data, scene, fighter, step, cast, context };
 }
 
-test('a special reports its first successful impact only, including for multi-hit moves', () => {
-    const { data, fighter, cast, step } = setup();
+test('a special reports its first hit and displays a short-lived burst only on impact', () => {
+    const { data, fighter, cast, step, scene } = setup();
     const [id, moves] = Object.entries(data).find(([, moves]) => moves.some(move => move.kind === 'stream'));
     const slot = moves.findIndex(move => move.kind === 'stream');
     let reactions = 0;
@@ -59,9 +59,14 @@ test('a special reports its first successful impact only, including for multi-hi
     const second = fighter(id, 300);
     const nearby = fighter('goku', 355);
     cast(second, nearby, slot, false, () => reactions++);
+    for (let frame = 0; frame < 180 && second.hits === 0; frame++) step(second, nearby);
+    const burst = scene.children.find(object => object.name === 'special-impact');
+    assert.ok(burst);
     step(second, nearby, 180);
     assert.ok(second.hits > 1);
     assert.equal(reactions, 1);
+    assert.ok(!scene.children.includes(burst));
+    assert.ok(burst.children.every(mesh => mesh.geometry.disposed && mesh.material.disposed));
 });
 
 test('all 112 moves map to exactly the 56 roster IDs and preserve source names', () => {

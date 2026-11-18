@@ -16,7 +16,9 @@
 .hud-stock-meter.health-low > i { background: linear-gradient(#ffc184, #de6b44 55%, #a93838); }
 .hud-right .hud-stock-meter > i { margin-left: auto; }
 .hud-specials { display: flex; gap: 5px; margin-top: 4px; }
-.hud-super { --ready: 100%; position: relative; flex: 1; min-width: 0; height: 13px; border: 1px solid #6f859c; border-radius: 2px; background: #101b2b; overflow: hidden; }
+.hud-special { flex: 1; min-width: 0; }
+.hud-super-name { display: block; padding: 2px 2px 0; color: #e6f3ff; font-size: clamp(8px, 1vw, 11px); font-weight: 700; line-height: 1.15; overflow-wrap: anywhere; text-align: center; }
+.hud-super { --ready: 100%; position: relative; height: 13px; border: 1px solid #6f859c; border-radius: 2px; background: #101b2b; overflow: hidden; }
 .hud-super > i { position: absolute; inset: 0 auto 0 0; width: var(--ready); background: linear-gradient(90deg, #2c678a, #78bad2); }
 .hud-super.is-ready > i { background: linear-gradient(90deg, #497c9e, #a0e7eb); }
 .hud-super > span { position: relative; display: block; padding: 1px 3px; color: #fff; font-size: 8px; font-weight: 700; line-height: 9px; text-shadow: 0 1px 2px #000; }

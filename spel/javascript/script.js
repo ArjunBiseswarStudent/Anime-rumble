@@ -2066,7 +2066,8 @@ function updateBattleHud() {
         meter.classList.toggle('health-low', health <= 25);
         document.getElementById(`${prefix}-stock-fill`).style.width = `${health}%`;
         ['neutral', 'side'].forEach((direction, slot) => {
-            const cooldown = fighter.character.moves[direction].cooldown || 1;
+            const move = fighter.character.moves[direction];
+            const cooldown = move.cooldown || 1;
             const remaining = Math.max(0, fighter.specialCooldowns[slot]);
             const ready = Math.max(0, Math.min(100, (1 - remaining / cooldown) * 100));
             const bar = document.getElementById(`${prefix}-super-${slot}`);
@@ -2074,7 +2075,9 @@ function updateBattleHud() {
             bar.classList.toggle('is-ready', remaining <= 0);
             bar.setAttribute('aria-valuenow', String(Math.round(ready)));
             bar.setAttribute('aria-valuetext', remaining <= 0 ? 'Klaar' : `Nog ${Math.ceil(remaining)} seconden`);
-            bar.title = `${fighter.character.moves[direction].name}: ${window.SpecialMoves.cooldownLabel(fighter, slot)}`;
+            bar.title = `${move.name}: ${window.SpecialMoves.cooldownLabel(fighter, slot)}`;
+            const name = document.getElementById(`${prefix}-super-${slot}-name`);
+            if (name.textContent !== move.name) name.textContent = move.name;
             const caption = document.getElementById(`${prefix}-super-${slot}-label`);
             const text = `S${slot + 1} ${remaining <= 0 ? 'klaar' : `${Math.ceil(remaining)}s`}`;
             if (caption.textContent !== text) caption.textContent = text;

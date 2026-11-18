@@ -2,6 +2,7 @@
 window.SpecialMoves = (() => {
     const data = window.SpecialMoveData;
     const effects = new Set();
+    const impacts = new Set();
     const directions = ['neutral', 'side'];
     const projectiles = new Set(['projectile', 'explosive', 'bomb', 'bounce', 'guided', 'volley', 'slash']);
     const areas = new Set(['zone', 'ground', 'ice', 'rain', 'lightning', 'delayed', 'orbit', 'stun', 'freeze', 'pull']);
@@ -34,7 +35,7 @@ window.SpecialMoves = (() => {
         for (const key of ['stun', 'buff', 'armor', 'dash']) status[key] = Math.max(0, status[key] - dt);
         fighter.model.scale.setScalar(status.buff > 0 && ['chopper', 'robin'].includes(fighter.character.id) ? 1.45 : 1);
     }
-    function remove(effect) {
+    function disposeVisual(effect) {
         effect.scene.remove(effect.visual);
         const geometries = new Set(), materials = new Set();
         effect.visual.traverse(object => {
@@ -43,55 +44,142 @@ window.SpecialMoves = (() => {
         });
         geometries.forEach(geometry => geometry.dispose());
         materials.forEach(material => material.dispose());
-        effects.delete(effect);
     }
+    function remove(effect) { disposeVisual(effect); effects.delete(effect); }
+    function removeImpact(impact) { disposeVisual(impact); impacts.delete(impact); }
     function clearFighter(fighter) {
         for (const effect of effects) if (effect.owner === fighter || effect.target === fighter) remove(effect);
+        for (const impact of impacts) if (impact.owner === fighter || impact.target === fighter) removeImpact(impact);
         fighter.specialStatus = { stun: 0, buff: 0, armor: 0, dash: 0, dashSpeed: 0 };
         fighter.model.scale.setScalar(1);
     }
-    function reset() { for (const effect of effects) remove(effect); }
+    function reset() {
+        for (const effect of effects) remove(effect);
+        for (const impact of impacts) removeImpact(impact);
+    }
 
-    function makeVisual(THREE, move, color, facing) {
+    function effectPalette(move, fallback) {
+        const name = move.name.toLowerCase();
+        if (/chidori|thunder|lightning|raikiri|electric|voltage/.test(name) || move.kind === 'lightning') return ['#789cff', '#e1efff'];
+        if (/flame|fire|burn|phoenix|katon|amaterasu|diable|hellfire/.test(name)) return ['#ff5319', '#ffdf92'];
+        if (/\bice\b|frost|snow|freeze|glacial/.test(name) || ['freeze', 'ice'].includes(move.kind)) return ['#61cfff', '#e0f9ff'];
+        if (move.kind === 'heal') return ['#3cef91', '#c8ffe1'];
+        return [fallback, '#fff5e6'];
+    }
+    function makeVisual(THREE, move, palette, facing) {
         const group = new THREE.Group();
-        const material = new THREE.MeshBasicMaterial({ color, transparent: true, opacity: 0.8, depthWrite: false });
-        const white = new THREE.MeshBasicMaterial({ color: '#ffffff', transparent: true, opacity: 0.9, depthWrite: false });
-        function part(geometry, mat, x = 0, y = 0, z = 0) {
+        const [color, highlight] = palette;
+        const glow = (tint, opacity, blending = THREE.AdditiveBlending) =>
+            new THREE.MeshBasicMaterial({ color: tint, transparent: true, opacity, depthWrite: false, blending, toneMapped: false });
+        const aura = glow(color, .42), streak = glow(color, .79), core = glow(highlight, .86, THREE.NormalBlending);
+        function part(geometry, mat, x = 0, y = 0, z = 0, animate) {
             const object = new THREE.Mesh(geometry, mat);
             object.position.set(x, y, z);
+            object.userData.animate = animate;
             group.add(object);
             return object;
         }
-        const radius = move.damage >= 20 ? 0.7 : 0.32;
+        const radius = move.damage >= 20 ? .64 : .4;
         if (move.kind === 'beam' || move.kind === 'stream' || move.kind === 'reach') {
             const length = move.range / 65;
-            const beam = part(new THREE.CylinderGeometry(radius * 0.6, radius * 0.9, length, 16), material, facing * length / 2);
-            beam.rotation.z = Math.PI / 2;
-            const core = part(new THREE.CylinderGeometry(radius * 0.18, radius * 0.3, length, 12), white, facing * length / 2);
-            core.rotation.z = Math.PI / 2;
-        } else if (['sword', 'slash', 'volley', 'rain', 'ice'].includes(move.kind)) {
-            const count = move.kind === 'sword' ? 1 : 5;
-            for (let i = 0; i < count; i++) {
-                const blade = part(new THREE.ConeGeometry(0.13, move.kind === 'sword' ? 2.6 : 1.1, 4), material, (i - (count - 1) / 2) * 0.28, Math.abs(i - 2) * 0.12);
-                blade.rotation.z = move.kind === 'ice' || move.kind === 'rain' ? 0 : -facing * Math.PI / 3;
+            for (const [mat, width] of [[core, .34], [streak, .72], [aura, 1.05]]) {
+                const beam = part(new THREE.CylinderGeometry(radius * width * .66, radius * width, length, 16),
+                    mat, facing * length / 2, 0, 0, (mesh, t) => {
+                        const pulse = 1 + .11 * Math.sin(t * 35 + width * 4);
+                        mesh.scale.set(pulse, 1, pulse);
+                    });
+                beam.rotation.z = -facing * Math.PI / 2;
+            }
+            const filament = new THREE.ConeGeometry(.034, .65, 5);
+            for (let i = 0; i < 10; i++) {
+                const thread = part(filament, i % 2 ? streak : core, 0, 0, 0, (mesh, t) => {
+                    const angle = i * 2.4 + t * 8;
+                    mesh.position.set(facing * length * ((i / 10 + t * 2.8) % 1),
+                        Math.cos(angle) * radius, Math.sin(angle) * radius);
+                });
+                thread.rotation.z = -facing * Math.PI / 2;
+            }
+        } else if (['sword', 'slash', 'spin', 'dash', 'uppercut', 'combo', 'double', 'heavy', 'leap', 'teleport', 'slam'].includes(move.kind)) {
+            for (let i = 0; i < 3; i++) {
+                part(new THREE.TorusGeometry(.65 + i * .25, .04 + i * .015, 6, 28, Math.PI * (1.15 - i * .17)),
+                    [core, streak, aura][i], 0, 0, i * -.09, (mesh, t) => {
+                        mesh.rotation.set(i * .2, facing * -.4, facing * (t * 10 - i * .42));
+                        mesh.scale.set(1.23, .72 + i * .13, 1);
+                    });
+            }
+        } else if (move.kind === 'lightning') {
+            const segment = new THREE.CylinderGeometry(.041, .065, 1, 6);
+            for (let i = 0; i < 8; i++) {
+                part(segment, i < 5 ? core : streak, 0, 0, 0, (mesh, t) => {
+                    const branch = i >= 5;
+                    const row = i % 5;
+                    const sway = Math.sin(Math.floor(t * 24) * 2.4 + row) * .13;
+                    mesh.position.set((branch ? .47 + row * .25 : (row % 2) * .16) + sway,
+                        (branch ? 1.52 : 3.12) - row * .7, branch ? -.23 : 0);
+                    mesh.rotation.z = (row % 2 ? -.46 : .49) + (branch ? .62 : sway);
+                    mesh.scale.set(1.1, .81, 1.1);
+                });
+            }
+        } else if (['volley', 'rain', 'ice', 'freeze'].includes(move.kind)) {
+            const falling = move.kind !== 'volley';
+            const shard = new THREE.ConeGeometry(.106, 1.05, 5);
+            for (let i = 0; i < 12; i++) {
+                const blade = part(shard, i % 3 === 0 ? core : streak, 0, 0, 0, (mesh, t) => {
+                    const phase = (t * 2.55 + i * .147) % 1;
+                    mesh.position.set((i % 6 - 2.5) * .37 - (falling ? phase * .45 : 0),
+                        falling ? 2.7 - phase * 3.25 : (i % 4 - 1.5) * .19, (i % 3 - 1) * .29);
+                    if (!falling) mesh.position.x += facing * (phase - .5) * 1.55;
+                    mesh.scale.setScalar(.65 + Math.sin(phase * Math.PI) * .64);
+                });
+                blade.rotation.z = falling ? Math.PI - .16 : -facing * Math.PI / 2;
             }
         } else if (move.kind === 'summon') {
+            const smoke = new THREE.SphereGeometry(.34, 14, 10);
+            for (let i = 0; i < 9; i++) part(smoke, i % 2 ? aura : streak, 0, 0, 0, (mesh, t) => {
+                const angle = i * Math.PI * 2 / 9 + t * 1.2;
+                mesh.position.set(Math.cos(angle) * (.28 + t), -.22 + t * .65, Math.sin(angle) * (.28 + t));
+                mesh.scale.setScalar(.4 + Math.min(t, .9));
+            });
             for (let i = 0; i < 3; i++) {
-                part(new THREE.SphereGeometry(0.15, 12, 8), white, (i - 1) * 0.6, 0.45);
-                part(new THREE.ConeGeometry(0.25, 0.8, 12), material, (i - 1) * 0.6, -0.05);
+                part(new THREE.SphereGeometry(.14, 12, 8), core, (i - 1) * .6, .45);
+                part(new THREE.ConeGeometry(.23, .8, 12), streak, (i - 1) * .6, -.05);
             }
-        } else if (['lightning', 'guided'].includes(move.kind)) {
-            for (let i = 0; i < 5; i++) {
-                const bolt = part(new THREE.CylinderGeometry(0.04, 0.08, 0.5, 6), i % 2 ? white : material, i % 2 * 0.18, 0.9 - i * 0.42);
-                bolt.rotation.z = i % 2 ? 0.5 : -0.5;
+        } else if (areas.has(move.kind) || ['heal', 'guard', 'transform'].includes(move.kind)) {
+            const span = areas.has(move.kind) ? Math.max(.74, move.range / 130) : .86;
+            for (let i = 0; i < 3; i++) {
+                const ring = part(new THREE.TorusGeometry(span * (.62 + i * .15), .025 + i * .016, 7, 36),
+                    i === 0 ? core : streak, 0, -.54 + i * .4, 0, (mesh, t) => {
+                        mesh.scale.setScalar(.90 + Math.sin(t * 8 - i * .65) * .12);
+                        mesh.rotation.y = Math.sin(t * 2 + i) * .14;
+                    });
+                ring.rotation.x = Math.PI / 2;
             }
+            const mote = new THREE.ConeGeometry(.057, .29, 5);
+            for (let i = 0; i < 12; i++) part(mote, i % 3 ? streak : core, 0, 0, 0, (mesh, t) => {
+                const angle = i * 2.4 + t * (move.kind === 'pull' ? -5 : 3);
+                const rise = (t * 1.7 + i * .17) % 1;
+                mesh.position.set(Math.cos(angle) * span, rise * 1.75 - .58, Math.sin(angle) * span);
+                mesh.scale.setScalar(.3 + Math.sin(Math.PI * rise));
+            });
         } else {
-            part(new THREE.SphereGeometry(radius, 20, 14), material);
-            part(new THREE.SphereGeometry(radius * 0.45, 14, 10), white);
+            part(new THREE.SphereGeometry(radius, 20, 14), aura);
+            part(new THREE.SphereGeometry(radius * .57, 16, 12), core);
+            for (let i = 0; i < 3; i++) part(new THREE.TorusGeometry(radius * (.77 + i * .13), .022, 6, 26, Math.PI * 1.45),
+                streak, 0, 0, 0, (mesh, t) => mesh.rotation.set(t * 7 + i, i * 1.1, t * -8 + i * 2));
+            const trail = new THREE.SphereGeometry(1, 10, 8);
+            for (let i = 0; i < 8; i++) part(trail, i % 2 ? aura : streak, 0, 0, 0, (mesh, t) => {
+                const phase = (t * 4.1 + i / 8) % 1;
+                const spread = radius * (.18 + phase * .77);
+                mesh.position.set(-facing * radius * (.45 + phase * 3.2),
+                    Math.cos(i * 2.4 + t * 14) * spread, Math.sin(i * 2.4 + t * 14) * spread);
+                mesh.scale.set(.27 * (1 - phase) + .048, .12 * (1 - phase) + .02, .1 * (1 - phase) + .02);
+            });
         }
-        const ring = part(new THREE.TorusGeometry(radius * 1.4, 0.04, 8, 32), material);
-        ring.userData.spin = true;
-        if (areas.has(move.kind)) { ring.rotation.x = Math.PI / 2; ring.scale.setScalar(2.2); }
+        group.userData.materials = [aura, streak, core].filter(mat => {
+            if (group.children.some(mesh => mesh.material === mat)) return true;
+            mat.dispose();
+            return false;
+        }).map(mat => [mat, mat.opacity]);
         return group;
     }
     function center(fighter) { return { x: fighter.x + fighter.width / 2, y: fighter.y + fighter.height / 2 }; }
@@ -109,15 +197,45 @@ window.SpecialMoves = (() => {
         const targeted = ['delayed', 'stun', 'freeze', 'lightning', 'rain', 'orbit', 'pull', 'ice', 'zone'].includes(move.kind);
         const closeTarget = Math.hypot(destination.x - origin.x, destination.y - origin.y) <= move.range + 60;
         const point = targeted && closeTarget ? destination : { x: origin.x + (targeted ? facing * move.range : 0), y: origin.y };
+        const palette = effectPalette(move, colors[owner.character.id]?.[slot] || owner.character.aura);
         const effect = {
-            owner, target, move, slot, scene, isShielded, onHit, x: point.x, y: point.y, facing,
+            THREE, owner, target, move, slot, scene, isShielded, onHit, x: point.x, y: point.y, facing, palette,
             age: 0, nextHit: move.windup, hits: 0, launched: false, area,
-            visual: makeVisual(THREE, move, colors[owner.character.id]?.[slot] || owner.character.aura, facing)
+            visual: makeVisual(THREE, move, palette, facing)
         };
         effect.visual.visible = false;
         scene.add(effect.visual);
         effects.add(effect);
         return true;
+    }
+
+    function burst(effect, blocked, portion) {
+        const { THREE, scene, owner, target, palette } = effect;
+        const point = center(target);
+        const visual = new THREE.Group();
+        visual.name = 'special-impact';
+        visual.position.set((point.x - 480) / 65, (540 - point.y) / 65 + .4, .57);
+        const color = blocked ? '#91bcff' : palette[0];
+        const mat = new THREE.MeshBasicMaterial({
+            color, transparent: true, opacity: .93, depthWrite: false, toneMapped: false
+        });
+        const flash = new THREE.MeshBasicMaterial({
+            color: palette[1], transparent: true, opacity: .88, depthWrite: false, blending: THREE.AdditiveBlending, toneMapped: false
+        });
+        const ring = new THREE.Mesh(new THREE.TorusGeometry(.52, .035, 6, 28), mat);
+        visual.add(ring);
+        const sparks = [];
+        const geometry = new THREE.ConeGeometry(.055, .39, 4);
+        for (let i = 0; i < 10; i++) {
+            const angle = i * Math.PI * 2 / 10 + effect.hits * .59;
+            const mesh = new THREE.Mesh(geometry, i % 2 ? mat : flash);
+            mesh.rotation.z = angle - Math.PI / 2;
+            visual.add(mesh);
+            sparks.push({ mesh, x: Math.cos(angle), y: Math.sin(angle), speed: 1.4 + i % 3 * .64 });
+        }
+        visual.scale.setScalar((blocked ? .78 : 1) * (.75 + portion * .25));
+        scene.add(visual);
+        impacts.add({ visual, scene, owner, target, ring, sparks, mat, flash, age: 0 });
     }
 
     function hit(effect, portion, stun = 0, pull = false) {
@@ -136,6 +254,7 @@ window.SpecialMoves = (() => {
         // Each effect tracks its own hit count; a short shared grace period avoids stacked hits.
         target.invulnerable = 0.08;
         owner.hits++;
+        burst(effect, blocked, portion);
         if (effect.hits === 0) effect.onHit?.();
         return true;
     }
@@ -216,15 +335,29 @@ window.SpecialMoves = (() => {
         group.position.set((effect.x - 480) / 65, (540 - effect.y) / 65 + 0.7, 0.2);
         const pulse = 1 + Math.sin(elapsed * 16) * 0.08;
         group.scale.setScalar(pulse * (effect.exploded ? 2.8 : move.kind === 'bomb' ? 1.6 : 1));
+        const fade = Math.min(1, Math.max(0, (move.duration - elapsed) / .18));
+        group.userData.materials.forEach(([material, opacity]) => { material.opacity = opacity * fade; });
         group.children.forEach(part => {
-            if (part.userData.spin) part.rotation.z += dt * 5;
-            part.material.opacity = Math.min(0.85, Math.max(0, (move.duration - elapsed) * 3));
+            part.userData.animate?.(part, elapsed);
         });
     }
     function update(dt) {
         for (const effect of effects) {
             updateEffect(effect, dt);
             if (effect.age >= effect.move.windup + effect.move.duration || effect.x < -150 || effect.x > 1110) remove(effect);
+        }
+        for (const impact of impacts) {
+            impact.age += dt;
+            const progress = impact.age / .28;
+            if (progress >= 1) { removeImpact(impact); continue; }
+            impact.ring.scale.setScalar(.65 + progress * 1.65);
+            impact.mat.opacity = .93 * (1 - progress);
+            impact.flash.opacity = .88 * (1 - progress) ** 2;
+            for (const { mesh, x, y, speed } of impact.sparks) {
+                const distance = .16 + progress * speed * .66;
+                mesh.position.set(x * distance, y * distance - progress ** 2 * .23, .04);
+                mesh.scale.setScalar(1 - progress * .87);
+            }
         }
     }
     function cooldownLabel(fighter, slot) {
