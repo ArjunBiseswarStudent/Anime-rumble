@@ -1237,8 +1237,8 @@ const pressedKeys = new Set();
 const inputSources = new Map();
 const jumpRequests = [false, false];
 const PLAYER_CONTROLS = [
-    { left: 'KeyA', right: 'KeyD', jump: 'KeyW', shield: 'KeyS', attack: 'KeyF', super1: 'KeyG', super2: 'KeyC' },
-    { left: 'ArrowLeft', right: 'ArrowRight', jump: 'ArrowUp', shield: 'ArrowDown', attack: 'Digit1', super1: 'Digit2', super2: 'Digit3' }
+    { left: 'KeyA', right: 'KeyD', jump: 'KeyW', shield: 'KeyS', attack: 'KeyF', super1: 'KeyG', super2: 'KeyC', pickup: 'KeyR', heal: 'KeyT' },
+    { left: 'ArrowLeft', right: 'ArrowRight', jump: 'ArrowUp', shield: 'ArrowDown', attack: 'Digit1', super1: 'Digit2', super2: 'Digit3', pickup: 'Digit6', heal: 'Digit7' }
 ];
 const GAME_KEYS = new Set([...PLAYER_CONTROLS.flatMap(controls => Object.values(controls)), 'KeyH', 'Digit4', 'KeyX', 'Digit5']);
 
@@ -1533,6 +1533,8 @@ function makeFighter(character, playerIndex) {
         damage: 0,
         get health() { return window.BattleRules.health(this); },
         defeats: 0,
+        healingItem: null,
+        healthRestored: 0,
         facing: playerIndex === 0 ? 1 : -1,
         attackCooldown: 0,
         specialCooldowns: [0, 0],
@@ -1554,6 +1556,7 @@ function startMatch() {
     window.SpecialMoves.reset();
     window.CombatActions?.reset();
     window.TrowItems?.reset();
+    window.HealingItems?.reset();
     resetGameInput();
     currentArena = ARENAS[document.getElementById('arena-select').value] || ARENAS.dojo;
     fighters = [makeFighter(selection[0], 0), makeFighter(selection[1], 1)];
@@ -1663,6 +1666,8 @@ function initBattleScene(canvas) {
         fighter.model.traverse(part => { if (part.isMesh) part.castShadow = part.receiveShadow = true; });
         battleScene.add(fighter.model);
     });
+    window.HealingItems?.init({ THREE, scene: battleScene, platforms: currentArena.platforms, fighters,
+        onNotice: message => { document.getElementById('arena-note').textContent = message; } });
     resizeBattleRenderer();
 }
 
@@ -1730,6 +1735,7 @@ function loseStock(fighter) {
     window.SpecialMoves.clearFighter(fighter);
     window.CombatActions?.clearFighter(fighter);
     window.TrowItems?.clearFighter(fighter);
+    window.HealingItems?.clearFighter(fighter);
     fighter.weaponSlow = 0;
     fighter.defeats++;
     fighter.stocks = Math.max(0, fighter.maxStocks - fighter.defeats);
@@ -1762,6 +1768,7 @@ function finishMatch(winner, reason = 'time') {
     window.SpecialMoves.reset();
     window.CombatActions?.reset();
     window.TrowItems?.reset();
+    window.HealingItems?.reset();
     gameRunning = false;
     cancelAnimationFrame(animationFrame);
     const elapsed = Math.floor(matchElapsed);
@@ -1777,6 +1784,7 @@ function finishMatch(winner, reason = 'time') {
         document.getElementById(`result-p${index + 1}-stats`).innerHTML =
             `<span>Levens over <b>${fighter.stocks}</b></span>` +
             `<span>Gezondheid <b>${Math.ceil(fighter.health)}%</b></span>` +
+            `<span>HP hersteld <b>${Math.round(fighter.healthRestored || 0)}</b></span>` +
             `<span>Aanvallen <b>${fighter.attacks}</b></span>` +
             `<span>Treffers <b>${fighter.hits}</b></span>` +
             `<span>Uitschakelingen <b>${fighter.knockouts}</b></span>`;
@@ -1793,6 +1801,7 @@ function returnToSelection() {
     window.SpecialMoves.reset();
     window.CombatActions?.reset();
     window.TrowItems?.reset();
+    window.HealingItems?.reset();
     gameRunning = false;
     cancelAnimationFrame(animationFrame);
     resetGameInput();
@@ -1908,6 +1917,8 @@ function battleLoop(now) {
         window.SpecialMoves.update(dt);
         window.CombatActions?.update(dt);
         window.TrowItems?.update(dt);
+        window.HealingItems?.update(dt, matchElapsed);
+        if (gameMode === 'cpu') window.HealingItems?.controlCPU(fighters[1]);
         // Resolve both fighters after all damage sources, including simultaneous KOs.
         const defeated = fighters.filter(fighter => window.BattleRules.isDefeated(fighter));
         defeated.forEach(loseStock);
@@ -1933,6 +1944,21 @@ function updateBattleHud() {
     if (clock.textContent !== time) clock.textContent = time;
     fighters.forEach((fighter, index) => {
         const prefix = `p${index + 1}`;
+        const healingLabel = document.getElementById(`${prefix}-healing-label`);
+        const healingImage = document.getElementById(`${prefix}-healing-image`);
+        if (healingLabel && window.HealingItems) {
+            const item = fighter.healingItem, close = window.HealingItems.nearby(fighter);
+            const pickupKey = index === 0 ? 'R' : '6', useKey = index === 0 ? 'T' : '7';
+            const message = item ? `${item.name} · +${item.heal} HP · ${useKey}: gebruiken`
+                : close ? `${close.name} · ${pickupKey}: oppakken` : `${pickupKey}: oppakken · ${useKey}: gebruiken · Leeg`;
+            if (healingLabel.textContent !== message) healingLabel.textContent = message;
+            if (healingImage) {
+                if (item && healingImage.dataset.itemId !== item.id) {
+                    healingImage.src = item.image; healingImage.alt = item.name; healingImage.dataset.itemId = item.id;
+                }
+                healingImage.hidden = !item;
+            }
+        }
         const label = document.getElementById(`${prefix}-hud-stats`);
         const ammo = document.getElementById(`${prefix}-throw-ammo`);
         if (ammo && window.TrowItems) {
@@ -1975,7 +2001,7 @@ window.addEventListener('resize', resizeBattleRenderer);
 function normalizeGameKey(code) {
     if (code === 'KeyQ') return 'KeyG';
     if (code === 'KeyE') return 'KeyC';
-    return /^Numpad[12345]$/.test(code) ? code.replace('Numpad', 'Digit') : code;
+    return /^Numpad[1-7]$/.test(code) ? code.replace('Numpad', 'Digit') : code;
 }
 
 function pressGameInput(rawCode, source, repeat = false) {
@@ -1986,6 +2012,8 @@ function pressGameInput(rawCode, source, repeat = false) {
     pressedKeys.add(code);
     PLAYER_CONTROLS.forEach((controls, index) => {
         if (index === 1 && gameMode !== '2p') return;
+        if (code === controls.pickup) window.HealingItems?.pickup(fighters[index]);
+        if (code === controls.heal) window.HealingItems?.use(fighters[index]);
         if (code === (index === 0 ? 'KeyH' : 'Digit4') && window.CombatActions?.cycle(fighters[index])) {
             document.getElementById('arena-note').textContent = window.CombatActions.equipped(fighters[index]).name;
         }
