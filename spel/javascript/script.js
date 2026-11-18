@@ -1259,19 +1259,60 @@ function createCharacterModel(character) {
     return window.CharacterMotion.create(THREE, character);
 }
 
+function enablePortraitRotation(canvas, viewer) {
+    canvas.classList.add('rotatable-portrait');
+    canvas.tabIndex = 0;
+    canvas.setAttribute('aria-label', '3D-vechter draaien. Sleep horizontaal of gebruik de pijltjestoetsen.');
+    function rotate(radians) {
+        viewer.yaw += radians;
+        viewer.manuallyRotated = true;
+        viewer.model.rotation.y = viewer.yaw;
+        viewer.renderer.render(viewer.scene, viewer.camera);
+    }
+    canvas.addEventListener('pointerdown', event => {
+        if (!viewer.model || viewer.drag || event.button !== 0) return;
+        canvas.setPointerCapture(event.pointerId);
+        viewer.drag = { id: event.pointerId, x: event.clientX, yaw: viewer.model.rotation.y };
+        canvas.classList.add('is-rotating');
+    });
+    canvas.addEventListener('pointermove', event => {
+        if (viewer.drag?.id !== event.pointerId) return;
+        const dx = event.clientX - viewer.drag.x;
+        viewer.drag.x = event.clientX;
+        if (dx) {
+            if (!viewer.manuallyRotated) viewer.yaw = viewer.drag.yaw;
+            rotate(dx * .013);
+        }
+    });
+    function endDrag(event) {
+        if (viewer.drag?.id !== event.pointerId) return;
+        viewer.drag = null;
+        canvas.classList.remove('is-rotating');
+    }
+    for (const event of ['pointerup', 'pointercancel', 'lostpointercapture']) canvas.addEventListener(event, endDrag);
+    canvas.addEventListener('keydown', event => {
+        if (!viewer.model || !['ArrowLeft', 'ArrowRight'].includes(event.key)) return;
+        event.preventDefault();
+        event.stopPropagation();
+        rotate(event.key === 'ArrowLeft' ? -.18 : .18);
+    });
+}
+
 function set3DPortrait(canvas, character) {
     let viewer = portraitViewers.get(canvas);
     if (!viewer) {
         try {
             const renderer = new THREE.WebGLRenderer({ canvas, alpha: true, antialias: true });
+            renderer.outputEncoding = THREE.sRGBEncoding;
+            renderer.toneMapping = THREE.ACESFilmicToneMapping;
             renderer.setPixelRatio(Math.min(window.devicePixelRatio || 1, 2));
             renderer.setSize(canvas.width, canvas.height, false);
             const scene = new THREE.Scene();
             const camera = new THREE.PerspectiveCamera(36, canvas.width / canvas.height, 0.1, 20);
             camera.position.set(0, 1.25, 4.2);
             camera.lookAt(0, 1.15, 0);
-            scene.add(new THREE.HemisphereLight(0xffffff, 0x1e293b, 1.3));
-            const light = new THREE.DirectionalLight(0xffffff, 1.3);
+            scene.add(new THREE.HemisphereLight(0xe4edff, 0x383043, .89));
+            const light = new THREE.DirectionalLight(0xffebd9, 1.48);
             light.position.set(2, 4, 3);
             scene.add(light);
             const rim = new THREE.DirectionalLight(canvas.id.startsWith('p1') ? '#ff6977' : '#65b1ff', 1.5);
@@ -1279,6 +1320,7 @@ function set3DPortrait(canvas, character) {
             scene.add(rim);
             viewer = { renderer, scene, camera, model: null, facing: canvas.id.startsWith('p1') ? 1 : -1 };
             portraitViewers.set(canvas, viewer);
+            enablePortraitRotation(canvas, viewer);
         } catch (error) {
             console.warn('3D-portret is niet beschikbaar; er wordt een getekend portret getoond.', error);
             return false;
@@ -1291,7 +1333,9 @@ function set3DPortrait(canvas, character) {
     }
     viewer.model = createCharacterModel(character);
     viewer.characterId = character.id;
-    viewer.model.rotation.y = viewer.facing * 0.3;
+    viewer.yaw = viewer.facing * .3;
+    viewer.manuallyRotated = false;
+    viewer.model.rotation.y = viewer.yaw;
     viewer.scene.add(viewer.model);
     viewer.renderer.render(viewer.scene, viewer.camera);
     return true;
@@ -1305,7 +1349,8 @@ function animatePortraits() {
         const dt = Math.min((now - (viewer.lastFrame || now)) / 1000, 0.04);
         viewer.lastFrame = now;
         window.CharacterMotion.update(viewer.model, { vx: 0, grounded: true, blocking: false, facing: 1 }, dt);
-        viewer.model.rotation.y = viewer.facing * (0.3 + Math.sin(now / 2600) * 0.1);
+        viewer.model.rotation.y = viewer.manuallyRotated ? viewer.yaw
+            : viewer.drag?.yaw ?? viewer.yaw + viewer.facing * Math.sin(now / 2600) * .1;
         viewer.renderer.render(viewer.scene, viewer.camera);
     });
     requestAnimationFrame(animatePortraits);
@@ -1330,11 +1375,13 @@ function drawPortrait(canvas, character) {
             if (!rosterPortraitCache.has(character.id)) {
                 if (!rosterPortraitStudio) {
                     const renderer = new THREE.WebGLRenderer({ alpha: true, antialias: true, preserveDrawingBuffer: true });
+                    renderer.outputEncoding = THREE.sRGBEncoding;
+                    renderer.toneMapping = THREE.ACESFilmicToneMapping;
                     renderer.setSize(180, 180);
                     renderer.setPixelRatio(1);
                     const scene = new THREE.Scene();
-                    scene.add(new THREE.HemisphereLight(0xffffff, 0x334155, 1.7));
-                    const light = new THREE.DirectionalLight(0xffffff, 1.8);
+                    scene.add(new THREE.HemisphereLight(0xe4edff, 0x383043, .95));
+                    const light = new THREE.DirectionalLight(0xffebd9, 1.5);
                     light.position.set(-2, 4, 5);
                     scene.add(light);
                     const camera = new THREE.PerspectiveCamera(32, 1, 0.1, 20);

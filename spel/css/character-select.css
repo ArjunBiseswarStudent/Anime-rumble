@@ -17,6 +17,9 @@
 .arcade-select .player-card.is-selecting .player-title { box-shadow: 0 3px 15px color-mix(in srgb, var(--player-color) 30%, transparent); }
 .arcade-select .fighter-info { position: relative; display: flex; flex-direction: column; gap: 0; margin: 0; }
 .arcade-select .fighter-info canvas { display: block; width: 100%; height: 400px; max-width: none; flex: none; object-fit: contain; border: 0; border-radius: 0; background: radial-gradient(ellipse at 50% 65%, color-mix(in srgb, var(--player-color) 14%, transparent), transparent 65%); filter: drop-shadow(0 15px 16px #0008); }
+.arcade-select .rotatable-portrait { cursor: grab; touch-action: pan-y; }
+.arcade-select .rotatable-portrait.is-rotating { cursor: grabbing; }
+.arcade-select .rotatable-portrait:focus-visible { outline: 2px solid var(--player-color); outline-offset: -2px; }
 .arcade-select .fighter-info > div { position: relative; width: 100%; margin-top: -25px; padding: 10px 14px; border-left: 4px solid var(--player-color); background: linear-gradient(100deg, color-mix(in srgb, var(--player-color) 62%, #101526), #121c2bd9); transform: skewX(-5deg); box-shadow: 0 4px 16px #0007; }
 .arcade-select .fighter-info h3 { overflow-wrap: anywhere; font-size: clamp(20px, 2vw, 29px); font-style: italic; text-transform: uppercase; line-height: 1.05; }
 .arcade-select .franchise { margin: 5px 0 0; color: #fff; font-size: 9px; letter-spacing: 1px; }

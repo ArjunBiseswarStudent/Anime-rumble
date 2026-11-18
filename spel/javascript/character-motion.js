@@ -4,14 +4,22 @@ window.CharacterMotion = (() => {
         const root = new THREE.Group();
         const rig = new THREE.Group();
         root.add(rig);
-        const material = color => new THREE.MeshStandardMaterial({ color, roughness: 0.78 });
-        const skin = material(character.skin), suit = material(character.primary);
-        const accent = material(character.secondary), hair = material(character.hair);
+        const material = (color, roughness = .78) => new THREE.MeshStandardMaterial({ color, roughness });
+        const skin = material(character.skin, .58), suit = material(character.primary);
+        const accent = material(character.secondary), hair = material(character.hair, .55);
         const dark = material('#182131'), white = material('#f1eee6');
+        const sphere = new THREE.SphereGeometry(1, 24, 16);
         function ellipsoid(parent, mat, x, y, z, sx, sy, sz) {
-            const mesh = new THREE.Mesh(new THREE.SphereGeometry(1, 20, 14), mat);
+            const mesh = new THREE.Mesh(sphere, mat);
             mesh.position.set(x, y, z);
             mesh.scale.set(sx, sy, sz);
+            parent.add(mesh);
+            return mesh;
+        }
+        function profile(parent, mat, outline, depth) {
+            const geometry = new THREE.LatheGeometry(outline.map(([radius, height]) => new THREE.Vector2(radius, height)), 28);
+            const mesh = new THREE.Mesh(geometry, mat);
+            mesh.scale.z = depth;
             parent.add(mesh);
             return mesh;
         }
@@ -28,30 +36,41 @@ window.CharacterMotion = (() => {
             return node;
         }
         const torso = joint(rig, 0, 1.13, 0);
-        ellipsoid(torso, suit, 0, 0.25, 0, 0.29, 0.43, 0.18);
-        ellipsoid(torso, accent, 0, -0.07, 0, 0.27, 0.12, 0.18);
+        profile(torso, suit, [[0, -.18], [.17, -.17], [.255, -.11], [.251, .015], [.245, .18],
+            [.272, .34], [.313, .49], [.294, .56], [.224, .61], [.096, .656], [0, .656]], .67);
+        ellipsoid(torso, suit, 0, -.068, 0, .265, .13, .176);
+        if (character.id !== 'gojo') ellipsoid(torso, accent, 0, -.017, 0, .253, .045, .176);
         segment(joint(torso, 0, 0.68, 0), skin, 0.17, 0.09, 0.1);
         const head = joint(torso, 0, 0.77, 0);
-        ellipsoid(head, skin, 0, 0.09, 0, 0.215, 0.285, 0.2);
-        ellipsoid(head, skin, 0, 0.02, 0.195, 0.035, 0.055, 0.045);
+        profile(head, skin, [[0, -.17], [.08, -.16], [.135, -.124], [.177, -.059], [.211, .035],
+            [.218, .12], [.208, .217], [.176, .296], [.113, .35], [0, .373]], .92);
+        const eyeColor = material(character.id === 'naruto' ? '#409ace' : '#59463c', .31);
+        ellipsoid(head, skin, 0, .046, .192, .034, .06, .036).rotation.x = -.24;
+        ellipsoid(head, skin, 0, .015, .213, .032, .024, .023);
         [-1, 1].forEach(side => {
             ellipsoid(head, skin, side * 0.215, 0.08, 0, 0.045, 0.075, 0.045);
-            ellipsoid(head, white, side * 0.085, 0.12, 0.183, 0.06, 0.033, 0.018);
-            ellipsoid(head, character.id === 'naruto' ? material('#409ace') : dark, side * 0.085, 0.12, 0.199, 0.023, 0.027, 0.009);
-            const brow = ellipsoid(head, hair, side * 0.085, 0.185, 0.18, 0.065, 0.012, 0.018);
-            brow.rotation.z = side * -0.12;
+            ellipsoid(head, skin, side * .19, .077, .098, .03, .057, .032);
+            ellipsoid(head, dark, side * .084, .122, .178, .059, .027, .017).rotation.z = side * .14;
+            ellipsoid(head, white, side * .084, .119, .186, .055, .022, .014).rotation.z = side * .14;
+            ellipsoid(head, eyeColor, side * .077, .119, .197, .023, .022, .009);
+            ellipsoid(head, dark, side * .077, .119, .204, .012, .014, .004);
+            ellipsoid(head, white, side * .077 - .005, .127, .207, .005, .005, .002);
+            const brow = ellipsoid(head, hair, side * .087, .168, .176, .062, .012, .016);
+            brow.rotation.z = side * (character.id === 'sukuna' ? .26 : .11);
         });
-        ellipsoid(head, dark, 0, -0.035, 0.19, 0.055, 0.007, 0.01);
+        ellipsoid(head, skin, 0, -.059, .17, .059, .024, .018);
+        ellipsoid(head, dark, 0, -.048, .185, .048, .004, .005);
         const bald = ['piccolo', 'hit', 'frieza', 'beerus', 'jiren', 'brook', 'chopper', 'dk', 'bowser', 'beru', 'sonic', 'shadow', 'knuckles'].includes(character.id);
         const longHair = ['sakura', 'jiraiya', 'cha', 'noelle', 'nezuko', 'erza', 'sephiroth', 'tifa', 'power', 'nami', 'robin', 'itachi'].includes(character.id);
-        if (!bald) ellipsoid(head, hair, 0, 0.29, -0.025, 0.23, 0.12, 0.21);
+        if (!bald) ellipsoid(head, hair, 0, .273, -.033, .225, .127, .21);
         for (let i = 0; i < (bald ? 0 : 9); i++) {
-            const spike = new THREE.Mesh(new THREE.ConeGeometry(0.075, 0.24, 5), hair);
             const angle = i / 9 * Math.PI * 2;
-            spike.position.set(Math.sin(angle) * 0.16, 0.36 + (i % 2) * 0.045, Math.cos(angle) * 0.14);
-            spike.rotation.z = -Math.sin(angle) * 0.7;
-            spike.rotation.x = Math.cos(angle) * 0.5;
-            head.add(spike);
+            const height = (longHair ? .105 : character.id === 'gojo' ? .218 : .166) - (i % 3) * .023;
+            const lock = profile(head, hair, [[0, -.096], [.069, -.056], [.077, -.005], [.06, height * .34],
+                [.033, height * .73], [0, height]], .57);
+            lock.position.set(Math.sin(angle) * .147, .328 + Math.sin(i * 2) * .025, Math.cos(angle) * .132 - .035);
+            lock.rotation.z = -Math.sin(angle) * .62 - .18;
+            lock.rotation.x = Math.cos(angle) * .42 - .21;
         }
         if (longHair) {
             ellipsoid(head, hair, 0, -0.02, -0.14, 0.245, 0.36, 0.14);
@@ -67,9 +86,24 @@ window.CharacterMotion = (() => {
             return mesh;
         }
         const id = character.id;
-        if (id === 'gojo') detail(head, '#111827', 0, 0.13, 0.16, 0.225, 0.065, 0.075);
+        if (id === 'gojo') {
+            detail(head, '#111827', 0, .133, .133, .229, .072, .114);
+            detail(head, '#283345', 0, .174, .179, .181, .012, .052);
+            detail(torso, '#20283a', 0, .628, .012, .139, .105, .129);
+            detail(torso, '#30394a', .024, .432, .183, .008, .175, .011).rotation.z = -.08;
+        }
+        if (id === 'sukuna') {
+            detail(torso, '#263144', 0, -.025, 0, .254, .06, .18);
+            [-1, 1].forEach(side => {
+                detail(torso, '#d4d4cc', side * .095, .421, .157, .024, .179, .032).rotation.z = side * -.47;
+                detail(head, '#42232c', side * .131, .069, .172, .038, .008, .009).rotation.z = side * .16;
+                detail(head, '#42232c', side * .146, -.003, .151, .01, .067, .012).rotation.z = side * .44;
+            });
+            detail(head, '#42232c', 0, .232, .174, .013, .045, .009);
+            detail(head, '#42232c', 0, .213, .181, .04, .008, .008);
+        }
         if (id === 'kakashi') detail(head, '#273449', 0, -0.035, 0.13, 0.205, 0.11, 0.1);
-        if (['sukuna', 'yuji', 'gaara', 'kiba', 'jiraiya', 'tanjiro'].includes(id)) {
+        if (['yuji', 'gaara', 'kiba', 'jiraiya', 'tanjiro'].includes(id)) {
             [-1, 1].forEach(side => {
                 const mark = detail(head, id === 'tanjiro' ? '#7c2828' : '#992f33', side * 0.14, id === 'tanjiro' ? 0.22 : 0, 0.175, 0.018, 0.07, 0.008);
                 mark.rotation.z = side * 0.25;
@@ -180,22 +214,26 @@ window.CharacterMotion = (() => {
         const limbs = [];
         [-1, 1].forEach(side => {
             const shoulder = joint(torso, side * 0.3, 0.49, 0);
-            ellipsoid(shoulder, suit, 0, -0.035, 0, 0.12, 0.14, 0.12);
-            segment(shoulder, suit, 0.34, 0.105, 0.08);
+            profile(shoulder, suit, [[0, -.371], [.075, -.352], [.084, -.256],
+                [.104, -.155], [.117, -.062], [.102, .026], [.057, .067], [0, .073]], .97);
             const elbow = joint(shoulder, 0, -0.34, 0);
-            ellipsoid(elbow, suit, 0, 0, 0, 0.082, 0.09, 0.082);
-            segment(elbow, suit, 0.3, 0.08, 0.06);
-            ellipsoid(elbow, accent, 0, -0.26, 0, 0.066, 0.055, 0.069);
-            ellipsoid(elbow, skin, 0, -0.36, 0.015, 0.065, 0.09, 0.045);
+            profile(elbow, suit, [[0, -.302], [.06, -.299], [.067, -.236], [.088, -.146],
+                [.085, -.05], [.075, .022], [0, .05]], .94);
+            ellipsoid(elbow, id === 'gojo' ? suit : accent, 0, -.278, 0, .066, .029, .066);
+            ellipsoid(elbow, skin, 0, -.35, .015, .057, .072, .036);
+            ellipsoid(elbow, skin, -side * .048, -.363, .041, .021, .041, .021).rotation.z = side * .32;
             for (let finger = 0; finger < 4; finger++) {
-                ellipsoid(elbow, skin, (finger - 1.5) * 0.025, -0.435, 0.026, 0.014, 0.042, 0.018);
+                ellipsoid(elbow, skin, (finger - 1.5) * .023, -.408, .023, .012, .026 + Math.sin(finger) * .011, .015);
             }
             const hip = joint(rig, side * 0.145, 1.08, 0);
-            segment(hip, suit, 0.46, 0.135, 0.1);
+            profile(hip, suit, [[0, -.492], [.091, -.471], [.095, -.382], [.112, -.278],
+                [.132, -.135], [.137, -.006], [.098, .048], [0, .059]], .93);
             const knee = joint(hip, 0, -0.46, 0);
-            ellipsoid(knee, suit, 0, 0, 0, 0.1, 0.105, 0.1);
-            segment(knee, suit, 0.43, 0.1, 0.07);
-            ellipsoid(knee, accent, 0, -0.44, 0.075, 0.09, 0.09, 0.18);
+            profile(knee, suit, [[0, -.451], [.073, -.427], [.075, -.335], [.096, -.209],
+                [.103, -.092], [.096, .01], [.069, .052], [0, .067]], .91);
+            ellipsoid(knee, dark, 0, -.478, .065, .101, .042, .179);
+            ellipsoid(knee, accent, 0, -.439, .067, .096, .061, .168);
+            ellipsoid(knee, accent, 0, -.401, -.006, .082, .067, .102);
             limbs.push({ side, shoulder, elbow, hip, knee });
         });
         const shield = new THREE.Mesh(new THREE.SphereGeometry(1.25, 24, 18), new THREE.MeshBasicMaterial({ color: character.aura, transparent: true, opacity: 0.2, depthWrite: false }));
