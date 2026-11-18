@@ -44,14 +44,38 @@ body { margin: 0; min-width: 280px; overflow-x: hidden; }
 @keyframes start-glow { 50% { filter: drop-shadow(0 0 17px #ffcb53); } }
 @keyframes petal-fall { 0% { opacity: 0; transform: translate3d(0, 0, 0) rotate(0); } 12% { opacity: .8; } 85% { opacity: .7; } 100% { opacity: 0; transform: translate3d(var(--drift), 110vh, 0) rotate(390deg); } }
 @media (orientation: portrait) {
-    .press-start, .has-artwork .press-start { top: 76%; left: 50%; width: min(80vw, 340px); height: 54px; transform: translateX(-50%); border: 2px solid #ffe187; background: linear-gradient(#46240c, #181018 50%, #56300c); }
-    .has-artwork .press-start span { opacity: 1; }
-    .start-fallback img { width: 34vw; }
-    .start-fallback h1 { font-size: 28px; }
+    .start-screen {
+        height: 100dvh;
+        padding: env(safe-area-inset-top, 0px) env(safe-area-inset-right, 0px)
+            calc(64px + env(safe-area-inset-bottom, 0px)) env(safe-area-inset-left, 0px);
+    }
+    .has-artwork .start-screen::before {
+        content: "";
+        position: absolute;
+        z-index: -1;
+        inset: -24px;
+        background: linear-gradient(#050615ba, #0506156e 45%, #050615ed),
+            url("../assest/img/anime-rumble-start.png") center / cover;
+        filter: blur(20px);
+    }
+    .artboard { width: 100%; aspect-ratio: 1672 / 941; transform: none; }
+    .has-artwork .start-artwork { animation: none; }
+    .has-artwork .press-start {
+        top: 78.2%;
+        width: 34%;
+        clip-path: none;
+        transform: translate(-50%, -50%);
+    }
+    body:not(.has-artwork) .artboard { aspect-ratio: auto; min-height: min(380px, 70svh); }
+    body:not(.has-artwork) .press-start { top: auto; bottom: 8%; left: 50%; width: min(80vw, 340px); height: 54px; transform: translateX(-50%); }
+    .start-fallback { padding: 0 12px min(82px, 20svh); text-align: center; }
+    .start-fallback img { width: min(34vw, 28svh); }
+    .start-fallback h1 { font-size: clamp(22px, 7vw, 32px); }
     .start-footer { font-size: 9px; gap: 8px; }
 }
-@media (max-height: 450px) and (orientation: portrait) {
-    .press-start, .has-artwork .press-start { top: 60%; }
+@media (orientation: portrait) and (pointer: coarse) {
+    .start-footer { justify-content: flex-end; }
+    .start-footer > span { display: none; }
 }
 @media (min-aspect-ratio: 21/9) {
     body:not(.has-artwork) .press-start { top: calc(50% + 18svh); left: 50%; width: min(45vw, 480px); height: 56px; transform: translateX(-50%); border: 2px solid #ffe187; background: linear-gradient(#46240c, #181018 50%, #56300c); }
