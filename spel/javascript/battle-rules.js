@@ -2,6 +2,8 @@
 (() => {
     const durationSeconds = 180;
     const health = fighter => Math.max(0, Math.min(100, 100 - fighter.damage));
+    // Physics uses 18 screen pixels per velocity unit. Platforms are 85–185px apart.
+    const jumpVelocity = character => Math.max(23, (character.jump || 12.5) * 1.8);
     function isDefeated(fighter) {
         return health(fighter) <= 0 || fighter.x < -fighter.width || fighter.x > 960 || fighter.y > 630;
     }
@@ -12,7 +14,7 @@
         const healthDifference = health(a) - health(b);
         return Math.abs(healthDifference) < 0.001 ? null : healthDifference > 0 ? a : b;
     }
-    const rules = { durationSeconds, health, isDefeated, chooseWinner };
+    const rules = { durationSeconds, health, jumpVelocity, isDefeated, chooseWinner };
     if (typeof module !== 'undefined' && module.exports) module.exports = rules;
     else window.BattleRules = rules;
 })();

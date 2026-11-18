@@ -1525,6 +1525,8 @@ function makeFighter(character, playerIndex) {
         vx: 0,
         vy: 0,
         grounded: false,
+        coyoteTime: 0,
+        jumpBuffer: 0,
         dropThroughTimer: 0,
         width: character.scaleW || 34,
         height: character.scaleH || 48,
@@ -1754,6 +1756,8 @@ function loseStock(fighter) {
     fighter.vy = 0;
     fighter.grounded = false;
     fighter.dropThroughTimer = 0;
+    fighter.coyoteTime = 0;
+    fighter.jumpBuffer = 0;
     fighter.invulnerable = 2;
     fighter.blocking = false;
     fighter.attackCooldown = 0;
@@ -1824,6 +1828,9 @@ function updateFighter(fighter, target, dt) {
     const isPlayerOne = fighter.playerIndex === 0;
     const { left: leftKey, right: rightKey, shield: shieldKey } = PLAYER_CONTROLS[fighter.playerIndex];
     const isCpu = gameMode === 'cpu' && !isPlayerOne;
+    fighter.coyoteTime = fighter.grounded ? 0.1 : Math.max(0, (fighter.coyoteTime || 0) - dt);
+    fighter.jumpBuffer = Math.max(0, (fighter.jumpBuffer || 0) - dt);
+    if (!isCpu && jumpRequests[fighter.playerIndex]) fighter.jumpBuffer = 0.12;
     let move = 0;
     fighter.blocking = !isCpu && pressedKeys.has(shieldKey);
 
@@ -1844,15 +1851,18 @@ function updateFighter(fighter, target, dt) {
         }
         if (Math.abs(distance) > 90 && Math.abs(distance) < 600 && Math.random() < 0.008) performThrow(fighter, target);
         if (fighter.grounded && Math.random() < 0.025) {
-            fighter.vy = -fighter.character.jump;
+            fighter.vy = -window.BattleRules.jumpVelocity(fighter.character);
             fighter.grounded = false;
+            fighter.coyoteTime = 0;
         }
     } else if (!isCpu && specialStatus.stun <= 0) {
         if (!fighter.blocking && pressedKeys.has(leftKey)) move--;
         if (!fighter.blocking && pressedKeys.has(rightKey)) move++;
-        if (jumpRequests[fighter.playerIndex] && fighter.grounded && !fighter.blocking) {
-            fighter.vy = -fighter.character.jump;
+        if (fighter.jumpBuffer > 0 && (fighter.grounded || fighter.coyoteTime > 0) && !fighter.blocking) {
+            fighter.vy = -window.BattleRules.jumpVelocity(fighter.character);
             fighter.grounded = false;
+            fighter.coyoteTime = 0;
+            fighter.jumpBuffer = 0;
         }
     }
 
@@ -1865,6 +1875,7 @@ function updateFighter(fighter, target, dt) {
     else fighter.vx += (move * speed - fighter.vx) * Math.min(1, dt * 12);
     if (!move && specialStatus.dash <= 0) fighter.vx *= Math.pow(0.82, dt * 60);
     fighter.x += fighter.vx * dt * 18;
+    const previousFeet = fighter.y + fighter.height;
     fighter.vy += 23 * dt;
     fighter.y += fighter.vy * dt * 18;
     fighter.attackCooldown = Math.max(0, fighter.attackCooldown - dt);
@@ -1872,15 +1883,19 @@ function updateFighter(fighter, target, dt) {
     fighter.dropThroughTimer = Math.max(0, fighter.dropThroughTimer - dt);
 
     fighter.grounded = false;
+    let landing = null;
     for (const platform of currentArena.platforms) {
         const feet = fighter.y + fighter.height;
         if (fighter.dropThroughTimer === 0 && fighter.vy >= 0 &&
-            feet >= platform.y && feet - fighter.vy * dt * 18 <= platform.y &&
+            feet >= platform.y && previousFeet <= platform.y &&
             fighter.x + fighter.width > platform.x && fighter.x < platform.x + platform.w) {
-            fighter.y = platform.y - fighter.height;
-            fighter.vy = 0;
-            fighter.grounded = true;
+            if (!landing || platform.y < landing.y) landing = platform;
         }
+    }
+    if (landing) {
+        fighter.y = landing.y - fighter.height;
+        fighter.vy = 0;
+        fighter.grounded = true;
     }
     fighter.model.position.set(
         (fighter.x + fighter.width / 2 - 480) / 65,
