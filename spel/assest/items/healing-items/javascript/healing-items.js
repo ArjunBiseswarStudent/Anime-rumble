@@ -1,18 +1,6 @@
 window.HealingItems = (() => {
-    const base = document.currentScript?.src ? new URL('img/', document.currentScript.src).href : 'assest/items/healing-items/img/';
-    const items = Object.freeze([
-        ['soldier-pill', 'Naruto', 'Soldier Pill', 15, '01_soldier_pill.png', 'pill'],
-        ['rice-ball', 'Naruto', 'Ninja Rice Ball', 20, '02_ninja_rice_ball.png', 'rice'],
-        ['chakra-scroll', 'Naruto', 'Medical Chakra Scroll', 35, '03_medical_chakra_scroll.png', 'scroll'],
-        ['ramen', 'Naruto', 'Ichiraku Ramen', 45, '04_ichiraku_ramen.png', 'ramen'],
-        ['katsuyu', 'Naruto', 'Katsuyu Healing Summon', 60, '05_katsuyu.png', 'slug'],
-        ['chopper-medicine', 'One Piece', "Chopper's Medicine", 20, '07_rumble_ball.png', 'medicine'],
-        ['bento', 'One Piece', "Sanji's Bento", 30, '09_sanjis_bento.png', 'bento'],
-        ['meat', 'One Piece', 'Pirate Meat', 40, '06_pirate_meat.png', 'meat'],
-        ['recovery-potion', 'One Piece', 'Grand Line Recovery Potion', 50, '08_miracle_drug.png', 'potion'],
-        ['hormones', 'One Piece', "Ivankov's Healing Hormones", 65, '10_ivankov_hormones.png', 'hormones'],
-        ['senzu', 'Dragon Ball', 'Senzu Bean', 100, '11_senzu_bean.png', 'bean']
-    ].map(([id, series, name, heal, file, kind]) => Object.freeze({ id, series, name, heal, file, kind, image: base + file })));
+    const base = document.currentScript?.src ? new URL('../img/', document.currentScript.src).href : 'assest/items/healing-items/img/';
+    const items = Object.freeze(window.HealingItemData.map(item => Object.freeze({ ...item, image: base + item.file })));
     const INTERVAL = 10, LIFETIME = 35, MAX_DROPS = 2;
     const AIR_MAPS = new Set(['dojo', 'castle', 'island', 'neon']);
     const FLIGHT_INTERVAL = 15, RELEASE_AT = 3, FLIGHT_DURATION = 6.4, FALL_TIME = 3.4;

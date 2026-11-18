@@ -34,13 +34,17 @@ gedragen item. De CPU kan nabije items oppakken en gebruiken als hij gewond is.
 | One Piece | Ivankov's Healing Hormones | 65 | 10_ivankov_hormones.png |
 | Dragon Ball | Senzu Bean | 100 | 11_senzu_bean.png |
 
-`healing-models.js` bouwt unieke 3D-vormen op basis van de meegeleverde afbeeldingen:
+De itemgegevens staan in `javascript/healing-items.json`. Houd de browserkopie
+`javascript/healing-items-data.js` gelijk aan de JSON, zodat het spel ook werkt
+als je `game.html` rechtstreeks opent. De stylesheet staat in `css/healing-items.css`.
+
+`javascript/healing-models.js` bouwt unieke 3D-vormen op basis van de meegeleverde afbeeldingen:
 potje, rijstbal, scroll, ramenkom, slak, medicijn, bento, vlees, flesje, spuit en bonen.
 De afbeeldingen verschijnen in de inventaris. De pick-ups zweven en draaien boven
 een lichtgevende ring. Gebruik toont een bewegende groene herstelaura. Alle
 geometrie en materialen worden bij ophalen, verdwijnen of een nieuwe ronde opgeruimd.
 
-`supply-plane.js` bouwt het vliegtuig met vier geanimeerde motorfans, cockpitramen,
+`javascript/supply-plane.js` bouwt het vliegtuig met vier geanimeerde motorfans, cockpitramen,
 rood-witte vleugels, gouden accenten, navigatielichten en het bestaande Anime Rumble-logo.
 De parachute bestaat uit acht afwisselend rode/witte panelen met ophanglijnen.
 De afbeeldingen worden niet als platte vervanging voor het 3D-vliegtuig gebruikt.

@@ -1,6 +1,6 @@
 /* Lightweight 3D supply aircraft and parachute; no image is used as a flat plane. */
 window.SupplyPlane = (() => {
-    const logoUrl = document.currentScript?.src ? new URL('../../img/anime-rumble-logo.png', document.currentScript.src).href : 'assest/img/anime-rumble-logo.png';
+    const logoUrl = document.currentScript?.src ? new URL('../../../img/anime-rumble-logo.png', document.currentScript.src).href : 'assest/img/anime-rumble-logo.png';
     let logoTexture;
     function create(THREE, direction) {
         const visual = new THREE.Group(); visual.name = 'anime-supply-plane';

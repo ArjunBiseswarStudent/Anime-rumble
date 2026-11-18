@@ -16,7 +16,7 @@ function setup(index = 0, arenaKey) {
     const THREE = { Group, Mesh, Shape, MeshStandardMaterial: Material, MeshBasicMaterial: Material, MeshPhysicalMaterial: Material };
     for (const name of ['SphereGeometry', 'CylinderGeometry', 'TorusGeometry', 'BoxGeometry', 'ExtrudeGeometry', 'CircleGeometry']) THREE[name] = Geometry;
     const context = { window: {}, document: {}, console }; vm.createContext(context);
-    for (const file of ['healing-models.js', 'supply-plane.js', 'healing-items.js']) vm.runInContext(fs.readFileSync(path.join(__dirname, file), 'utf8'), context);
+    for (const file of ['healing-models.js', 'supply-plane.js', 'healing-items-data.js', 'healing-items.js']) vm.runInContext(fs.readFileSync(path.join(__dirname, file), 'utf8'), context);
     const api = context.window.HealingItems, scene = new Group(), notices = [];
     const casts = [];
     if (arenaKey === 'frog') scene.userData.gamakichi = { userData: {
@@ -34,10 +34,11 @@ function setup(index = 0, arenaKey) {
 }
 
 test('all eleven requested items have exact healing values, unique IDs and existing illustrations', () => {
-    const { api } = setup();
+    const { api, context } = setup();
+    assert.equal(JSON.stringify(context.window.HealingItemData), JSON.stringify(require('./healing-items.json')));
     assert.equal(api.items.length, 11); assert.equal(new Set(api.items.map(i => i.id)).size, 11);
     assert.deepEqual(Array.from(api.items, i => i.heal), [15,20,35,45,60,20,30,40,50,65,100]);
-    for (const item of api.items) assert.ok(fs.existsSync(path.join(__dirname, 'img', item.file)), item.file);
+    for (const item of api.items) assert.ok(fs.existsSync(path.join(__dirname, '../img', item.file)), item.file);
 });
 
 test('first spawn is exactly 10s, subsequent spawns every 10s, with no backlog burst', () => {
@@ -105,7 +106,7 @@ test('CPU can only collect nearby items while injured and uses its own inventory
 });
 
 test('keyboard/touch input routes R/T and 6/7 independently and blocks CPU manual input', () => {
-    const source = fs.readFileSync(path.join(__dirname, '../../../javascript/script.js'), 'utf8');
+    const source = fs.readFileSync(path.join(__dirname, '../../../../javascript/script.js'), 'utf8');
     const calls = [], app = { window: { HealingItems: { pickup: f => calls.push(['pickup', f.playerIndex]), use: f => calls.push(['use', f.playerIndex]) } },
         gameRunning: true, gameMode: '2p', fighters: [{playerIndex:0},{playerIndex:1}], pressedKeys: new Set(), inputSources: new Map(), jumpRequests: [], performThrow() {}, performAttack() {} };
     vm.createContext(app);

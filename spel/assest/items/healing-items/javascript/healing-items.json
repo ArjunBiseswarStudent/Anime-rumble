@@ -1,0 +1,90 @@
+[
+  {
+    "id": "soldier-pill",
+    "series": "Naruto",
+    "name": "Soldier Pill",
+    "heal": 15,
+    "file": "01_soldier_pill.png",
+    "kind": "pill"
+  },
+  {
+    "id": "rice-ball",
+    "series": "Naruto",
+    "name": "Ninja Rice Ball",
+    "heal": 20,
+    "file": "02_ninja_rice_ball.png",
+    "kind": "rice"
+  },
+  {
+    "id": "chakra-scroll",
+    "series": "Naruto",
+    "name": "Medical Chakra Scroll",
+    "heal": 35,
+    "file": "03_medical_chakra_scroll.png",
+    "kind": "scroll"
+  },
+  {
+    "id": "ramen",
+    "series": "Naruto",
+    "name": "Ichiraku Ramen",
+    "heal": 45,
+    "file": "04_ichiraku_ramen.png",
+    "kind": "ramen"
+  },
+  {
+    "id": "katsuyu",
+    "series": "Naruto",
+    "name": "Katsuyu Healing Summon",
+    "heal": 60,
+    "file": "05_katsuyu.png",
+    "kind": "slug"
+  },
+  {
+    "id": "chopper-medicine",
+    "series": "One Piece",
+    "name": "Chopper's Medicine",
+    "heal": 20,
+    "file": "07_rumble_ball.png",
+    "kind": "medicine"
+  },
+  {
+    "id": "bento",
+    "series": "One Piece",
+    "name": "Sanji's Bento",
+    "heal": 30,
+    "file": "09_sanjis_bento.png",
+    "kind": "bento"
+  },
+  {
+    "id": "meat",
+    "series": "One Piece",
+    "name": "Pirate Meat",
+    "heal": 40,
+    "file": "06_pirate_meat.png",
+    "kind": "meat"
+  },
+  {
+    "id": "recovery-potion",
+    "series": "One Piece",
+    "name": "Grand Line Recovery Potion",
+    "heal": 50,
+    "file": "08_miracle_drug.png",
+    "kind": "potion"
+  },
+  {
+    "id": "hormones",
+    "series": "One Piece",
+    "name": "Ivankov's Healing Hormones",
+    "heal": 65,
+    "file": "10_ivankov_hormones.png",
+    "kind": "hormones"
+  },
+  {
+    "id": "senzu",
+    "series": "Dragon Ball",
+    "name": "Senzu Bean",
+    "heal": 100,
+    "file": "11_senzu_bean.png",
+    "kind": "bean"
+  }
+]
