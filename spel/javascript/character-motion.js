@@ -7,6 +7,7 @@ window.CharacterMotion = (() => {
         const material = (color, roughness = .78) => new THREE.MeshStandardMaterial({ color, roughness });
         const skin = material(character.skin, .58), suit = material(character.primary);
         const accent = material(character.secondary), hair = material(character.hair, .55);
+        root.userData.palette = { skin, suit, accent, hair };
         const dark = material('#182131'), white = material('#f1eee6');
         const sphere = new THREE.SphereGeometry(1, 24, 16);
         function ellipsoid(parent, mat, x, y, z, sx, sy, sz) {
@@ -77,9 +78,10 @@ window.CharacterMotion = (() => {
             [-1, 1].forEach(side => ellipsoid(head, hair, side * 0.19, -0.04, -0.015, 0.07, 0.28, 0.09));
         }
         // Signature details are attached to the same rig used by portraits and combat.
-        const detail = (parent, color, x, y, z, sx, sy, sz) => ellipsoid(parent, material(color), x, y, z, sx, sy, sz);
+        const detailMaterial = color => color === character.primary ? suit : color === character.skin ? skin : material(color);
+        const detail = (parent, color, x, y, z, sx, sy, sz) => ellipsoid(parent, detailMaterial(color), x, y, z, sx, sy, sz);
         function horn(parent, color, x, y, z, radius, height, tilt = 0) {
-            const mesh = new THREE.Mesh(new THREE.ConeGeometry(radius, height, 12), material(color));
+            const mesh = new THREE.Mesh(new THREE.ConeGeometry(radius, height, 12), detailMaterial(color));
             mesh.position.set(x, y, z);
             mesh.rotation.z = tilt;
             parent.add(mesh);

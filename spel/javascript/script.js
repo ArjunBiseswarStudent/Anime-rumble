@@ -1237,8 +1237,8 @@ const pressedKeys = new Set();
 const inputSources = new Map();
 const jumpRequests = [false, false];
 const PLAYER_CONTROLS = [
-    { left: 'KeyA', right: 'KeyD', jump: 'KeyW', shield: 'KeyS', attack: 'KeyF', super1: 'KeyG', super2: 'KeyC', pickup: 'KeyR', heal: 'KeyT' },
-    { left: 'ArrowLeft', right: 'ArrowRight', jump: 'ArrowUp', shield: 'ArrowDown', attack: 'Digit1', super1: 'Digit2', super2: 'Digit3', pickup: 'Digit6', heal: 'Digit7' }
+    { left: 'KeyA', right: 'KeyD', jump: 'KeyW', shield: 'KeyS', attack: 'KeyF', super1: 'KeyG', super2: 'KeyC', pickup: 'KeyR', heal: 'KeyT', ultimate: 'KeyB' },
+    { left: 'ArrowLeft', right: 'ArrowRight', jump: 'ArrowUp', shield: 'ArrowDown', attack: 'Digit1', super1: 'Digit2', super2: 'Digit3', pickup: 'Digit6', heal: 'Digit7', ultimate: 'Digit8' }
 ];
 const GAME_KEYS = new Set([...PLAYER_CONTROLS.flatMap(controls => Object.values(controls)), 'KeyH', 'Digit4', 'KeyX', 'Digit5']);
 
@@ -1610,6 +1610,7 @@ function startMatch() {
         return;
     }
     cancelAnimationFrame(animationFrame);
+    fighters.forEach(fighter => window.UltimateForms?.clear(fighter));
     window.SpecialMoves.reset();
     window.CombatActions?.reset();
     window.TrowItems?.reset();
@@ -1803,6 +1804,7 @@ function performAttack(attacker, target, isSpecial, specialMove = 'neutral') {
 }
 
 function loseStock(fighter) {
+    window.UltimateForms?.clear(fighter);
     window.SpecialMoves.clearFighter(fighter);
     window.CombatActions?.clearFighter(fighter);
     window.TrowItems?.clearFighter(fighter);
@@ -1870,6 +1872,7 @@ function replayMatch() {
 }
 
 function returnToSelection() {
+    fighters.forEach(fighter => window.UltimateForms?.clear(fighter));
     setBattleFocus(false);
     window.ArenaMusic?.stop();
     window.SpecialMoves.reset();
@@ -1972,6 +1975,7 @@ function updateFighter(fighter, target, dt) {
         0
     );
     window.CharacterMotion.update(fighter.model, fighter, dt);
+    window.UltimateForms?.update(fighter, dt);
     if (fighter.model.userData.shield) fighter.model.userData.shield.visible = fighter.blocking;
     fighter.model.visible = fighter.invulnerable <= 0 || Math.floor(performance.now() / 90) % 2 === 0;
 }
@@ -2029,6 +2033,12 @@ function updateBattleHud() {
     if (clock.textContent !== time) clock.textContent = time;
     fighters.forEach((fighter, index) => {
         const prefix = `p${index + 1}`;
+        const hudName = document.getElementById(`${prefix}-hud-name`);
+        const activeName = fighter.ultimateForm ? `${fighter.character.name} · ${fighter.ultimateForm.name}` : fighter.character.name;
+        if (hudName.textContent !== activeName) {
+            hudName.textContent = activeName;
+            hudName.title = activeName;
+        }
         const healingLabel = document.getElementById(`${prefix}-healing-label`);
         const healingImage = document.getElementById(`${prefix}-healing-image`);
         if (healingLabel && window.HealingItems) {
@@ -2089,7 +2099,7 @@ window.addEventListener('resize', resizeBattleRenderer);
 function normalizeGameKey(code) {
     if (code === 'KeyQ') return 'KeyG';
     if (code === 'KeyE') return 'KeyC';
-    return /^Numpad[1-7]$/.test(code) ? code.replace('Numpad', 'Digit') : code;
+    return /^Numpad[1-8]$/.test(code) ? code.replace('Numpad', 'Digit') : code;
 }
 
 function pressGameInput(rawCode, source, repeat = false) {
@@ -2102,6 +2112,11 @@ function pressGameInput(rawCode, source, repeat = false) {
         if (index === 1 && gameMode !== '2p') return;
         if (code === controls.pickup) window.HealingItems?.pickup(fighters[index]);
         if (code === controls.heal) window.HealingItems?.use(fighters[index]);
+        if (code === controls.ultimate) {
+            const fighter = fighters[index];
+            const form = window.UltimateForms?.activate(THREE, fighter);
+            if (form) document.getElementById('arena-note').textContent = `${fighter.character.name} transformeert naar ${form}!`;
+        }
         if (code === (index === 0 ? 'KeyH' : 'Digit4') && window.CombatActions?.cycle(fighters[index])) {
             document.getElementById('arena-note').textContent = window.CombatActions.equipped(fighters[index]).name;
         }
