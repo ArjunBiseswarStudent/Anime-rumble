@@ -18,14 +18,14 @@ function setup() {
             addEventListener(name, fn) { this.handlers[name] = fn; } };
     });
     const scope = { gameRunning: true, gameMode: 'cpu', pressedKeys: new Set(), inputSources: new Map(),
-        jumpRequests: [false, false], GAME_KEYS: new Set(['KeyA', 'KeyF', 'KeyW', 'KeyS', 'Digit1']),
-        PLAYER_CONTROLS: [{ left: 'KeyA', right: 'KeyD', jump: 'KeyW', shield: 'KeyS', attack: 'KeyF', super1: 'KeyG', super2: 'KeyC' }, { attack: 'Digit1' }],
+        jumpRequests: [false, false],
         fighters: [{ playerIndex: 0 }, { playerIndex: 1 }],
         performAttack(owner) { attacks.push(owner.playerIndex); }, performThrow() {},
         document: { hidden: false, getElementById() { return controlRoot; }, querySelectorAll() { return buttons; }, querySelector() { return panels[1]; }, addEventListener(name, fn) { documentEvents[name] = fn; } },
         window: { addEventListener(name, fn) { events[name] = fn; } }
     };
     vm.createContext(scope);
+    vm.runInContext(gameSource.slice(gameSource.indexOf('const PLAYER_CONTROLS ='), gameSource.indexOf('const portraitCanvases =')), scope);
     vm.runInContext(gameSource.slice(gameSource.indexOf('function normalizeGameKey('), gameSource.indexOf("window.addEventListener('keydown'")), scope);
     vm.runInContext(touchSource, scope);
     const api = scope.window.TouchControls;

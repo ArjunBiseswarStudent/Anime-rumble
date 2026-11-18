@@ -44,3 +44,46 @@ test('resizing keeps the horizontal battlefield visible on phone and tablet disp
         assert.ok(horizontal >= Math.tan(42 * Math.PI / 360) * 16 / 9 - .00001);
     }
 });
+
+test('the controls guide shows the actual bindings for the selected mode and can return to selection', () => {
+    const elements = new Map();
+    function element() {
+        const classes = new Set();
+        return {
+            children: [], classList: classes, focus() { this.focused = true; },
+            append(...children) { this.children.push(...children); },
+            replaceChildren(...children) { this.children = children; }
+        };
+    }
+    function getElementById(id) {
+        if (!elements.has(id)) {
+            const node = element();
+            node.classList.remove = node.classList.delete.bind(node.classList);
+            elements.set(id, node);
+        }
+        return elements.get(id);
+    }
+    const app = vm.createContext({
+        gameMode: 'cpu', gameRunning: false, ARENAS: { dojo: { name: 'Anime Dojo' } },
+        selection: ['Gojo', 'Sukuna'].map(name => ({ name, moves: { neutral: { name: name + ' 1' }, side: { name: name + ' 2' } } })),
+        document: { createElement: element, getElementById }
+    });
+    vm.runInContext(source.slice(source.indexOf('const PLAYER_CONTROLS ='), source.indexOf('const portraitCanvases =')), app);
+    vm.runInContext(source.slice(source.indexOf('function showControlsGuide('), source.indexOf('function startMatch(')), app);
+    app.showControlsGuide();
+    const table = getElementById('controls-bindings');
+    assert.equal(app.gameRunning, false);
+    assert.equal(getElementById('controls-player-two').hidden, true);
+    assert.ok(getElementById('controls-title').focused);
+    assert.equal(table.children.length, 12);
+    assert.ok(table.children.every(row => row.children.length === 2));
+    assert.deepEqual(table.children[5].children[1].children.map(node => node.textContent), ['G', 'Q', 'Gojo 1']);
+    app.backFromControlsGuide();
+    assert.ok(getElementById('controls-screen').classList.has('hidden'));
+    assert.ok(getElementById('review-controls-btn').focused);
+    app.gameMode = '2p';
+    app.showControlsGuide();
+    assert.equal(getElementById('controls-player-two').hidden, false);
+    assert.ok(table.children.every(row => row.children.length === 3));
+    assert.equal(table.children[7].children[2].children[0].textContent, '8');
+});

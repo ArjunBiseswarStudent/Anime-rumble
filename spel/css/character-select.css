@@ -92,3 +92,45 @@
 }
 @media (max-width: 420px) { .arcade-select .roster-grid { grid-template-columns: repeat(6, minmax(0, 1fr)); } .arcade-select .fighter-info canvas { height: 190px; } }
 @media (prefers-reduced-motion: reduce) { .arcade-select .char-card { transition: none; } }
+.controls-screen { width: min(760px, calc(100% - 28px)); }
+.controls-heading { margin-bottom: 18px; }
+.controls-heading h1 { margin: 0 0 6px; font-size: clamp(28px, 5vw, 44px); font-style: italic; }
+.controls-heading p, .controls-tip { margin: 0; color: var(--muted); line-height: 1.5; }
+.controls-table {
+    width: 100%;
+    table-layout: fixed;
+    border-collapse: separate;
+    border-spacing: 0;
+    border: 1px solid var(--line);
+    border-radius: 10px;
+    background: var(--panel);
+    overflow: hidden;
+}
+.controls-table th, .controls-table td { padding: 7px clamp(8px, 2vw, 18px); text-align: left; overflow-wrap: anywhere; }
+.controls-table thead { background: #1c2941; color: #e3edff; }
+.controls-table thead th { padding-block: 12px; }
+.controls-table tbody th, .controls-table tbody td { border-top: 1px solid var(--line); }
+.controls-table tbody tr:nth-child(even) { background: #152037; }
+.controls-table tbody th { font-size: .88rem; }
+.controls-table kbd {
+    display: inline-grid;
+    place-items: center;
+    min-width: 28px;
+    min-height: 27px;
+    margin-right: 5px;
+    padding: 1px 4px;
+    border: 1px solid #536989;
+    border-bottom-width: 3px;
+    border-radius: 5px;
+    color: #fff4da;
+    background: #24334f;
+    font: 700 .9rem/1 monospace;
+}
+.controls-move { display: block; margin-top: 4px; color: #bbd0eb; font-size: .76rem; }
+.controls-tip { margin-top: 10px; font-size: .85rem; }
+.controls-footer { display: flex; flex-wrap: wrap; justify-content: space-between; align-items: center; gap: 10px; margin-top: 18px; }
+.controls-footer button { min-height: 44px; }
+@media (max-width: 440px) {
+    .controls-table th, .controls-table td { padding-inline: 7px; }
+    .controls-footer button { flex: 1 1 100%; }
+}

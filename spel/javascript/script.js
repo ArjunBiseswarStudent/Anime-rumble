@@ -1237,10 +1237,11 @@ const pressedKeys = new Set();
 const inputSources = new Map();
 const jumpRequests = [false, false];
 const PLAYER_CONTROLS = [
-    { left: 'KeyA', right: 'KeyD', jump: 'KeyW', shield: 'KeyS', attack: 'KeyF', super1: 'KeyG', super2: 'KeyC', pickup: 'KeyR', heal: 'KeyT', ultimate: 'KeyB' },
-    { left: 'ArrowLeft', right: 'ArrowRight', jump: 'ArrowUp', shield: 'ArrowDown', attack: 'Digit1', super1: 'Digit2', super2: 'Digit3', pickup: 'Digit6', heal: 'Digit7', ultimate: 'Digit8' }
+    { left: 'KeyA', right: 'KeyD', jump: 'KeyW', shield: 'KeyS', attack: 'KeyF', super1: 'KeyG', super2: 'KeyC', pickup: 'KeyR', heal: 'KeyT', ultimate: 'KeyB', weapon: 'KeyH', throw: 'KeyX' },
+    { left: 'ArrowLeft', right: 'ArrowRight', jump: 'ArrowUp', shield: 'ArrowDown', attack: 'Digit1', super1: 'Digit2', super2: 'Digit3', pickup: 'Digit6', heal: 'Digit7', ultimate: 'Digit8', weapon: 'Digit4', throw: 'Digit5' }
 ];
-const GAME_KEYS = new Set([...PLAYER_CONTROLS.flatMap(controls => Object.values(controls)), 'KeyH', 'Digit4', 'KeyX', 'Digit5']);
+const GAME_KEYS = new Set(PLAYER_CONTROLS.flatMap(controls => Object.values(controls)));
+const GAME_KEY_ALIASES = { KeyQ: 'KeyG', KeyE: 'KeyC' };
 
 const portraitCanvases = [
     document.getElementById('p1-portrait-canvas'),
@@ -1603,6 +1604,57 @@ function setBattleFocus(active) {
     if (options) options.open = false;
 }
 
+function showControlsGuide() {
+    const twoPlayer = gameMode === '2p';
+    const actions = [
+        ['Naar links', 'left'], ['Naar rechts', 'right'], ['Springen', 'jump'], ['Blokkeren', 'shield'],
+        ['Aanvallen', 'attack'], ['Special move 1', 'super1', 'neutral'], ['Special move 2', 'super2', 'side'],
+        ['Ultieme vorm', 'ultimate'], ['Wapen wisselen', 'weapon'], ['Werpitem gooien', 'throw'],
+        ['Health-item oppakken', 'pickup'], ['Health-item gebruiken', 'heal']
+    ];
+    const arrowLabels = { ArrowLeft: '←', ArrowRight: '→', ArrowUp: '↑', ArrowDown: '↓' };
+    const rows = actions.map(([label, action, move]) => {
+        const row = document.createElement('tr');
+        const heading = document.createElement('th');
+        heading.scope = 'row';
+        heading.textContent = label;
+        row.append(heading);
+        PLAYER_CONTROLS.slice(0, twoPlayer ? 2 : 1).forEach((controls, index) => {
+            const code = controls[action];
+            const cell = document.createElement('td');
+            const keys = [code, ...Object.keys(GAME_KEY_ALIASES).filter(alias => GAME_KEY_ALIASES[alias] === code)];
+            keys.forEach(key => {
+                const cap = document.createElement('kbd');
+                cap.textContent = arrowLabels[key] || key.replace(/^(Key|Digit)/, '');
+                cell.append(cap);
+            });
+            if (move) {
+                const name = document.createElement('span');
+                name.className = 'controls-move';
+                name.textContent = selection[index].moves[move].name;
+                cell.append(name);
+            }
+            row.append(cell);
+        });
+        return row;
+    });
+    const arena = ARENAS[document.getElementById('arena-select').value] || ARENAS.dojo;
+    document.getElementById('controls-matchup').textContent =
+        `${selection[0].name} tegen ${selection[1].name}${twoPlayer ? '' : ' (CPU)'} · ${arena.name}`;
+    document.getElementById('controls-player-two').hidden = !twoPlayer;
+    document.getElementById('controls-numpad').hidden = !twoPlayer;
+    document.getElementById('controls-bindings').replaceChildren(...rows);
+    document.getElementById('select-screen').classList.add('hidden');
+    document.getElementById('controls-screen').classList.remove('hidden');
+    document.getElementById('controls-title').focus();
+}
+
+function backFromControlsGuide() {
+    document.getElementById('controls-screen').classList.add('hidden');
+    document.getElementById('select-screen').classList.remove('hidden');
+    document.getElementById('review-controls-btn').focus();
+}
+
 function startMatch() {
     window.ArenaMusic?.stop();
     if (typeof THREE === 'undefined') {
@@ -1621,6 +1673,7 @@ function startMatch() {
     gameRunning = true;
     matchElapsed = 0;
     document.getElementById('select-screen').classList.add('hidden');
+    document.getElementById('controls-screen').classList.add('hidden');
     document.getElementById('arena-screen').classList.remove('hidden');
     setBattleFocus(true);
     document.getElementById('result-overlay').classList.add('hidden');
@@ -2097,9 +2150,7 @@ function updateBattleHud() {
 
 window.addEventListener('resize', resizeBattleRenderer);
 function normalizeGameKey(code) {
-    if (code === 'KeyQ') return 'KeyG';
-    if (code === 'KeyE') return 'KeyC';
-    return /^Numpad[1-8]$/.test(code) ? code.replace('Numpad', 'Digit') : code;
+    return GAME_KEY_ALIASES[code] || (/^Numpad[1-8]$/.test(code) ? code.replace('Numpad', 'Digit') : code);
 }
 
 function pressGameInput(rawCode, source, repeat = false) {
@@ -2117,10 +2168,10 @@ function pressGameInput(rawCode, source, repeat = false) {
             const form = window.UltimateForms?.activate(THREE, fighter);
             if (form) document.getElementById('arena-note').textContent = `${fighter.character.name} transformeert naar ${form}!`;
         }
-        if (code === (index === 0 ? 'KeyH' : 'Digit4') && window.CombatActions?.cycle(fighters[index])) {
+        if (code === controls.weapon && window.CombatActions?.cycle(fighters[index])) {
             document.getElementById('arena-note').textContent = window.CombatActions.equipped(fighters[index]).name;
         }
-        if (code === (index === 0 ? 'KeyX' : 'Digit5')) performThrow(fighters[index], fighters[1 - index]);
+        if (code === controls.throw) performThrow(fighters[index], fighters[1 - index]);
         if (code === controls.jump) jumpRequests[index] = true;
         if (code === controls.attack) performAttack(fighters[index], fighters[1 - index], false);
         if (code === controls.super1) performAttack(fighters[index], fighters[1 - index], true, 'neutral');
