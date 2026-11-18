@@ -15,14 +15,21 @@ const api = context.window.UltimateForms;
 
 class Group {
     children = [];
-    position = { set() {} };
-    rotation = {};
-    scale = { set() {}, setScalar() {} };
+    userData = {};
+    position = { x: 0, y: 0, z: 0, set(x, y, z) { Object.assign(this, { x, y, z }); } };
+    rotation = { x: 0, y: 0, z: 0 };
+    scale = { x: 1, y: 1, z: 1, set(x, y, z) { Object.assign(this, { x, y, z }); }, setScalar(value) { this.set(value, value, value); } };
     add(child) { this.children.push(child); }
     remove(child) { this.children = this.children.filter(item => item !== child); }
     traverse(visit) { visit(this); this.children.forEach(child => child.traverse(visit)); }
 }
 class Resource { dispose() { this.disposed = true; } }
+class Material extends Resource {
+    constructor({ color }) {
+        super();
+        this.color = { value: color, set(value) { this.value = value; } };
+    }
+}
 class Mesh extends Group {
     constructor(geometry, material) { super(); Object.assign(this, { geometry, material }); }
 }
@@ -36,9 +43,35 @@ class BufferAttribute {
     setXYZ(index, x, y, z) { this.array.set([x, y, z], index * 3); }
 }
 const THREE = {
-    Group, Mesh, BufferGeometry, BufferAttribute, PointLight: Group, MeshBasicMaterial: Resource, MeshStandardMaterial: Resource,
-    SphereGeometry: Resource, ConeGeometry: Resource, TorusGeometry: Resource
+    Group, Mesh, BufferGeometry, BufferAttribute, PointLight: Group, MeshBasicMaterial: Material, MeshStandardMaterial: Material,
+    SphereGeometry: Resource, ConeGeometry: Resource, TorusGeometry: Resource, BoxGeometry: Resource,
+    LatheGeometry: Resource, CylinderGeometry: Resource, Vector2: class { constructor(x, y) { Object.assign(this, { x, y }); } }
 };
+
+test('the whole roster builds detailed models around the same animated rig and transformable palette', () => {
+    vm.runInContext(read('character-motion.js'), context);
+    const motion = context.window.CharacterMotion;
+    const bodyBuilds = new Set();
+    for (const character of context.roster) {
+        const model = motion.create(THREE, character);
+        const fighter = { model, character, stocks: 3, damage: 0, vx: 2, grounded: true, facing: 1 };
+        const { rig, limbs } = model.userData.motion;
+        assert.equal(limbs.length, 2);
+        bodyBuilds.add(rig.scale.x);
+        const nodes = [];
+        model.traverse(node => nodes.push(node));
+        assert.ok(nodes.filter(node => node.geometry).length >= 30, character.id);
+        assert.ok(nodes.every(node => !node.geometry || node.material), character.id);
+        motion.attack(model, 'side');
+        motion.update(model, fighter, .02);
+        assert.ok(Number.isFinite(limbs[0].shoulder.rotation.x), character.id);
+        assert.ok(api.activate(THREE, fighter), character.id);
+        api.update(fighter, .5);
+        api.clear(fighter);
+        assert.equal(model.userData.palette.suit.color.value, character.primary);
+    }
+    assert.ok(bodyBuilds.size >= 6);
+});
 
 test('every roster entry can transform once per life and restore its existing rig and materials', () => {
     assert.deepEqual(Object.keys(api.forms).sort(), Array.from(context.roster, character => character.id).sort());

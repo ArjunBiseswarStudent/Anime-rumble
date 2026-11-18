@@ -1,8 +1,44 @@
 /* Rounded, articulated characters. All poses are relative to their joint rest positions. */
 window.CharacterMotion = (() => {
+    // Body proportions, hair silhouette and the main piece of clothing for each fighter.
+    const looks = {
+        gojo: ['lean', 'swept', 'uniform'], sukuna: ['athletic', 'crop', 'robe'], yuji: ['athletic', 'crop', 'hood'],
+        jinwoo: ['lean', 'fringe', 'coat'], cha: ['slim', 'bob', 'armor'], beru: ['beast', 'bare', 'carapace'],
+        deku: ['compact', 'rough', 'armor'], bakugo: ['athletic', 'burst', 'armor'], todoroki: ['lean', 'split', 'uniform'],
+        asta: ['compact', 'burst', 'mantle'], yuno: ['lean', 'fringe', 'mantle'], noelle: ['slim', 'twin', 'armor'],
+        tanjiro: ['compact', 'swept', 'checkered'], nezuko: ['slim', 'flow', 'robe'], zenitsu: ['lean', 'bob', 'triangles'],
+        natsu: ['athletic', 'burst', 'scarf'], erza: ['athletic', 'flow', 'armor'], gray: ['lean', 'rough', 'open'],
+        sonic: ['mascot', 'bare', 'gloves'], shadow: ['mascot', 'bare', 'gloves'], knuckles: ['beast', 'bare', 'gloves'],
+        mario: ['round', 'crop', 'overalls'], bowser: ['beast', 'bare', 'shell'], dk: ['beast', 'bare', 'open'],
+        cloud: ['lean', 'burst', 'pauldron'], sephiroth: ['tall', 'flow', 'pauldron'], tifa: ['slim', 'flow', 'straps'],
+        denji: ['lean', 'rough', 'shirt'], power: ['slim', 'flow', 'shirt'], aki: ['tall', 'knot', 'lapels'],
+        naruto: ['athletic', 'burst', 'uniform'], sasuke: ['lean', 'swept', 'robe'], sakura: ['slim', 'bob', 'uniform'],
+        itachi: ['lean', 'flow', 'coat'], kakashi: ['tall', 'swept', 'vest'], jiraiya: ['broad', 'mane', 'mantle'],
+        gaara: ['compact', 'crop', 'sling'], shikamaru: ['lean', 'knot', 'vest'], kiba: ['athletic', 'rough', 'hood'],
+        luffy: ['lean', 'crop', 'open'], zoro: ['broad', 'crop', 'sash'], sanji: ['tall', 'side', 'lapels'],
+        usopp: ['lean', 'rough', 'overalls'], chopper: ['round', 'bare', 'scarf'], nami: ['slim', 'flow', 'straps'],
+        robin: ['tall', 'flow', 'lapels'], brook: ['tall', 'bare', 'lapels'],
+        goku: ['broad', 'burst', 'gi'], vegeta: ['athletic', 'flame', 'armor'], gohan: ['broad', 'flame', 'gi'],
+        piccolo: ['tall', 'bare', 'mantle'], trunks: ['athletic', 'side', 'coat'], hit: ['tall', 'bare', 'coat'],
+        frieza: ['slim', 'bare', 'carapace'], beerus: ['tall', 'bare', 'sash'], jiren: ['broad', 'bare', 'uniform']
+    };
+    const builds = {
+        lean: [1, 1, 1], athletic: [1.075, 1, 1.08], slim: [.89, 1, .91], compact: [1, .96, 1.03],
+        tall: [.94, 1.045, .98], broad: [1.16, 1.025, 1.16], beast: [1.24, .99, 1.19],
+        mascot: [.94, .94, 1.04], round: [1.12, .91, 1.15]
+    };
+    const eyeColors = {
+        naruto: '#409ace', sakura: '#5a9b66', itachi: '#a93143', sasuke: '#293047', gaara: '#4e9e93',
+        gojo: '#5cb3ef', sukuna: '#922f38', deku: '#3a926f', bakugo: '#9b323d', natsu: '#514032',
+        noelle: '#a366b1', nezuko: '#b9709f', zenitsu: '#c27b37', power: '#c78d43',
+        cha: '#7589a9', sephiroth: '#68af96', cloud: '#638acd', trunks: '#5eb4dd'
+    };
     function create(THREE, character) {
+        const id = character.id;
+        const [build, haircut, outfit] = looks[id] || ['lean', 'rough', 'uniform'];
         const root = new THREE.Group();
         const rig = new THREE.Group();
+        rig.scale.set(...builds[build]);
         root.add(rig);
         const material = (color, roughness = .78) => new THREE.MeshStandardMaterial({ color, roughness });
         const skin = material(character.skin, .58), suit = material(character.primary);
@@ -45,15 +81,17 @@ window.CharacterMotion = (() => {
         const head = joint(torso, 0, 0.77, 0);
         profile(head, skin, [[0, -.17], [.08, -.16], [.135, -.124], [.177, -.059], [.211, .035],
             [.218, .12], [.208, .217], [.176, .296], [.113, .35], [0, .373]], .92);
-        const eyeColor = material(character.id === 'naruto' ? '#409ace' : '#59463c', .31);
+        const eyeColor = material(eyeColors[id] || '#59463c', .31);
+        const eyeTilt = ['sukuna', 'bakugo', 'vegeta', 'sephiroth', 'jiren'].includes(id) ? .26 : .14;
+        const eyeHeight = ['nezuko', 'chopper', 'deku', 'cha', 'noelle'].includes(id) ? 1.22 : 1;
         ellipsoid(head, skin, 0, .046, .192, .034, .06, .036).rotation.x = -.24;
         ellipsoid(head, skin, 0, .015, .213, .032, .024, .023);
         [-1, 1].forEach(side => {
             ellipsoid(head, skin, side * 0.215, 0.08, 0, 0.045, 0.075, 0.045);
             ellipsoid(head, skin, side * .19, .077, .098, .03, .057, .032);
-            ellipsoid(head, dark, side * .084, .122, .178, .059, .027, .017).rotation.z = side * .14;
-            ellipsoid(head, white, side * .084, .119, .186, .055, .022, .014).rotation.z = side * .14;
-            ellipsoid(head, eyeColor, side * .077, .119, .197, .023, .022, .009);
+            ellipsoid(head, dark, side * .084, .122, .178, .059, .027 * eyeHeight, .017).rotation.z = side * eyeTilt;
+            ellipsoid(head, white, side * .084, .119, .186, .055, .022 * eyeHeight, .014).rotation.z = side * eyeTilt;
+            ellipsoid(head, eyeColor, side * .077, .119, .197, .023, .022 * eyeHeight, .009);
             ellipsoid(head, dark, side * .077, .119, .204, .012, .014, .004);
             ellipsoid(head, white, side * .077 - .005, .127, .207, .005, .005, .002);
             const brow = ellipsoid(head, hair, side * .087, .168, .176, .062, .012, .016);
@@ -61,25 +99,65 @@ window.CharacterMotion = (() => {
         });
         ellipsoid(head, skin, 0, -.059, .17, .059, .024, .018);
         ellipsoid(head, dark, 0, -.048, .185, .048, .004, .005);
-        const bald = ['piccolo', 'hit', 'frieza', 'beerus', 'jiren', 'brook', 'chopper', 'dk', 'bowser', 'beru', 'sonic', 'shadow', 'knuckles'].includes(character.id);
-        const longHair = ['sakura', 'jiraiya', 'cha', 'noelle', 'nezuko', 'erza', 'sephiroth', 'tifa', 'power', 'nami', 'robin', 'itachi'].includes(character.id);
-        if (!bald) ellipsoid(head, hair, 0, .273, -.033, .225, .127, .21);
-        for (let i = 0; i < (bald ? 0 : 9); i++) {
-            const angle = i / 9 * Math.PI * 2;
-            const height = (longHair ? .105 : character.id === 'gojo' ? .218 : .166) - (i % 3) * .023;
-            const lock = profile(head, hair, [[0, -.096], [.069, -.056], [.077, -.005], [.06, height * .34],
-                [.033, height * .73], [0, height]], .57);
-            lock.position.set(Math.sin(angle) * .147, .328 + Math.sin(i * 2) * .025, Math.cos(angle) * .132 - .035);
-            lock.rotation.z = -Math.sin(angle) * .62 - .18;
-            lock.rotation.x = Math.cos(angle) * .42 - .21;
-        }
-        if (longHair) {
-            ellipsoid(head, hair, 0, -0.02, -0.14, 0.245, 0.36, 0.14);
-            [-1, 1].forEach(side => ellipsoid(head, hair, side * 0.19, -0.04, -0.015, 0.07, 0.28, 0.09));
+        if (haircut !== 'bare') {
+            const upright = ['burst', 'flame', 'rough', 'crop', 'swept'].includes(haircut);
+            const long = ['flow', 'mane', 'twin'].includes(haircut);
+            const splitHair = haircut === 'split' ? material('#a13536', .54) : hair;
+            ellipsoid(head, hair, 0, .265, -.05, .221, .124, .201);
+            if (haircut === 'split') ellipsoid(head, splitHair, -.102, .263, -.037, .127, .115, .185);
+            if (upright) {
+                const peak = { burst: .22, flame: .29, rough: .12, crop: .067, swept: .19 }[haircut];
+                const count = haircut === 'rough' || haircut === 'crop' ? 10 : 7;
+                for (let i = 0; i < count; i++) {
+                    const angle = i / count * Math.PI * 2;
+                    const height = peak * (1 - (i % 3) * .16);
+                    const lock = profile(head, hair, [[0, -.09], [.071, -.063], [.073, -.014], [.052, height * .28],
+                        [.026, height * .69], [0, height]], haircut === 'crop' ? .83 : .67);
+                    lock.position.set(Math.sin(angle) * .147, .323 + Math.sin(i * 2) * .022, Math.cos(angle) * .14 - .035);
+                    lock.rotation.z = -Math.sin(angle) * (haircut === 'flame' ? .25 : .73) + (haircut === 'swept' ? -.37 : -.09);
+                    lock.rotation.x = Math.cos(angle) * .31 - (haircut === 'swept' ? .43 : .12);
+                }
+            } else {
+                for (let i = 0; i < 5; i++) {
+                    const x = (i - 2) * .075;
+                    const sidePart = haircut === 'side';
+                    const hanging = sidePart ? (4 - i) * .022 + .054 : .052 + Math.cos(i * 1.25) * .023;
+                    const mat = haircut === 'split' && i < 2 ? splitHair : hair;
+                    const fringe = ellipsoid(head, mat, x, .284 - hanging / 2, .153 - x * x * .6, .052, hanging, .057);
+                    fringe.rotation.z = sidePart ? -.57 : (i - 2) * -.18;
+                }
+            }
+            if (long || haircut === 'bob') {
+                const length = id === 'sephiroth' || haircut === 'mane' ? .54 : long ? .41 : .25;
+                ellipsoid(head, hair, 0, .23 - length, -.153, .225, length, .129);
+                for (const side of [-1, 1]) {
+                    for (let i = 0; i < 3; i++) {
+                        const strand = ellipsoid(head, hair, side * (.165 + i * .024), .19 - length * .7,
+                            -.045 - i * .052, .055, length * (.72 + i * .12), .065);
+                        strand.rotation.z = side * (-.1 - i * .066);
+                    }
+                }
+            }
+            if (haircut === 'knot' || haircut === 'twin') {
+                const count = haircut === 'twin' ? 2 : 1;
+                for (let i = 0; i < count; i++) {
+                    const x = count === 1 ? 0 : (i ? .21 : -.21);
+                    ellipsoid(head, hair, x, .34, -.189, .092, .079, .092);
+                    ellipsoid(head, hair, x, .276, -.236, .062, count === 1 ? .12 : .27, .078).rotation.x = -.44;
+                }
+            }
         }
         // Signature details are attached to the same rig used by portraits and combat.
         const detailMaterial = color => color === character.primary ? suit : color === character.skin ? skin : material(color);
         const detail = (parent, color, x, y, z, sx, sy, sz) => ellipsoid(parent, detailMaterial(color), x, y, z, sx, sy, sz);
+        const gold = ['vest', 'overalls', 'sash'].includes(outfit) ? material('#b49759', .39) : null;
+        function strip(parent, mat, x, y, z, width, length, angle = 0) {
+            const mesh = new THREE.Mesh(new THREE.BoxGeometry(width, length, .025), mat);
+            mesh.position.set(x, y, z);
+            mesh.rotation.z = angle;
+            parent.add(mesh);
+            return mesh;
+        }
         function horn(parent, color, x, y, z, radius, height, tilt = 0) {
             const mesh = new THREE.Mesh(new THREE.ConeGeometry(radius, height, 12), detailMaterial(color));
             mesh.position.set(x, y, z);
@@ -87,7 +165,116 @@ window.CharacterMotion = (() => {
             parent.add(mesh);
             return mesh;
         }
-        const id = character.id;
+        if (['coat', 'mantle', 'robe', 'checkered', 'triangles'].includes(outfit)) {
+            const cloth = outfit === 'mantle' && id === 'piccolo' ? white : suit;
+            const lapel = outfit === 'robe' ? white : accent;
+            for (const side of [-1, 1]) {
+                const panel = ellipsoid(torso, cloth, side * .167, .125, -.117, .134, .51, .097);
+                panel.rotation.z = side * .13;
+                const fold = ellipsoid(torso, lapel, side * .103, .391, .171, .035, .231, .031);
+                fold.rotation.z = side * -.30;
+            }
+        }
+        if (outfit === 'checkered' || outfit === 'triangles') {
+            const triangle = outfit === 'triangles';
+            const pattern = triangle ? white : dark;
+            const tile = triangle ? new THREE.ConeGeometry(.031, .057, 3) : new THREE.BoxGeometry(.066, .073, .013);
+            for (let row = 0; row < 4; row++) {
+                for (let col = 0; col < 5; col++) {
+                    if (!triangle && (col + row) % 2) continue;
+                    const x = (col - 2) * .069;
+                    const y = .086 + row * .102;
+                    const radius = .245 + row * .012;
+                    const mesh = new THREE.Mesh(tile, pattern);
+                    mesh.position.set(x, y, Math.sqrt(radius ** 2 - x ** 2) * .67 + .013);
+                    mesh.rotation.y = Math.asin(x / radius) * .7;
+                    torso.add(mesh);
+                }
+            }
+        }
+        if (['shirt', 'lapels', 'gi'].includes(outfit)) {
+            const lining = outfit === 'shirt' ? white : accent;
+            for (const side of [-1, 1]) {
+                strip(torso, lining, side * .078, .438, .196, .049, .194, side * -.47);
+            }
+            if (outfit === 'shirt' || outfit === 'lapels') {
+                strip(torso, dark, 0, .301, .199, .038, .225).rotation.z = -.045;
+                ellipsoid(torso, dark, 0, .417, .209, .039, .033, .016);
+            }
+        }
+        if (['vest', 'overalls', 'straps', 'sling'].includes(outfit)) {
+            const vest = outfit === 'vest' || outfit === 'overalls';
+            const panel = outfit === 'overalls' ? accent : suit;
+            if (vest) ellipsoid(torso, panel, 0, .249, .153, .222, .277, .068);
+            for (const side of outfit === 'sling' ? [1] : [-1, 1]) {
+                const strap = strip(torso, outfit === 'overalls' ? accent : dark, side * .128, .369, .188, .058,
+                    outfit === 'sling' ? .61 : .332, outfit === 'sling' ? -.62 : side * -.13);
+                strap.rotation.y = side * .21;
+                if (vest) ellipsoid(torso, gold, side * .131, .294, .214, .026, .026, .011);
+            }
+        }
+        if (['armor', 'carapace', 'pauldron'].includes(outfit)) {
+            const plate = outfit === 'carapace' ? accent : material(id === 'noelle' ? '#c2e9f3' : '#aab7cc', .38);
+            if (outfit !== 'pauldron') {
+                for (const side of [-1, 1]) {
+                    const chestPlate = ellipsoid(torso, plate, side * .107, .378, .163, .119, .167, .063);
+                    chestPlate.rotation.z = side * -.28;
+                }
+            }
+            for (let row = 0; row < 3; row++) {
+                const rib = ellipsoid(torso, outfit === 'armor' ? accent : plate, 0, .133 + row * .064, .167, .167, .034, .043);
+                rib.rotation.z = outfit === 'pauldron' ? -.19 : 0;
+            }
+        }
+        if (outfit === 'scarf' || outfit === 'hood' || outfit === 'uniform') {
+            const collar = outfit === 'scarf' ? white : accent;
+            ellipsoid(torso, collar, 0, .588, .013, .167, .086, .137);
+            if (outfit === 'scarf') {
+                for (let i = 0; i < 4; i++) strip(torso, dark, (i - 1.5) * .051, .586, .145, .008, .083, -.17);
+                ellipsoid(torso, white, -.119, .359, -.111, .071, .259, .045).rotation.z = -.39;
+            }
+        }
+        if (outfit === 'sash') {
+            ellipsoid(torso, accent, 0, .072, 0, .257, .081, .181);
+            ellipsoid(torso, gold, 0, .08, .188, .053, .067, .017);
+        }
+        if (outfit === 'shell') {
+            const shell = material('#385b3f', .54);
+            ellipsoid(torso, shell, 0, .213, -.197, .351, .435, .162);
+            for (let i = 0; i < 7; i++) {
+                const angle = i * Math.PI * 2 / 7;
+                horn(torso, '#e0c999', Math.cos(angle) * .22, .213 + Math.sin(angle) * .331, -.333, .046, .15).rotation.x = -Math.PI / 2;
+            }
+        }
+        if (id === 'gaara') {
+            const gourd = material('#996936', .64);
+            ellipsoid(torso, gourd, -.22, .143, -.237, .22, .302, .19).rotation.z = -.36;
+            ellipsoid(torso, gourd, -.333, .421, -.237, .15, .174, .133).rotation.z = -.36;
+        }
+        if (id === 'itachi') {
+            const cloud = material('#b33d48');
+            ellipsoid(torso, cloud, -.088, .279, .196, .082, .038, .012);
+            ellipsoid(torso, cloud, -.111, .302, .194, .037, .031, .013);
+            ellipsoid(torso, cloud, -.056, .303, .195, .039, .045, .013);
+        }
+        if (id === 'nezuko') {
+            const bow = material('#f48bac');
+            for (const side of [-1, 1]) ellipsoid(head, bow, -.177 + side * .036, .245, .129, .044, .024, .022).rotation.z = side * .42;
+            ellipsoid(head, bow, -.177, .245, .148, .025, .021, .017);
+        }
+        if (id === 'tanjiro') {
+            const paper = material('#e7dfc9');
+            for (const side of [-1, 1]) {
+                strip(head, paper, side * .215, -.045, .045, .037, .102);
+                ellipsoid(head, accent, side * .215, -.025, .061, .012, .012, .005);
+                strip(head, dark, side * .215, -.079, .061, .025, .004);
+            }
+        }
+        if (id === 'beerus') {
+            strip(torso, accent, 0, .401, .196, .142, .318);
+            strip(torso, white, 0, .431, .214, .07, .07, Math.PI / 4);
+            strip(torso, gold, 0, .549, .213, .128, .019);
+        }
         if (id === 'gojo') {
             detail(head, '#111827', 0, .133, .133, .229, .072, .114);
             detail(head, '#283345', 0, .174, .179, .181, .012, .052);
@@ -104,7 +291,10 @@ window.CharacterMotion = (() => {
             detail(head, '#42232c', 0, .232, .174, .013, .045, .009);
             detail(head, '#42232c', 0, .213, .181, .04, .008, .008);
         }
-        if (id === 'kakashi') detail(head, '#273449', 0, -0.035, 0.13, 0.205, 0.11, 0.1);
+        if (id === 'kakashi') {
+            detail(head, '#273449', 0, -.025, .14, .204, .133, .092);
+            detail(head, '#3c4758', -.091, .175, .193, .113, .042, .043).rotation.z = .32;
+        }
         if (['yuji', 'gaara', 'kiba', 'jiraiya', 'tanjiro'].includes(id)) {
             [-1, 1].forEach(side => {
                 const mark = detail(head, id === 'tanjiro' ? '#7c2828' : '#992f33', side * 0.14, id === 'tanjiro' ? 0.22 : 0, 0.175, 0.018, 0.07, 0.008);
@@ -138,11 +328,10 @@ window.CharacterMotion = (() => {
             detail(head, '#efbc94', 0, 0.06, 0.23, 0.07, 0.065, 0.06);
         }
         if (id === 'usopp') detail(head, character.skin, 0, 0.045, 0.29, 0.035, 0.035, 0.16);
-        if (id === 'sanji') detail(head, '#e6c94f', -0.09, 0.19, 0.2, 0.1, 0.15, 0.035);
         if (id === 'zoro') {
             [-1, 0, 1].forEach(i => detail(head, '#e8c34a', -0.235, -0.035 + i * 0.035, 0.04, 0.009, 0.025, 0.009));
         }
-        if (id === 'todoroki') detail(head, '#b94542', -0.12, 0.29, 0, 0.12, 0.14, 0.2);
+        if (id === 'todoroki') detail(head, '#a45450', -.11, .117, .166, .07, .047, .025);
         if (['power', 'bowser', 'beru'].includes(id)) {
             [-1, 1].forEach(side => horn(head, id === 'power' ? '#b73345' : '#e9d9b2', side * 0.18, 0.48, 0, 0.055, 0.26, side * -0.2));
         }
@@ -191,17 +380,20 @@ window.CharacterMotion = (() => {
             [-1, 1].forEach(side => detail(head, '#4b5243', side * 0.14, 0.02, 0.18, 0.025, 0.008, 0.008));
         }
         if (id === 'bakugo' || id === 'asta') detail(head, '#252b32', 0, id === 'asta' ? 0.24 : 0.13, 0.16, 0.23, 0.04, 0.07);
-        if (id === 'denji') detail(torso, '#232831', 0, 0.28, 0.18, 0.025, 0.25, 0.02);
         if (['goku', 'gohan', 'vegeta', 'trunks'].includes(id)) {
             detail(torso, character.secondary, 0, 0.53, 0.12, 0.2, 0.065, 0.12);
             if (id === 'vegeta') detail(torso, '#e7e5d9', 0, 0.27, 0.16, 0.245, 0.22, 0.055);
         }
-        if (character.franchise === 'Naruto') {
-            ellipsoid(head, dark, 0, 0.25, 0, 0.225, 0.05, 0.212);
-            ellipsoid(head, material('#b9c5cc'), 0, 0.25, 0.207, 0.13, 0.04, 0.015);
+        if (['naruto', 'kakashi', 'itachi', 'jiraiya', 'sakura', 'kiba'].includes(id)) {
+            const band = joint(head, 0, .245, 0);
+            if (id === 'kakashi') band.rotation.z = .27;
+            ellipsoid(band, dark, 0, 0, 0, .225, .044, .214);
+            ellipsoid(band, material('#a6b4bf', .34), 0, 0, .207, .126, .035, .018);
             const emblem = new THREE.Mesh(new THREE.TorusGeometry(0.021, 0.004, 5, 16), dark);
-            emblem.position.set(0, 0.25, 0.225);
-            head.add(emblem);
+            emblem.position.set(0, 0, .227);
+            band.add(emblem);
+            for (const side of [-1, 1]) ellipsoid(band, dark, side * .099, 0, .22, .006, .006, .004);
+            if (id === 'itachi') strip(band, dark, 0, -.005, .23, .17, .006);
         }
         if (character.id === 'naruto') {
             ellipsoid(torso, dark, 0, 0.48, 0, 0.285, 0.16, 0.185);
@@ -214,24 +406,34 @@ window.CharacterMotion = (() => {
             });
         }
         const limbs = [];
+        const shortSleeve = ['gi', 'open', 'straps', 'gloves'].includes(outfit);
+        const gloves = outfit === 'gloves';
+        const legs = outfit === 'overalls' || (outfit === 'open' && id === 'luffy') ? accent : suit;
         [-1, 1].forEach(side => {
             const shoulder = joint(torso, side * 0.3, 0.49, 0);
-            profile(shoulder, suit, [[0, -.371], [.075, -.352], [.084, -.256],
+            profile(shoulder, shortSleeve ? skin : suit, [[0, -.371], [.075, -.352], [.084, -.256],
                 [.104, -.155], [.117, -.062], [.102, .026], [.057, .067], [0, .073]], .97);
+            if (outfit === 'gi') ellipsoid(shoulder, accent, 0, -.042, 0, .125, .129, .114);
+            if (outfit === 'armor' || (outfit === 'pauldron' && (id === 'sephiroth' || side === -1))) {
+                const pad = ellipsoid(shoulder, white, side * .032, -.015, 0, .136, .092, .133);
+                pad.rotation.z = side * -.31;
+            }
             const elbow = joint(shoulder, 0, -0.34, 0);
-            profile(elbow, suit, [[0, -.302], [.06, -.299], [.067, -.236], [.088, -.146],
+            profile(elbow, shortSleeve ? skin : suit, [[0, -.302], [.06, -.299], [.067, -.236], [.088, -.146],
                 [.085, -.05], [.075, .022], [0, .05]], .94);
-            ellipsoid(elbow, id === 'gojo' ? suit : accent, 0, -.278, 0, .066, .029, .066);
-            ellipsoid(elbow, skin, 0, -.35, .015, .057, .072, .036);
-            ellipsoid(elbow, skin, -side * .048, -.363, .041, .021, .041, .021).rotation.z = side * .32;
+            const cuff = gloves ? white : id === 'gojo' ? suit : accent;
+            const hand = gloves ? white : skin;
+            ellipsoid(elbow, cuff, 0, -.278, 0, gloves ? .087 : .066, .029, .066);
+            ellipsoid(elbow, hand, 0, -.35, .015, gloves ? .078 : .057, .072, .036);
+            ellipsoid(elbow, hand, -side * .048, -.363, .041, .021, .041, .021).rotation.z = side * .32;
             for (let finger = 0; finger < 4; finger++) {
-                ellipsoid(elbow, skin, (finger - 1.5) * .023, -.408, .023, .012, .026 + Math.sin(finger) * .011, .015);
+                ellipsoid(elbow, hand, (finger - 1.5) * .023, -.408, .023, .012, .026 + Math.sin(finger) * .011, .015);
             }
             const hip = joint(rig, side * 0.145, 1.08, 0);
-            profile(hip, suit, [[0, -.492], [.091, -.471], [.095, -.382], [.112, -.278],
+            profile(hip, legs, [[0, -.492], [.091, -.471], [.095, -.382], [.112, -.278],
                 [.132, -.135], [.137, -.006], [.098, .048], [0, .059]], .93);
             const knee = joint(hip, 0, -0.46, 0);
-            profile(knee, suit, [[0, -.451], [.073, -.427], [.075, -.335], [.096, -.209],
+            profile(knee, id === 'luffy' ? skin : legs, [[0, -.451], [.073, -.427], [.075, -.335], [.096, -.209],
                 [.103, -.092], [.096, .01], [.069, .052], [0, .067]], .91);
             ellipsoid(knee, dark, 0, -.478, .065, .101, .042, .179);
             ellipsoid(knee, accent, 0, -.439, .067, .096, .061, .168);
