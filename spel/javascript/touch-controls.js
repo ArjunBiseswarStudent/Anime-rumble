@@ -12,13 +12,14 @@ window.TouchControls = (() => {
             button.setAttribute('aria-pressed', 'false');
         }
     }
-    function reset() { for (const id of [...pointers.keys()]) release(id); }
+    function reset() { for (const id of [...pointers.keys()]) release(id); window.MobileGamepad?.reset(); }
     function updateMode(twoPlayer) {
         reset();
         const controls = document.getElementById('touch-controls');
         if (!controls) return;
         controls.dataset.twoPlayer = String(twoPlayer);
         document.querySelector('[data-touch-player="1"]').hidden = !twoPlayer;
+        window.MobileGamepad?.updateMode(twoPlayer);
     }
     function init(callbacks) {
         if (handlers) return;
@@ -46,6 +47,7 @@ window.TouchControls = (() => {
         window.addEventListener('pointercancel', event => release(event.pointerId));
         window.addEventListener('blur', reset);
         document.addEventListener('visibilitychange', () => { if (document.hidden) reset(); });
+        window.MobileGamepad?.init(callbacks);
     }
     return { init, reset, updateMode };
 })();
