@@ -13,6 +13,7 @@
   <link rel="stylesheet" href="css/battle-hud.css">
   <link rel="stylesheet" href="css/responsive.css">
   <link rel="stylesheet" href="assest/items/healing-items/healing-items.css">
+  <link rel="stylesheet" href="css/battle-layout.css">
   <script src="https://cdn.jsdelivr.net/npm/three@0.128.0/build/three.min.js"></script>
   <script defer src="assest/maps/maps.js"></script>
   <script defer src="assest/maps/battlefield.js"></script>
@@ -109,13 +110,21 @@
   </main>
 
   <main id="arena-screen" class="screen arena-screen hidden">
-    <header class="arena-top"><div><p class="eyebrow">HYPER HELDEN HAVOC</p><h1>DE <span>ARENA</span></h1></div><button class="back-btn" type="button" onclick="returnToSelection()">← TERUG NAAR SELECTIE</button></header>
-    <section class="music-controls" aria-label="Achtergrondmuziek in de arena">
+    <header class="arena-top battle-toolbar">
+      <button class="back-btn" type="button" onclick="returnToSelection()">← Selectie</button>
+      <span class="battle-toolbar-title">ANIME RUMBLE</span>
+      <details class="battle-options"><summary>Instellingen</summary><div class="battle-options-panel">
+        <section class="music-controls" aria-label="Achtergrondmuziek in de arena">
       <button type="button" data-music-toggle aria-pressed="true">Muziek aan</button>
       <label for="music-volume-arena">Muziekvolume</label>
       <input id="music-volume-arena" data-music-volume type="range" min="0" max="100" value="28">
       <span data-music-status>Start bij het gevecht</span>
     </section>
+        <h2>Besturing en uitleg</h2>
+        <p><b>P1:</b> A/D lopen · W springen · S beschermen · F aanvallen · H wapen wisselen · X werpen · G/Q en C/E supers · R health-item oppakken · T health-item gebruiken.</p><p><b>P2:</b> ←/→ lopen · ↑ springen · ↓ beschermen · 1 aanvallen · 4 wapen wisselen · 5 werpen · 2/3 supers · 6 health-item oppakken · 7 health-item gebruiken (ook numpad).</p><p>De groene balk toont je gezondheid: elk leven begint op 100%. Bij 0% gezondheid of een val uit de arena verlies je een leven. Elke speler kiest vooraf 3 of 5 levens. De ronde duurt maximaal 3 minuten en stopt eerder als je levens op zijn. Bij tijd om wint de speler met de meeste levens; bij gelijke levens telt de gezondheid. Zijn beide gelijk, dan is het gelijkspel. De twee kleine meters tonen wanneer je supers weer klaar zijn.</p>
+        <p>Health-items: één draagplek. Pak op met R (P1) of 6 (P2). Gebruik met T (P1) of 7 (P2).</p>
+      </div></details>
+    </header>
     <div class="game-frame">
       <div class="battle-viewport">
         <canvas id="gameCanvas" aria-label="3D-gevechtsarena"></canvas>
@@ -140,20 +149,22 @@
             </div>
           </section>
         </div>
-      </div>
-    </div>
     <section class="healing-inventory" aria-label="Health-items in je inventaris">
       <div class="healing-slot"><b>P1</b><div class="healing-thumbnail"><img id="p1-healing-image" alt="" hidden><span class="healing-empty" aria-hidden="true">+</span></div><span id="p1-healing-label" role="status">R: oppakken · T: gebruiken · Leeg</span></div>
       <div class="healing-slot"><b>P2 / CPU</b><div class="healing-thumbnail"><img id="p2-healing-image" alt="" hidden><span class="healing-empty" aria-hidden="true">+</span></div><span id="p2-healing-label" role="status">6: oppakken · 7: gebruiken · Leeg</span></div>
       <p>Dojo, Kasteel, Zwevend Eiland en Neon Stad: elke 15 seconden een vliegtuig met een health-drop. Andere maps: elke 10 seconden een item. Pak het op na de landing. Je kunt één item dragen; herstel stopt bij 100%.</p>
     </section>
+        <p id="arena-note" class="arena-note">Duw je tegenstander van de platforms af om te winnen.</p>
+      </div>
+    </div>
+
     <section id="touch-controls" class="touch-controls" aria-label="Touchbediening" data-two-player="false">
       <p class="touch-tip">Touchbediening · Draai je telefoon voor een groter speelveld.</p>
       <fieldset class="touch-player" data-touch-player="0"><legend>Speler 1</legend><div class="touch-player-buttons"><div class="touch-movement"><button type="button" class="touch-button touch-action-0" data-touch-code="KeyW" aria-label="Speler 1: Springen" aria-pressed="false">↑</button><button type="button" class="touch-button touch-action-1" data-touch-code="KeyA" aria-label="Speler 1: Links" aria-pressed="false">←</button><button type="button" class="touch-button touch-action-2" data-touch-code="KeyS" aria-label="Speler 1: Beschermen" aria-pressed="false">Schild</button><button type="button" class="touch-button touch-action-3" data-touch-code="KeyD" aria-label="Speler 1: Rechts" aria-pressed="false">→</button></div><div class="touch-actions"><button type="button" class="touch-button touch-action-4" data-touch-code="KeyF" aria-label="Speler 1: Aanval" aria-pressed="false">Aanval</button><button type="button" class="touch-button touch-action-5" data-touch-code="KeyG" aria-label="Speler 1: Super 1" aria-pressed="false">Super 1</button><button type="button" class="touch-button touch-action-6" data-touch-code="KeyC" aria-label="Speler 1: Super 2" aria-pressed="false">Super 2</button><button type="button" class="touch-button touch-action-7" data-touch-code="KeyH" aria-label="Speler 1: Wapen wisselen" aria-pressed="false">Wissel</button><button type="button" class="touch-button touch-action-8" data-touch-code="KeyX" aria-label="Speler 1: Werpen" aria-pressed="false">Werp</button><button type="button" class="touch-button touch-action-9" data-touch-code="KeyR" aria-label="Speler 1: health-item oppakken" aria-pressed="false">Pak HP</button><button type="button" class="touch-button touch-action-10" data-touch-code="KeyT" aria-label="Speler 1: health-item gebruiken" aria-pressed="false">Herstel</button></div></div></fieldset>
 <fieldset class="touch-player" data-touch-player="1" hidden><legend>Speler 2</legend><div class="touch-player-buttons"><div class="touch-movement"><button type="button" class="touch-button touch-action-0" data-touch-code="ArrowUp" aria-label="Speler 2: Springen" aria-pressed="false">↑</button><button type="button" class="touch-button touch-action-1" data-touch-code="ArrowLeft" aria-label="Speler 2: Links" aria-pressed="false">←</button><button type="button" class="touch-button touch-action-2" data-touch-code="ArrowDown" aria-label="Speler 2: Beschermen" aria-pressed="false">Schild</button><button type="button" class="touch-button touch-action-3" data-touch-code="ArrowRight" aria-label="Speler 2: Rechts" aria-pressed="false">→</button></div><div class="touch-actions"><button type="button" class="touch-button touch-action-4" data-touch-code="Digit1" aria-label="Speler 2: Aanval" aria-pressed="false">Aanval</button><button type="button" class="touch-button touch-action-5" data-touch-code="Digit2" aria-label="Speler 2: Super 1" aria-pressed="false">Super 1</button><button type="button" class="touch-button touch-action-6" data-touch-code="Digit3" aria-label="Speler 2: Super 2" aria-pressed="false">Super 2</button><button type="button" class="touch-button touch-action-7" data-touch-code="Digit4" aria-label="Speler 2: Wapen wisselen" aria-pressed="false">Wissel</button><button type="button" class="touch-button touch-action-8" data-touch-code="Digit5" aria-label="Speler 2: Werpen" aria-pressed="false">Werp</button><button type="button" class="touch-button touch-action-9" data-touch-code="Digit6" aria-label="Speler 2: health-item oppakken" aria-pressed="false">Pak HP</button><button type="button" class="touch-button touch-action-10" data-touch-code="Digit7" aria-label="Speler 2: health-item gebruiken" aria-pressed="false">Herstel</button></div></div></fieldset>
 
     </section>
-    <details class="battle-controls"><summary>Besturing en uitleg</summary><p><b>P1:</b> A/D lopen · W springen · S beschermen · F aanvallen · H wapen wisselen · X werpen · G/Q en C/E supers · R health-item oppakken · T health-item gebruiken.</p><p><b>P2:</b> ←/→ lopen · ↑ springen · ↓ beschermen · 1 aanvallen · 4 wapen wisselen · 5 werpen · 2/3 supers · 6 health-item oppakken · 7 health-item gebruiken (ook numpad).</p><p>De groene balk toont je gezondheid: elk leven begint op 100%. Bij 0% gezondheid of een val uit de arena verlies je een leven. Elke speler kiest vooraf 3 of 5 levens. De ronde duurt maximaal 3 minuten en stopt eerder als je levens op zijn. Bij tijd om wint de speler met de meeste levens; bij gelijke levens telt de gezondheid. Zijn beide gelijk, dan is het gelijkspel. De twee kleine meters tonen wanneer je supers weer klaar zijn.</p></details>
+
     <section id="result-overlay" class="result-overlay hidden" role="dialog" aria-modal="true" aria-labelledby="result-winner">
       <div class="result-panel">
         <p class="result-eyebrow">🏆 BATTLE COMPLETE</p>
@@ -172,7 +183,7 @@
       </div>
     </section>
     <p class="combat-help">Wapenaanval: P1 F / P2 1. Drie snelle aanvallen vormen een combo. Wissel tussen wapens met H / 4. Kunai en katapult schieten projectielen; ijs vertraagt bij een treffer.</p>
-    <p id="arena-note" class="arena-note">Duw je tegenstander van de platforms af om te winnen.</p>
+
   </main>
 </body>
 </html>

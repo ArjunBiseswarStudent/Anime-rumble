@@ -1253,6 +1253,7 @@ const portraitMotionPreference = window.matchMedia?.('(prefers-reduced-motion: r
 let battleRenderer = null;
 let battleScene = null;
 let battleCamera = null;
+let battleResizeObserver = null;
 
 function createCharacterModel(character) {
     return window.CharacterMotion.create(THREE, character);
@@ -1548,6 +1549,13 @@ function makeFighter(character, playerIndex) {
     };
 }
 
+function setBattleFocus(active) {
+    document.documentElement?.classList.toggle('battle-active', active);
+    document.body?.classList.toggle('battle-active', active);
+    const options = document.querySelector?.('.battle-options');
+    if (options) options.open = false;
+}
+
 function startMatch() {
     window.ArenaMusic?.stop();
     if (typeof THREE === 'undefined') {
@@ -1566,6 +1574,7 @@ function startMatch() {
     matchElapsed = 0;
     document.getElementById('select-screen').classList.add('hidden');
     document.getElementById('arena-screen').classList.remove('hidden');
+    setBattleFocus(true);
     document.getElementById('result-overlay').classList.add('hidden');
     document.getElementById('arena-note').textContent =
         `${currentArena.name} · Maximaal 3 minuten · 100% gezondheid per leven · Geen levens meer? Dan is het gevecht voorbij.`;
@@ -1581,6 +1590,7 @@ function startMatch() {
     } catch (error) {
         gameRunning = false;
         console.error('De 3D-arena kon niet worden gestart.', error);
+        setBattleFocus(false);
         document.getElementById('arena-screen').classList.add('hidden');
         document.getElementById('select-screen').classList.remove('hidden');
         window.alert('De 3D-arena kon niet starten. Controleer of WebGL in je browser is ingeschakeld.');
@@ -1605,6 +1615,10 @@ function initBattleScene(canvas) {
         battleRenderer.shadowMap.type = THREE.PCFSoftShadowMap;
     }
     battleScene = new THREE.Scene();
+    if (!battleResizeObserver && typeof ResizeObserver !== 'undefined') {
+        battleResizeObserver = new ResizeObserver(resizeBattleRenderer);
+        battleResizeObserver.observe(canvas);
+    }
     battleScene.background = new THREE.Color(currentArena.bgBottom);
     battleScene.fog = new THREE.Fog(currentArena.bgBottom, 13, 30);
 
@@ -1681,6 +1695,9 @@ function resizeBattleRenderer() {
     const height = canvas.clientHeight || 540;
     battleRenderer.setSize(width, height, false);
     battleCamera.aspect = width / height;
+    // Preserve the horizontal arena view when the viewport is tall and narrow.
+    const portraitScale = Math.max(1, (16 / 9) / battleCamera.aspect);
+    battleCamera.fov = 2 * Math.atan(Math.tan(42 * Math.PI / 360) * portraitScale) * 180 / Math.PI;
     battleCamera.updateProjectionMatrix();
 }
 
@@ -1802,6 +1819,7 @@ function replayMatch() {
 }
 
 function returnToSelection() {
+    setBattleFocus(false);
     window.ArenaMusic?.stop();
     window.SpecialMoves.reset();
     window.CombatActions?.reset();
