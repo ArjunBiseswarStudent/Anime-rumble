@@ -31,6 +31,7 @@ class Material extends Resource {
     constructor({ color }) {
         super();
         this.color = { value: color, set(value) { this.value = value; } };
+        this.normalScale = { set() {} };
     }
 }
 class Mesh extends Group {
@@ -47,7 +48,7 @@ class BufferAttribute {
 }
 const THREE = {
     Group, Mesh, BufferGeometry, BufferAttribute, PointLight: Group, MeshBasicMaterial: Material, MeshStandardMaterial: Material,
-    DataTexture: Resource, MeshToonMaterial: Material, ShaderMaterial: Material,
+    DataTexture: Resource, ShaderMaterial: Material,
     SphereGeometry: Resource, ConeGeometry: Resource, TorusGeometry: Resource, BoxGeometry: Resource,
     LatheGeometry: Resource, CylinderGeometry: Resource, Vector2: class { constructor(x, y) { Object.assign(this, { x, y }); } }
 };
@@ -67,6 +68,7 @@ test('the whole roster builds detailed models around the same animated rig and t
         assert.ok(nodes.filter(node => node.geometry).length >= 30, character.id);
         assert.ok(nodes.every(node => !node.geometry || node.material), character.id);
         assert.ok(nodes.some(node => node.userData.characterOutline), character.id);
+        assert.ok(Object.values(model.userData.palette).every(material => material.normalMap), character.id);
         motion.attack(model, 'side');
         motion.update(model, fighter, .02);
         assert.ok(Number.isFinite(limbs[0].shoulder.rotation.x), character.id);

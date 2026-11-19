@@ -208,6 +208,35 @@ window.SpecialMoves = (() => {
             mat.dispose();
             return false;
         }).map(mat => [mat, mat.opacity]);
+        // A soft, selective glow around the move, composited inside the 3D scene.
+        const bloom = new THREE.ShaderMaterial({
+            uniforms: { tint: { value: new THREE.Color(color) }, strength: { value: 0 } },
+            vertexShader: `
+                varying vec2 glowUv;
+                void main() {
+                    glowUv = uv;
+                    gl_Position = projectionMatrix * modelViewMatrix * vec4(position, 1.0);
+                }`,
+            fragmentShader: `
+                uniform vec3 tint;
+                uniform float strength;
+                varying vec2 glowUv;
+                void main() {
+                    float radius = length((glowUv - 0.5) * 2.0);
+                    float falloff = pow(max(0.0, 1.0 - radius), 2.6);
+                    gl_FragColor = vec4(tint, strength * falloff);
+                }`,
+            blending: THREE.AdditiveBlending, transparent: true, depthWrite: false, toneMapped: false
+        });
+        const bloomMesh = part(new THREE.PlaneGeometry(radius * 5.8, radius * 5.8), bloom, 0, 0, .74);
+        bloomMesh.onBeforeRender = (renderer, scene, camera) => bloomMesh.quaternion.copy(camera.quaternion);
+        const light = new THREE.PointLight(color, 0, 3.4, 2);
+        light.position.z = .55;
+        group.add(light);
+        group.userData.illuminate = strength => {
+            bloom.uniforms.strength.value = strength * .76;
+            light.intensity = strength * 1.25;
+        };
         return group;
     }
     function center(fighter) { return { x: fighter.x + fighter.width / 2, y: fighter.y + fighter.height / 2 }; }
@@ -216,8 +245,6 @@ window.SpecialMoves = (() => {
         if (!move) return null;
         const [color, highlight] = effectPalette(move, colors[character.id]?.[slot] || character.aura);
         const visual = makeVisual(THREE, move, [color, highlight], facing);
-        const light = new THREE.PointLight(color, 0, 3.2, 2);
-        visual.add(light);
         scene.add(visual);
         const duration = Math.max(1.2, Math.min(move.duration, 2.3));
         const beam = ['beam', 'stream', 'reach'].includes(move.kind);
@@ -235,7 +262,7 @@ window.SpecialMoves = (() => {
                 visual.position.set(facing * (offset + travel), 1.22, .48);
                 visual.scale.setScalar(scale);
                 const opacity = reducedMotion ? .8 : Math.min(1, elapsed / .09, (duration - elapsed) / .35);
-                light.intensity = opacity * 1.4;
+                visual.userData.illuminate(opacity);
                 visual.userData.materials.forEach(([material, initial]) => { material.opacity = initial * opacity; });
                 visual.children.forEach(part => part.userData.animate?.(part, time));
             },
@@ -396,6 +423,7 @@ window.SpecialMoves = (() => {
         const pulse = 1 + Math.sin(elapsed * 16) * 0.08;
         group.scale.setScalar(pulse * (effect.exploded ? 2.8 : move.kind === 'bomb' ? 1.6 : 1));
         const fade = Math.min(1, Math.max(0, (move.duration - elapsed) / .18));
+        group.userData.illuminate(fade * (.8 + .2 * Math.sin(elapsed * 12) ** 2));
         group.userData.materials.forEach(([material, opacity]) => { material.opacity = opacity * fade; });
         group.children.forEach(part => {
             part.userData.animate?.(part, elapsed);

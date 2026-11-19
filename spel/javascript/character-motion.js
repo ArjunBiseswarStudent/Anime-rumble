@@ -1,15 +1,52 @@
 /* Articulated cel-shaded characters. Poses are relative to their joint rest positions. */
 window.CharacterMotion = (() => {
-    let toonRamp;
-    function gradient(THREE) {
-        if (!toonRamp) {
-            const pixels = Uint8Array.from([30, 30, 30, 255, 104, 104, 104, 255, 230, 230, 230, 255]);
-            toonRamp = new THREE.DataTexture(pixels, 3, 1, THREE.RGBAFormat);
-            toonRamp.minFilter = toonRamp.magFilter = THREE.NearestFilter;
-            toonRamp.generateMipmaps = false;
-            toonRamp.needsUpdate = true;
+    const surfaces = {
+        skin: { roughness: .63, metalness: 0, relief: .06, frequency: [37, 31] },
+        fabric: { roughness: .86, metalness: 0, relief: .21, frequency: [68, 82] },
+        hair: { roughness: .47, metalness: 0, relief: .21, frequency: [96, 6] },
+        metal: { roughness: .32, metalness: .64, relief: .09, frequency: [8, 106] }
+    };
+    const normalMaps = new Map();
+    function normalMap(THREE, surface) {
+        if (normalMaps.has(surface)) return normalMaps.get(surface);
+        const size = 1024;
+        const pixels = new Uint8Array(size * size * 4);
+        const [fx, fy] = surfaces[surface].frequency;
+        const wave = frequency => Float32Array.from({ length: size },
+            (_, index) => Math.sin(2 * Math.PI * index * frequency / size));
+        const across = wave(fx), down = wave(fy);
+        for (let y = 0; y < size; y++) {
+            for (let x = 0; x < size; x++) {
+                const offset = (y * size + x) * 4;
+                const nx = across[x] * (.46 + .22 * down[y]);
+                const ny = down[y] * (.46 + .22 * across[x]);
+                pixels[offset] = Math.round(127.5 * (1 + nx));
+                pixels[offset + 1] = Math.round(127.5 * (1 + ny));
+                pixels[offset + 2] = Math.round(127.5 * (1 + Math.sqrt(1 - nx * nx - ny * ny)));
+                pixels[offset + 3] = 255;
+            }
         }
-        return toonRamp;
+        const texture = new THREE.DataTexture(pixels, size, size, THREE.RGBAFormat);
+        texture.wrapS = texture.wrapT = THREE.RepeatWrapping;
+        texture.minFilter = THREE.LinearMipmapLinearFilter;
+        texture.magFilter = THREE.LinearFilter;
+        texture.generateMipmaps = true;
+        texture.needsUpdate = true;
+        normalMaps.set(surface, texture);
+        return texture;
+    }
+
+    function bandDiffuse(shader) {
+        // Keep the specular response physically based and band the direct diffuse light.
+        shader.fragmentShader = shader.fragmentShader.replace('#include <lights_fragment_end>', `
+            #include <lights_fragment_end>
+            vec3 surfaceLight = reflectedLight.directDiffuse / max(diffuseColor.rgb, vec3(0.025));
+            float brightness = max(max(surfaceLight.r, surfaceLight.g), surfaceLight.b);
+            float band = 0.42 * smoothstep(0.12, 0.17, brightness)
+                + 0.29 * smoothstep(0.38, 0.44, brightness)
+                + 0.29 * smoothstep(0.69, 0.77, brightness);
+            reflectedLight.directDiffuse *= mix(0.32, band / max(brightness, 0.1), 0.78);
+        `);
     }
 
     function inkSilhouette(THREE, rig) {
@@ -79,10 +116,20 @@ window.CharacterMotion = (() => {
         const rig = new THREE.Group();
         rig.scale.set(...builds[build]);
         root.add(rig);
-        const ramp = gradient(THREE);
-        const material = color => new THREE.MeshToonMaterial({ color, gradientMap: ramp });
-        const skin = material(character.skin), suit = material(character.primary);
-        const accent = material(character.secondary), hair = material(character.hair);
+        const material = (color, roughness, surface) => {
+            const properties = surfaces[surface];
+            const mat = new THREE.MeshStandardMaterial({
+                color, roughness: roughness ?? properties?.roughness ?? .72, metalness: properties?.metalness ?? 0
+            });
+            if (properties) {
+                mat.normalMap = normalMap(THREE, surface);
+                mat.normalScale.set(properties.relief, properties.relief);
+            }
+            mat.onBeforeCompile = bandDiffuse;
+            return mat;
+        };
+        const skin = material(character.skin, undefined, 'skin'), suit = material(character.primary, undefined, 'fabric');
+        const accent = material(character.secondary, undefined, 'fabric'), hair = material(character.hair, undefined, 'hair');
         root.userData.palette = { skin, suit, accent, hair };
         const dark = material('#182131'), white = material('#f1eee6');
         const sphere = new THREE.SphereGeometry(1, 24, 16);
@@ -142,7 +189,7 @@ window.CharacterMotion = (() => {
         if (haircut !== 'bare') {
             const upright = ['burst', 'flame', 'rough', 'crop', 'swept'].includes(haircut);
             const long = ['flow', 'mane', 'twin'].includes(haircut);
-            const splitHair = haircut === 'split' ? material('#a13536', .54) : hair;
+            const splitHair = haircut === 'split' ? material('#a13536', .54, 'hair') : hair;
             ellipsoid(head, hair, 0, .265, -.05, .221, .124, .201);
             if (haircut === 'split') ellipsoid(head, splitHair, -.102, .263, -.037, .127, .115, .185);
             if (upright) {
@@ -190,7 +237,7 @@ window.CharacterMotion = (() => {
         // Signature details are attached to the same rig used by portraits and combat.
         const detailMaterial = color => color === character.primary ? suit : color === character.skin ? skin : material(color);
         const detail = (parent, color, x, y, z, sx, sy, sz) => ellipsoid(parent, detailMaterial(color), x, y, z, sx, sy, sz);
-        const gold = ['vest', 'overalls', 'sash'].includes(outfit) ? material('#b49759', .39) : null;
+        const gold = ['vest', 'overalls', 'sash'].includes(outfit) ? material('#b49759', .39, 'metal') : null;
         function strip(parent, mat, x, y, z, width, length, angle = 0) {
             const mesh = new THREE.Mesh(new THREE.BoxGeometry(width, length, .025), mat);
             mesh.position.set(x, y, z);
@@ -254,7 +301,7 @@ window.CharacterMotion = (() => {
             }
         }
         if (['armor', 'carapace', 'pauldron'].includes(outfit)) {
-            const plate = outfit === 'carapace' ? accent : material(id === 'noelle' ? '#c2e9f3' : '#aab7cc', .38);
+            const plate = outfit === 'carapace' ? accent : material(id === 'noelle' ? '#c2e9f3' : '#aab7cc', .38, 'metal');
             if (outfit !== 'pauldron') {
                 for (const side of [-1, 1]) {
                     const chestPlate = ellipsoid(torso, plate, side * .107, .378, .163, .119, .167, .063);
