@@ -18,8 +18,9 @@ window.AnimeMaps = (() => {
     function surfaceTexture(THREE, type) {
         if (surfaceTextures.has(type)) return surfaceTextures.get(type);
         const canvas = document.createElement('canvas');
-        canvas.width = canvas.height = 128;
+        canvas.width = canvas.height = 512;
         const ctx = canvas.getContext('2d');
+        ctx.scale(4, 4);
         ctx.fillStyle = '#e8e8e8';
         ctx.fillRect(0, 0, 128, 128);
         for (let i = 0; i < 2300; i++) {
@@ -54,6 +55,83 @@ window.AnimeMaps = (() => {
         texture.wrapS = texture.wrapT = THREE.RepeatWrapping;
         surfaceTextures.set(type, texture);
         return texture;
+    }
+
+    const terrainNormals = new Map();
+    function terrainNormal(THREE, type) {
+        if (terrainNormals.has(type)) return terrainNormals.get(type);
+        const { image } = surfaceTexture(THREE, type);
+        const size = image.width;
+        const source = image.getContext('2d').getImageData(0, 0, size, size).data;
+        const pixels = new Uint8Array(size * size * 4);
+        const height = (x, y) => source[4 * ((y & (size - 1)) * size + (x & (size - 1)))];
+        for (let y = 0; y < size; y++) {
+            for (let x = 0; x < size; x++) {
+                const nx = (height(x - 1, y) - height(x + 1, y)) / 255;
+                const ny = (height(x, y + 1) - height(x, y - 1)) / 255;
+                const scale = 127 / Math.hypot(nx, ny, 1);
+                const offset = (y * size + x) * 4;
+                pixels[offset] = 128 + nx * scale;
+                pixels[offset + 1] = 128 + ny * scale;
+                pixels[offset + 2] = 128 + scale;
+                pixels[offset + 3] = 255;
+            }
+        }
+        const texture = new THREE.DataTexture(pixels, size, size, THREE.RGBAFormat);
+        texture.flipY = true;
+        texture.wrapS = texture.wrapT = THREE.RepeatWrapping;
+        texture.minFilter = THREE.LinearMipmapLinearFilter;
+        texture.magFilter = THREE.LinearFilter;
+        texture.generateMipmaps = true;
+        texture.needsUpdate = true;
+        terrainNormals.set(type, texture);
+        return texture;
+    }
+
+    function bandTerrainLight(shader) {
+        shader.fragmentShader = shader.fragmentShader.replace('#include <lights_fragment_end>', `
+            #include <lights_fragment_end>
+            vec3 terrainLight = reflectedLight.directDiffuse / max(diffuseColor.rgb, vec3(0.025));
+            float luminanceBand = max(terrainLight.r, max(terrainLight.g, terrainLight.b));
+            float band = .35 * smoothstep(.13, .17, luminanceBand)
+                + .31 * smoothstep(.35, .41, luminanceBand)
+                + .34 * smoothstep(.66, .74, luminanceBand);
+            reflectedLight.directDiffuse *= mix(.34, band / max(luminanceBand, .08), .76);
+        `);
+    }
+
+    function styleSurface(THREE, material, type) {
+        material.onBeforeCompile = bandTerrainLight;
+        if (type) {
+            material.map = surfaceTexture(THREE, type);
+            material.normalMap = terrainNormal(THREE, type);
+            material.normalScale.set(.42, .42);
+        }
+        return material;
+    }
+
+    function arenaInk(THREE) {
+        return new THREE.LineBasicMaterial({ color: '#181322', transparent: true, opacity: .62, depthWrite: false });
+    }
+
+    function outlineSurface(THREE, mesh, ink) {
+        const outline = new THREE.LineSegments(new THREE.EdgesGeometry(mesh.geometry, 27), ink);
+        outline.name = 'arena-ink';
+        outline.scale.setScalar(1.003);
+        mesh.add(outline);
+    }
+
+    function terrainSilhouette(THREE) {
+        return new THREE.ShaderMaterial({
+            side: THREE.BackSide,
+            vertexShader: `
+                void main() {
+                    vec4 point = modelViewMatrix * vec4(position, 1.0);
+                    point.xyz += normalize(normalMatrix * normal) * 0.025;
+                    gl_Position = projectionMatrix * point;
+                }`,
+            fragmentShader: 'void main() { gl_FragColor = vec4(.07, .055, .09, 1.0); }'
+        });
     }
 
     function buildScenery(THREE, scene, key) {
@@ -122,6 +200,7 @@ window.AnimeMaps = (() => {
         }
         function water(c, x, y, z, w, h) {
             const sheet = box(c, x, y, z, w, h, 0.12);
+            styleSurface(THREE, sheet.material);
             sheet.material.transparent = true;
             sheet.material.opacity = 0.78;
             sheet.material.roughness = 0.22;
@@ -565,21 +644,26 @@ window.AnimeMaps = (() => {
             foliage.add(blades);
             animations.push(t => { foliage.rotation.z = Math.sin(t * 0.8) * 0.008; });
         }
-        // Give large solid scenery a visible grain and shallow relief.
+        const ink = arenaInk(THREE);
+        const outlined = [], rounded = [];
         group.traverse(object => {
             if (!object.isMesh || !object.material.isMeshStandardMaterial || object.material.transparent) return;
             const size = object.geometry.parameters;
-            if (object.geometry.type === 'BoxGeometry' && Math.max(size.width, size.height) > 1) {
-                object.material.map = surfaceTexture(THREE, 'stone');
-                object.material.bumpMap = object.material.map;
-                object.material.bumpScale = 0.065;
-            }
-            if (object.geometry.type === 'CylinderGeometry' && size.height > 2) {
-                object.material.map = surfaceTexture(THREE, key === 'beerus' ? 'bark' : 'rock');
-                object.material.bumpMap = object.material.map;
-                object.material.bumpScale = 0.16;
-            }
+            const box = object.geometry.type === 'BoxGeometry' && Math.max(size.width, size.height) > 1;
+            const column = object.geometry.type === 'CylinderGeometry' && size.height > 2;
+            styleSurface(THREE, object.material, box ? 'stone' : column ? (key === 'beerus' ? 'bark' : 'rock') : null);
+            if (box || column) outlined.push(object);
+            if (object.geometry.type === 'SphereGeometry' && size.radius >= .85 && object.position.z > -17) rounded.push(object);
         });
+        outlined.forEach(object => outlineSurface(THREE, object, ink));
+        if (rounded.length) {
+            const silhouette = terrainSilhouette(THREE);
+            for (const object of rounded) {
+                const outline = new THREE.Mesh(object.geometry, silhouette);
+                outline.name = 'arena-silhouette';
+                object.add(outline);
+            }
+        }
         // Small drifting particles occupy the space behind the fighters.
         const particleGeometry = new THREE.BufferGeometry();
         const particlePositions = new Float32Array(90 * 3);
@@ -588,6 +672,15 @@ window.AnimeMaps = (() => {
             size: key === 'beerus' ? 0.065 : 0.035, transparent: true,
             opacity: 0.5, depthWrite: false
         });
+        particleMaterial.onBeforeCompile = shader => {
+            shader.fragmentShader = shader.fragmentShader.replace('#include <alphatest_fragment>', `
+                vec2 mote = gl_PointCoord - vec2(.5);
+                float stroke = abs(mote.x + mote.y * .56) * 2.7 + abs(mote.y) * 1.5;
+                diffuseColor.a *= 1.0 - smoothstep(.45, .82, stroke);
+                #include <alphatest_fragment>
+            `);
+        };
+        particleMaterial.size *= 1.7;
         particleGeometry.setAttribute('position', new THREE.BufferAttribute(particlePositions, 3));
         group.add(new THREE.Points(particleGeometry, particleMaterial));
         animations.push(t => {
@@ -660,5 +753,5 @@ window.AnimeMaps = (() => {
     function updateScenery(scene, time) {
         if (scene && scene.userData.updateMap) scene.userData.updateMap(time);
     }
-    return { arenas, buildScenery, updateScenery, surfaceTexture };
+    return { arenas, buildScenery, updateScenery, surfaceTexture, styleSurface, arenaInk, outlineSurface };
 })();

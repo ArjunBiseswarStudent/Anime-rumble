@@ -1866,32 +1866,31 @@ function initBattleScene(canvas) {
     battleScene.add(rimLight);
 
     const accent = new THREE.Color(currentArena.accentColor);
+    const platformInk = window.AnimeMaps.arenaInk(THREE);
     currentArena.platforms.forEach((platform) => {
         const width = platform.w / 65;
         const top = (540 - platform.y) / 65;
-        const material = new THREE.MeshStandardMaterial({
+        const material = window.AnimeMaps.styleSurface(THREE, new THREE.MeshStandardMaterial({
             color: currentArena.surface || (platform.main ? '#202b42' : '#28334d'),
             emissive: accent,
             emissiveIntensity: 0.025,
-            roughness: 0.84,
-            map: window.AnimeMaps.surfaceTexture(THREE, currentArena.surfaceType || 'stone'),
-            bumpMap: window.AnimeMaps.surfaceTexture(THREE, currentArena.surfaceType || 'stone'),
-            bumpScale: 0.045
-        });
+            roughness: 0.84
+        }), currentArena.surfaceType || 'stone');
         const mesh = new THREE.Mesh(new THREE.BoxGeometry(width, 0.22, 2.2), material);
         mesh.position.set((platform.x + platform.w / 2 - 480) / 65, top - 0.11, 0);
         mesh.receiveShadow = true;
         mesh.castShadow = true;
+        window.AnimeMaps.outlineSurface(THREE, mesh, platformInk);
         battleScene.add(mesh);
 
         const foundation = new THREE.Mesh(
             new THREE.BoxGeometry(width * 0.98, platform.main ? 0.48 : 0.28, 2.05),
-            new THREE.MeshStandardMaterial({ color: currentArena.surface, roughness: 0.95,
-                map: window.AnimeMaps.surfaceTexture(THREE, 'rock'),
-                bumpMap: window.AnimeMaps.surfaceTexture(THREE, 'rock'), bumpScale: 0.12 })
+            window.AnimeMaps.styleSurface(THREE,
+                new THREE.MeshStandardMaterial({ color: currentArena.surface, roughness: 0.95 }), 'rock')
         );
         foundation.position.set(mesh.position.x, top - (platform.main ? 0.43 : 0.33), 0);
         foundation.castShadow = foundation.receiveShadow = true;
+        window.AnimeMaps.outlineSurface(THREE, foundation, platformInk);
         battleScene.add(foundation);
 
         const edge = new THREE.Mesh(

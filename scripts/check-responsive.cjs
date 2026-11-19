@@ -89,6 +89,10 @@ async function audit(name) {
                 const request = pending.get(message.id); pending.delete(message.id); clearTimeout(request.timeout);
                 if (message.error) request.reject(Error(message.error.message)); else request.resolve(message.result);
             } else if (message.method === 'Runtime.exceptionThrown') errors.push(message.params.exceptionDetails.exception?.description || message.params.exceptionDetails.text);
+            else if (message.method === 'Runtime.consoleAPICalled' && message.params.type === 'error') {
+                const messageText = message.params.args.map(arg => arg.value).join(' ');
+                if (messageText.includes('THREE.WebGLProgram')) errors.push(messageText);
+            }
         }
     });
     const { targetId } = await command('Target.createTarget', { url: 'about:blank' });
@@ -171,7 +175,11 @@ async function audit(name) {
         await evaluate(`returnToSelection();
             if (battleScene.getObjectByName('beerus-shenron')) throw new Error('Shenron persisted after leaving the match');`);
     }
-    await navigate(base + '/spel/assest/maps/', '.map-card'); report.push(...await audit('maps'));
+    await navigate(base + '/spel/assest/maps/', '.map-card');
+    if (engine) await evaluate(`if (document.querySelectorAll('.map-preview').length !== Object.keys(window.AnimeMaps.arenas).length) {
+        throw new Error('One or more cel-shaded arena previews did not render');
+    }`);
+    report.push(...await audit('maps'));
     await navigate(base + '/spel/assest/special-moves/', '#move-catalog article'); report.push(...await audit('specials'));
     fs.writeFileSync(path.join(output, 'report.json'), JSON.stringify({ engine, errors, results: report }, null, 2));
     console.log(JSON.stringify({ output, engine, errors, checks: report.length, failures: report.filter(r => r.problems.length).length }));
