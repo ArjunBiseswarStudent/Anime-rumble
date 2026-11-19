@@ -1321,7 +1321,7 @@ function set3DPortrait(canvas, character) {
             scene.add(rim);
             viewer = { renderer, scene, camera, model: null, facing: canvas.id.startsWith('p1') ? 1 : -1 };
             portraitViewers.set(canvas, viewer);
-            enablePortraitRotation(canvas, viewer);
+            if (!canvas.closest('#match-intro')) enablePortraitRotation(canvas, viewer);
         } catch (error) {
             console.warn('3D-portret is niet beschikbaar; er wordt een getekend portret getoond.', error);
             return false;
@@ -1343,12 +1343,17 @@ function set3DPortrait(canvas, character) {
 }
 
 function animatePortraits() {
+    const now = performance.now();
     portraitViewers.forEach((viewer, canvas) => {
         const visible = !document.hidden && !canvas.closest('main').classList.contains('hidden');
-        if (!viewer.model || !visible || portraitMotionPreference?.matches) { viewer.lastFrame = 0; return; }
-        const now = performance.now();
+        if (!viewer.model || !visible) { viewer.lastFrame = 0; return; }
         const dt = Math.min((now - (viewer.lastFrame || now)) / 1000, 0.04);
         viewer.lastFrame = now;
+        if (viewer.intro) {
+            updateIntroPortrait(viewer, now, dt);
+            return;
+        }
+        if (portraitMotionPreference?.matches) return;
         window.CharacterMotion.update(viewer.model, { vx: 0, grounded: true, blocking: false, facing: 1 }, dt);
         viewer.model.rotation.y = viewer.manuallyRotated ? viewer.yaw
             : viewer.drag?.yaw ?? viewer.yaw + viewer.facing * Math.sin(now / 2600) * .1;
@@ -1664,25 +1669,53 @@ const introTips = [
 ];
 let introTipIndex = 0;
 let introTipTimer = null;
+let introStartTimer = null;
+
+function updateIntroPortrait(viewer, now, dt) {
+    const { intro, model, facing } = viewer;
+    const elapsed = (now - intro.startedAt) / 1000 - intro.delay;
+    const phase = elapsed >= 6.3 ? 3 : elapsed >= 3.25 ? 2 : elapsed >= 1.1 ? 1 : 0;
+    const reducedMotion = portraitMotionPreference?.matches;
+    if (phase !== intro.phase) {
+        intro.phase = phase;
+        intro.card.dataset.phase = phase === 1 ? 'awakening' : 'ready';
+        intro.move?.dispose();
+        intro.move = null;
+        if (phase >= 1 && !intro.fighter.ultimateForm) {
+            const formName = window.UltimateForms?.activate(THREE, intro.fighter);
+            if (formName) {
+                intro.label.textContent = formName;
+                intro.card.style.setProperty('--intro-energy', intro.fighter.ultimateForm.color);
+            }
+        }
+        if (phase >= 2) {
+            const slot = phase - 2;
+            const direction = slot === 0 ? 'neutral' : 'side';
+            intro.move = window.SpecialMoves.createPreview(THREE, viewer.scene, intro.fighter.character, slot, facing);
+            intro.label.textContent = intro.fighter.character.moves[direction].name;
+            if (intro.move) intro.card.style.setProperty('--intro-energy', intro.move.color);
+            if (!reducedMotion) window.CharacterMotion.attack(model, direction);
+        }
+    }
+    const form = intro.fighter.ultimateForm;
+    if (form && !reducedMotion) window.UltimateForms.update(intro.fighter, dt);
+    else if (form && !form.revealed) window.UltimateForms.update(intro.fighter, 1);
+
+    const attackAge = elapsed - (phase === 2 ? 3.25 : 6.3);
+    intro.move?.update(attackAge, reducedMotion);
+    if (!reducedMotion) {
+        window.CharacterMotion.update(model, { vx: 0, grounded: true, blocking: false, facing }, dt);
+        const turn = phase >= 2 ? Math.max(0, 1 - attackAge / 1.2) * .65 : 0;
+        model.rotation.y = facing * (.28 + turn);
+        viewer.camera.position.z = 4.2 + turn * .5;
+    }
+    viewer.renderer.render(viewer.scene, viewer.camera);
+}
 
 function renderMatchTip() {
     const twoPlayerTip = 'Speler 1: druk op B. Speler 2: druk op 8. Op touch gebruik je Vorm voor je ultieme transformatie.';
     document.getElementById('match-intro-tip').textContent =
         introTipIndex === 0 && gameMode === '2p' ? twoPlayerTip : introTips[introTipIndex];
-}
-
-function toggleMatchTips() {
-    if (introTipTimer === null) {
-        introTipTimer = setInterval(() => {
-            introTipIndex = (introTipIndex + 1) % introTips.length;
-            renderMatchTip();
-        }, 5000);
-    } else {
-        clearInterval(introTipTimer);
-        introTipTimer = null;
-    }
-    document.getElementById('intro-tip-toggle').textContent =
-        introTipTimer === null ? 'Tips hervatten' : 'Tips pauzeren';
 }
 
 function showMatchIntro() {
@@ -1693,37 +1726,66 @@ function showMatchIntro() {
     document.getElementById('intro-p2-role').textContent = gameMode === '2p' ? 'Speler 2' : 'CPU';
     selection.forEach((character, index) => {
         const player = index + 1;
+        const canvas = document.getElementById(`p${player}-intro-portrait-canvas`);
         document.getElementById(`intro-p${player}-name`).textContent = character.name;
-        drawPortrait(document.getElementById(`p${player}-intro-portrait-canvas`), character);
+        drawPortrait(canvas, character);
+        const viewer = portraitViewers.get(canvas);
+        if (!viewer?.model) return;
+        viewer.intro = {
+            fighter: { character, model: viewer.model, stocks: 1, damage: 0 },
+            card: canvas.closest('.intro-fighter'),
+            label: document.getElementById(`intro-p${player}-move`),
+            phase: 0, delay: index * .48, move: null
+        };
+    });
+    const startedAt = performance.now();
+    portraitViewers.forEach(viewer => {
+        if (viewer.intro) viewer.intro.startedAt = startedAt;
     });
     introTipIndex = 0;
     renderMatchTip();
-    toggleMatchTips();
     document.getElementById('controls-screen').classList.add('hidden');
     matchIntro.classList.remove('hidden');
-    document.getElementById('match-intro-title').focus();
+    matchIntro.focus({ preventScroll: true });
     window.scrollTo(0, 0);
     window.ArenaMusic?.start('matchIntro');
+    introTipTimer = setInterval(() => {
+        introTipIndex = (introTipIndex + 1) % introTips.length;
+        renderMatchTip();
+    }, 5000);
+    introStartTimer = setTimeout(startMatch, 10000);
 }
 
 function closeMatchIntro() {
-    if (introTipTimer !== null) toggleMatchTips();
+    if (introTipTimer !== null) clearInterval(introTipTimer);
+    if (introStartTimer !== null) clearTimeout(introStartTimer);
+    introTipTimer = null;
+    introStartTimer = null;
+    portraitViewers.forEach(viewer => {
+        if (!viewer.intro) return;
+        const { fighter, move, card, label } = viewer.intro;
+        move?.dispose();
+        window.UltimateForms?.clear(fighter);
+        card.style.removeProperty('--intro-energy');
+        delete card.dataset.phase;
+        label.textContent = '';
+        viewer.model.rotation.y = viewer.facing * .28;
+        viewer.model.userData.motion.actionTime = 0;
+        viewer.camera.position.z = 4.2;
+        viewer.intro = null;
+    });
     document.getElementById('match-intro').classList.add('hidden');
 }
 
-function backFromMatchIntro() {
+function startMatch() {
+    const introVisible = !document.getElementById('match-intro').classList.contains('hidden');
     closeMatchIntro();
     window.ArenaMusic?.stop();
-    showControlsGuide();
-}
-
-function startMatch() {
-    window.ArenaMusic?.stop();
     if (typeof THREE === 'undefined') {
+        if (introVisible) showControlsGuide();
         window.alert('De 3D-engine kan niet worden geladen. Controleer je internetverbinding en laad de pagina opnieuw.');
         return;
     }
-    closeMatchIntro();
     cancelAnimationFrame(animationFrame);
     fighters.forEach(fighter => window.UltimateForms?.clear(fighter));
     window.SpecialMoves.reset();

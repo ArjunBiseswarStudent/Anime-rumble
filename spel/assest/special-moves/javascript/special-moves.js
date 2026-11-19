@@ -183,6 +183,38 @@ window.SpecialMoves = (() => {
         return group;
     }
     function center(fighter) { return { x: fighter.x + fighter.width / 2, y: fighter.y + fighter.height / 2 }; }
+    function createPreview(THREE, scene, character, slot, facing) {
+        const move = data[character.id]?.[slot];
+        if (!move) return null;
+        const [color, highlight] = effectPalette(move, colors[character.id]?.[slot] || character.aura);
+        const visual = makeVisual(THREE, move, [color, highlight], facing);
+        const light = new THREE.PointLight(color, 0, 3.2, 2);
+        visual.add(light);
+        scene.add(visual);
+        const duration = Math.max(1.2, Math.min(move.duration, 2.3));
+        const beam = ['beam', 'stream', 'reach'].includes(move.kind);
+        const self = ['heal', 'transform', 'guard'].includes(move.kind);
+        return {
+            color,
+            update(age, reducedMotion) {
+                const elapsed = age - Math.min(move.windup, .45);
+                visual.visible = elapsed >= 0 && elapsed < duration;
+                if (!visual.visible) return;
+                const time = reducedMotion ? .38 : elapsed;
+                const scale = beam ? Math.min(.78, 1.55 / (move.range / 65)) : .72;
+                const travel = projectiles.has(move.kind) ? Math.min(.95, time * 1.5) : 0;
+                const offset = self ? 0 : beam ? .26 : .48;
+                visual.position.set(facing * (offset + travel), 1.22, .48);
+                visual.scale.setScalar(scale);
+                const opacity = reducedMotion ? .8 : Math.min(1, elapsed / .09, (duration - elapsed) / .35);
+                light.intensity = opacity * 1.4;
+                visual.userData.materials.forEach(([material, initial]) => { material.opacity = initial * opacity; });
+                visual.children.forEach(part => part.userData.animate?.(part, time));
+            },
+            dispose() { disposeVisual({ scene, visual }); }
+        };
+    }
+
     function cast({ THREE, scene, owner, target, slot, isShielded, onNotice, onHit }) {
         const status = prepare(owner), move = data[owner.character.id]?.[slot];
         if (!move || owner.specialCooldowns[slot] > 0 || status.stun > 0 || isShielded(owner)) return false;
@@ -364,5 +396,5 @@ window.SpecialMoves = (() => {
         const seconds = fighter.specialCooldowns?.[slot] || 0;
         return seconds > 0 ? `${seconds.toFixed(1)}s` : 'klaar';
     }
-    return { applyRoster, prepare, tickFighter, cast, update, reset, clearFighter, cooldownLabel };
+    return { applyRoster, prepare, tickFighter, cast, createPreview, update, reset, clearFighter, cooldownLabel };
 })();

@@ -135,32 +135,25 @@
     </div>
   </main>
 
-  <main id="match-intro" class="screen match-intro hidden" aria-labelledby="match-intro-title">
+  <main id="match-intro" class="screen match-intro hidden" aria-label="Confrontatie" tabindex="-1">
     <header class="intro-heading">
-      <h1 id="match-intro-title" tabindex="-1">Confrontatie</h1>
       <p id="match-intro-arena"></p>
     </header>
     <div class="intro-stage">
       <article class="intro-fighter">
         <canvas id="p1-intro-portrait-canvas" width="360" height="420" role="img"></canvas>
-        <div class="intro-nameplate"><span>Speler 1</span><h2 id="intro-p1-name"></h2></div>
+        <div class="intro-nameplate"><span>Speler 1</span><h2 id="intro-p1-name"></h2><p class="intro-move" id="intro-p1-move"></p></div>
       </article>
       <div class="intro-versus">VS</div>
       <article class="intro-fighter intro-opponent">
         <canvas id="p2-intro-portrait-canvas" width="360" height="420" role="img"></canvas>
-        <div class="intro-nameplate"><span id="intro-p2-role"></span><h2 id="intro-p2-name"></h2></div>
+        <div class="intro-nameplate"><span id="intro-p2-role"></span><h2 id="intro-p2-name"></h2><p class="intro-move" id="intro-p2-move"></p></div>
       </article>
     </div>
     <div class="intro-tip">
       <strong>Gevechtstip</strong>
       <p id="match-intro-tip" aria-live="polite"></p>
-      <button id="intro-tip-toggle" type="button" onclick="toggleMatchTips()">Tips pauzeren</button>
     </div>
-    <footer class="intro-actions">
-      <button type="button" onclick="backFromMatchIntro()">Terug naar besturing</button>
-      <button data-music-toggle type="button" aria-pressed="true">Muziek aan</button>
-      <button class="start-btn" type="button" onclick="startMatch()">Start gevecht</button>
-    </footer>
   </main>
 
   <main id="arena-screen" class="screen arena-screen hidden">

@@ -49,7 +49,7 @@ async function audit(name) {
         await page('Emulation.setTouchEmulationEnabled', { enabled: touch });
         await settle();
         const result = await evaluate(`(() => {
-            const selectors = ${JSON.stringify({ start: ['.press-start', '.start-footer'], select: ['.selection-stage', '.player-card', '.roster-panel', '.mode-panel'], controls: ['.controls-table', '.controls-footer'], intro: ['.intro-stage', '.intro-fighter', '.intro-tip', '.intro-actions'], battle: ['.battle-hud-overlay', '.hud-fighter', '.touch-player:not([hidden])', '.touch-player-buttons', '.touch-button', '#gameCanvas'], result: ['.result-panel'], maps: ['.maps-gallery', '.map-card'], specials: ['#move-catalog', 'article'] }[name.replace(/-2p$/, '')])};
+            const selectors = ${JSON.stringify({ start: ['.press-start', '.start-footer'], select: ['.selection-stage', '.player-card', '.roster-panel', '.mode-panel'], controls: ['.controls-table', '.controls-footer'], intro: ['.intro-stage', '.intro-fighter', '.intro-tip'], battle: ['.battle-hud-overlay', '.hud-fighter', '.touch-player:not([hidden])', '.touch-player-buttons', '.touch-button', '#gameCanvas'], result: ['.result-panel'], maps: ['.maps-gallery', '.map-card'], specials: ['#move-catalog', 'article'] }[name.replace(/-2p$/, '')])};
             const problems = [];
             if (document.documentElement.scrollWidth > innerWidth + 1) problems.push('page horizontal overflow: ' + document.documentElement.scrollWidth);
             for (const selector of selectors) for (const el of document.querySelectorAll(selector)) {
@@ -99,8 +99,21 @@ async function audit(name) {
     await evaluate("document.querySelector('.selection-settings').open = true"); report.push(...await audit('select'));
     await evaluate('showControlsGuide()'); report.push(...await audit('controls'));
     await evaluate("backFromControlsGuide(); setGameMode('2p'); showControlsGuide()"); report.push(...await audit('controls-2p'));
-    await evaluate("backFromControlsGuide(); setGameMode('cpu'); showControlsGuide(); window.ArenaMusic?.setMuted(true); document.querySelector('.controls-footer .start-btn').click()");
+    const introOpenedAt = await evaluate("backFromControlsGuide(); setGameMode('cpu'); showControlsGuide(); window.ArenaMusic?.setMuted(true); document.querySelector('.controls-footer .start-btn').click(); performance.now()");
     const firstTip = await evaluate("document.getElementById('match-intro-tip').textContent");
+    await evaluate(`window.observedIntroPhases = [new Set(), new Set()];
+        function observeIntro() {
+            if (document.getElementById('match-intro').classList.contains('hidden')) return;
+            for (let index = 0; index < 2; index++) {
+                const canvas = document.getElementById('p' + (index + 1) + '-intro-portrait-canvas');
+                const intro = portraitViewers.get(canvas)?.intro;
+                if (intro?.fighter.ultimateForm?.revealed && (intro.phase === 1 || intro.move)) {
+                    window.observedIntroPhases[index].add(intro.phase);
+                }
+            }
+            requestAnimationFrame(observeIntro);
+        }
+        requestAnimationFrame(observeIntro)`);
     report.push(...await audit('intro'));
     await evaluate(`new Promise((resolve, reject) => {
         const tip = document.getElementById('match-intro-tip');
@@ -109,12 +122,26 @@ async function audit(name) {
         const timeout = setTimeout(() => { observer.disconnect(); reject(new Error('Intro tip did not rotate')); }, 5500);
         observer.observe(tip, { childList: true });
     })`);
-    await evaluate("backFromMatchIntro(); if (introTipTimer !== null || document.getElementById('controls-screen').classList.contains('hidden')) throw Error('Intro did not return to controls'); showMatchIntro()");
     const engine = await evaluate("typeof THREE !== 'undefined'");
     await page('Emulation.setDeviceMetricsOverride', { width: 1366, height: 768, deviceScaleFactor: 1, mobile: false });
     if (engine) {
-        await evaluate("document.querySelector('.intro-actions .start-btn').click(); if (introTipTimer !== null || !document.getElementById('match-intro').classList.contains('hidden')) throw Error('Intro did not close on start')");
+        await evaluate(`new Promise((resolve, reject) => {
+            const poll = setInterval(() => {
+                if (!gameRunning && performance.now() - ${introOpenedAt} < 15000) return;
+                clearInterval(poll);
+                if (!gameRunning || matchStartedAt - ${introOpenedAt} < 9900 ||
+                    introTipTimer !== null || introStartTimer !== null ||
+                    !document.getElementById('match-intro').classList.contains('hidden')) {
+                    return reject(new Error('Intro did not start the battle automatically after 10 seconds'));
+                }
+                resolve(true);
+            }, 100);
+        })`);
         await new Promise(resolve => setTimeout(resolve, 500));
+        await evaluate(`if (!window.observedIntroPhases.every(phases => [1, 2, 3].every(phase => phases.has(phase)))) {
+            throw new Error('Intro did not showcase both ultimate forms and both specials');
+        }
+        if (fighters.some(fighter => fighter.ultimateForm)) throw new Error('Intro transformation carried into battle');`);
         await evaluate('gameRunning = false; cancelAnimationFrame(animationFrame)');
     } else await evaluate("document.getElementById('select-screen').classList.add('hidden'); document.getElementById('arena-screen').classList.remove('hidden')");
     report.push(...await audit('battle'));
