@@ -3,6 +3,9 @@ window.SpecialMoves = (() => {
     const data = window.SpecialMoveData;
     const effects = new Set();
     const impacts = new Set();
+    const sceneLights = new WeakMap();
+    const impactGeometry = new WeakMap();
+    const sharedGeometry = new WeakSet();
     const directions = ['neutral', 'side'];
     const projectiles = new Set(['projectile', 'explosive', 'bomb', 'bounce', 'guided', 'volley', 'slash']);
     const areas = new Set(['zone', 'ground', 'ice', 'rain', 'lightning', 'delayed', 'orbit', 'stun', 'freeze', 'pull']);
@@ -39,13 +42,31 @@ window.SpecialMoves = (() => {
         effect.scene.remove(effect.visual);
         const geometries = new Set(), materials = new Set();
         effect.visual.traverse(object => {
-            if (object.geometry) geometries.add(object.geometry);
+            if (object.geometry && !sharedGeometry.has(object.geometry)) geometries.add(object.geometry);
             if (object.material) materials.add(object.material);
         });
         geometries.forEach(geometry => geometry.dispose());
         materials.forEach(material => material.dispose());
     }
-    function remove(effect) { disposeVisual(effect); effects.delete(effect); }
+    function remove(effect) {
+        if (effect.lightSlot) {
+            effect.lightSlot.light.intensity = 0;
+            effect.lightSlot.inUse = false;
+        }
+        disposeVisual(effect);
+        effects.delete(effect);
+    }
+
+    function prepareLighting(THREE, scene) {
+        if (sceneLights.has(scene)) return;
+        const slots = Array.from({ length: 2 }, () => {
+            const light = new THREE.PointLight('#ffffff', 0, 3.4, 2);
+            light.name = 'special-move-light';
+            scene.add(light);
+            return { light, inUse: false };
+        });
+        sceneLights.set(scene, slots);
+    }
     function removeImpact(impact) { disposeVisual(impact); impacts.delete(impact); }
     function clearFighter(fighter) {
         for (const effect of effects) if (effect.owner === fighter || effect.target === fighter) remove(effect);
@@ -230,12 +251,8 @@ window.SpecialMoves = (() => {
         });
         const bloomMesh = part(new THREE.PlaneGeometry(radius * 5.8, radius * 5.8), bloom, 0, 0, .74);
         bloomMesh.onBeforeRender = (renderer, scene, camera) => bloomMesh.quaternion.copy(camera.quaternion);
-        const light = new THREE.PointLight(color, 0, 3.4, 2);
-        light.position.z = .55;
-        group.add(light);
         group.userData.illuminate = strength => {
             bloom.uniforms.strength.value = strength * .76;
-            light.intensity = strength * 1.25;
         };
         return group;
     }
@@ -245,6 +262,9 @@ window.SpecialMoves = (() => {
         if (!move) return null;
         const [color, highlight] = effectPalette(move, colors[character.id]?.[slot] || character.aura);
         const visual = makeVisual(THREE, move, [color, highlight], facing);
+        const light = new THREE.PointLight(color, 0, 3.4, 2);
+        light.position.z = .55;
+        visual.add(light);
         scene.add(visual);
         const duration = Math.max(1.2, Math.min(move.duration, 2.3));
         const beam = ['beam', 'stream', 'reach'].includes(move.kind);
@@ -263,6 +283,7 @@ window.SpecialMoves = (() => {
                 visual.scale.setScalar(scale);
                 const opacity = reducedMotion ? .8 : Math.min(1, elapsed / .09, (duration - elapsed) / .35);
                 visual.userData.illuminate(opacity);
+                light.intensity = opacity * 1.25;
                 visual.userData.materials.forEach(([material, initial]) => { material.opacity = initial * opacity; });
                 visual.children.forEach(part => part.userData.animate?.(part, time));
             },
@@ -309,13 +330,19 @@ window.SpecialMoves = (() => {
         const flash = new THREE.MeshBasicMaterial({
             color: palette[1], transparent: true, opacity: .88, depthWrite: false, blending: THREE.AdditiveBlending, toneMapped: false
         });
-        const ring = new THREE.Mesh(new THREE.TorusGeometry(.52, .035, 6, 28), mat);
+        let geometry = impactGeometry.get(THREE);
+        if (!geometry) {
+            geometry = { ring: new THREE.TorusGeometry(.52, .035, 6, 28), spark: new THREE.ConeGeometry(.055, .39, 4) };
+            sharedGeometry.add(geometry.ring);
+            sharedGeometry.add(geometry.spark);
+            impactGeometry.set(THREE, geometry);
+        }
+        const ring = new THREE.Mesh(geometry.ring, mat);
         visual.add(ring);
         const sparks = [];
-        const geometry = new THREE.ConeGeometry(.055, .39, 4);
         for (let i = 0; i < 10; i++) {
             const angle = i * Math.PI * 2 / 10 + effect.hits * .59;
-            const mesh = new THREE.Mesh(geometry, i % 2 ? mat : flash);
+            const mesh = new THREE.Mesh(geometry.spark, i % 2 ? mat : flash);
             mesh.rotation.z = angle - Math.PI / 2;
             visual.add(mesh);
             sparks.push({ mesh, x: Math.cos(angle), y: Math.sin(angle), speed: 1.4 + i % 3 * .64 });
@@ -423,7 +450,21 @@ window.SpecialMoves = (() => {
         const pulse = 1 + Math.sin(elapsed * 16) * 0.08;
         group.scale.setScalar(pulse * (effect.exploded ? 2.8 : move.kind === 'bomb' ? 1.6 : 1));
         const fade = Math.min(1, Math.max(0, (move.duration - elapsed) / .18));
-        group.userData.illuminate(fade * (.8 + .2 * Math.sin(elapsed * 12) ** 2));
+        const energy = fade * (.8 + .2 * Math.sin(elapsed * 12) ** 2);
+        group.userData.illuminate(energy);
+        if (!effect.lightSlot) {
+            const slot = sceneLights.get(effect.scene)?.find(candidate => !candidate.inUse);
+            if (slot) {
+                slot.inUse = true;
+                slot.light.color.set(effect.palette[0]);
+                effect.lightSlot = slot;
+            }
+        }
+        if (effect.lightSlot) {
+            const { light } = effect.lightSlot;
+            light.position.set(group.position.x, group.position.y, group.position.z + .55 * group.scale.x);
+            light.intensity = energy * 1.25;
+        }
         group.userData.materials.forEach(([material, opacity]) => { material.opacity = opacity * fade; });
         group.children.forEach(part => {
             part.userData.animate?.(part, elapsed);
@@ -452,5 +493,5 @@ window.SpecialMoves = (() => {
         const seconds = fighter.specialCooldowns?.[slot] || 0;
         return seconds > 0 ? `${seconds.toFixed(1)}s` : 'klaar';
     }
-    return { applyRoster, prepare, tickFighter, cast, createPreview, update, reset, clearFighter, cooldownLabel };
+    return { applyRoster, prepare, prepareLighting, tickFighter, cast, createPreview, update, reset, clearFighter, cooldownLabel };
 })();

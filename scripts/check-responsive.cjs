@@ -3,14 +3,28 @@ const fs = require('node:fs');
 const path = require('node:path');
 const os = require('node:os');
 const http = require('node:http');
-const { spawn } = require('node:child_process');
+const { spawn, execFileSync } = require('node:child_process');
 const root = path.resolve(__dirname, '..');
 const output = fs.mkdtempSync(path.join(os.tmpdir(), 'anime-rumble-layout-'));
 const chromePath = process.env.CHROME_PATH || 'C:\\Program Files\\Google\\Chrome\\Application\\chrome.exe';
+const benchmark = process.argv.includes('--benchmark-specials');
+const baselineRevision = 'cb1fc00';
+const baselineFiles = new Map();
+if (benchmark) {
+    for (const file of ['spel/javascript/script.js', 'spel/assest/special-moves/javascript/special-moves.js']) {
+        baselineFiles.set('/' + file, execFileSync('git', ['show', `${baselineRevision}:${file}`], { cwd: root }));
+    }
+}
 const sizes = [[1280,720,false], [1366,768,false], [1920,1080,false], [768,1024,true], [1024,768,true], [320,640,true], [360,740,true], [390,844,true], [430,932,true], [667,375,true], [740,360,true], [844,390,true], [2560,1080,false]];
 const mime = { '.html': 'text/html', '.js': 'text/javascript', '.css': 'text/css', '.png': 'image/png', '.json': 'application/json' };
 const server = http.createServer((req, res) => {
-    let file = path.resolve(root, '.' + decodeURIComponent(new URL(req.url, 'http://localhost').pathname));
+    const pathname = decodeURIComponent(new URL(req.url, 'http://localhost').pathname);
+    const baselinePath = benchmark && pathname.startsWith('/before/') ? pathname.slice('/before'.length) : null;
+    if (baselinePath && baselineFiles.has(baselinePath)) {
+        res.writeHead(200, { 'Content-Type': 'text/javascript' });
+        return res.end(baselineFiles.get(baselinePath));
+    }
+    let file = path.resolve(root, '.' + (baselinePath || pathname));
     if (!file.startsWith(root + path.sep) && file !== root) { res.writeHead(403); return res.end(); }
     if (fs.existsSync(file) && fs.statSync(file).isDirectory()) file = path.join(file, 'index.html');
     if (!fs.existsSync(file)) { res.writeHead(404); return res.end(); }
@@ -41,6 +55,66 @@ async function navigate(url, selector) {
         await new Promise(resolve => setTimeout(resolve, 250));
     }
     throw Error('Page did not become ready: ' + url);
+}
+async function benchmarkSpecials(base) {
+    await page('Emulation.setDeviceMetricsOverride', { width: 1366, height: 768, deviceScaleFactor: 1, mobile: false });
+    const results = [];
+    for (const version of ['before', 'after', 'after', 'before', 'before', 'after']) {
+        const prefix = version === 'before' ? '/before' : '';
+        await navigate(base + prefix + '/spel/game.html', '.char-card');
+        const result = await evaluate(`(() => {
+            window.ArenaMusic.setMuted(true);
+            setGameMode('2p');
+            startMatch();
+            gameRunning = false;
+            cancelAnimationFrame(animationFrame);
+            const gl = battleRenderer.getContext();
+            const extension = gl.getExtension('WEBGL_debug_renderer_info');
+            const renderFrame = () => {
+                battleRenderer.render(battleScene, battleCamera);
+                gl.finish();
+            };
+            fighters.forEach((fighter, index) => {
+                fighter.x = index === 0 ? 365 : 550;
+                fighter.y = 300;
+                fighter.model.position.set((fighter.x - 480) / 65, (540 - fighter.y) / 65, 0);
+                fighter.invulnerable = 1;
+            });
+            for (let frame = 0; frame < 5; frame++) renderFrame();
+            const rounds = [];
+            for (let round = 0; round < 3; round++) {
+                const castStart = performance.now();
+                fighters.forEach((owner, index) => {
+                    owner.specialCooldowns[0] = 0;
+                    const cast = window.SpecialMoves.cast({ THREE, scene: battleScene, owner,
+                        target: fighters[1 - index], slot: 0, isShielded: () => false, onNotice() {} });
+                    if (!cast) throw new Error('Benchmark cast failed');
+                });
+                const castMs = performance.now() - castStart;
+                const frames = [];
+                window.SpecialMoves.update(.18);
+                for (let frame = 0; frame < 12; frame++) {
+                    const start = performance.now();
+                    window.SpecialMoves.update(1 / 60);
+                    renderFrame();
+                    frames.push(performance.now() - start);
+                }
+                window.SpecialMoves.reset();
+                const resetStart = performance.now();
+                renderFrame();
+                rounds.push({ castMs, frames, firstIdleMs: performance.now() - resetStart });
+            }
+            return { renderer: extension && gl.getParameter(extension.UNMASKED_RENDERER_WEBGL),
+                framebuffer: [gl.drawingBufferWidth, gl.drawingBufferHeight], rounds };
+        })()`);
+        const entry = { version, ...result };
+        results.push(entry);
+        console.log(JSON.stringify(entry));
+    }
+    const report = path.join(output, 'special-performance.json');
+    fs.writeFileSync(report, JSON.stringify({ baselineRevision, results, errors }, null, 2));
+    console.log(JSON.stringify({ report, errors }));
+    if (errors.length) process.exitCode = 1;
 }
 async function audit(name) {
     const results = [];
@@ -78,7 +152,7 @@ async function audit(name) {
 (async () => {
     await new Promise(resolve => server.listen(0, '127.0.0.1', resolve));
     const base = 'http://127.0.0.1:' + server.address().port;
-    chrome = spawn(chromePath, ['--headless=new', '--disable-gpu', '--no-first-run', '--disable-extensions', '--disable-background-networking', '--remote-debugging-pipe', '--user-data-dir=' + path.join(output, 'profile')], { stdio: ['ignore','ignore','pipe','pipe','pipe'], windowsHide: true });
+    chrome = spawn(chromePath, ['--headless=new', ...(benchmark ? ['--disable-gpu-shader-disk-cache'] : ['--disable-gpu']), '--no-first-run', '--disable-extensions', '--disable-background-networking', '--remote-debugging-pipe', '--user-data-dir=' + path.join(output, 'profile')], { stdio: ['ignore','ignore','pipe','pipe','pipe'], windowsHide: true });
     chrome.on('error', error => { console.error(error.message); process.exitCode = 1; });
     chrome.stdio[4].on('data', chunk => {
         buffer += chunk.toString();
@@ -98,6 +172,7 @@ async function audit(name) {
     const { targetId } = await command('Target.createTarget', { url: 'about:blank' });
     session = (await command('Target.attachToTarget', { targetId, flatten: true })).sessionId;
     await page('Runtime.enable'); await page('Page.enable');
+    if (benchmark) return await benchmarkSpecials(base);
     const report = [];
     await navigate(base + '/spel/', '#press-start'); report.push(...await audit('start'));
     await navigate(base + '/spel/game.html', '.char-card');
@@ -148,6 +223,29 @@ async function audit(name) {
         }
         if (fighters.some(fighter => fighter.ultimateForm)) throw new Error('Intro transformation carried into battle');`);
         await evaluate('gameRunning = false; cancelAnimationFrame(animationFrame)');
+        await evaluate(`const pointLights = () => {
+            const lights = [];
+            battleScene.traverseVisible(object => { if (object.isPointLight) lights.push(object); });
+            return lights;
+        };
+        window.SpecialMoves.reset();
+        const idleLights = pointLights();
+        fighters.forEach((owner, index) => {
+            owner.specialCooldowns[0] = 0;
+            owner.specialStatus.stun = 0;
+            owner.invulnerable = 1;
+            const cast = window.SpecialMoves.cast({ THREE, scene: battleScene, owner, target: fighters[1 - index],
+                slot: 0, isShielded: () => false, onNotice() {} });
+            if (!cast) throw new Error('Simultaneous test cast failed');
+        });
+        window.SpecialMoves.update(.22);
+        battleRenderer.render(battleScene, battleCamera);
+        const castingLights = pointLights();
+        if (castingLights.length !== idleLights.length || castingLights.some((light, index) => light !== idleLights[index]) ||
+            castingLights.filter(light => light.name === 'special-move-light' && light.intensity > 0).length !== 2) {
+            throw new Error('Simultaneous specials changed the scene light count or failed to illuminate');
+        }
+        window.SpecialMoves.reset();`);
     } else await evaluate("document.getElementById('select-screen').classList.add('hidden'); document.getElementById('arena-screen').classList.remove('hidden')");
     report.push(...await audit('battle'));
     await evaluate('window.TouchControls.updateMode(true)'); report.push(...await audit('battle-2p'));

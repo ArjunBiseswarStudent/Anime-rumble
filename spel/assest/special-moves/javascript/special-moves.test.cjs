@@ -20,8 +20,15 @@ class Geometry { dispose() { this.disposed = true; } }
 class Material { constructor(options) { Object.assign(this, options); } dispose() { this.disposed = true; } }
 class Mesh extends Group { constructor(geometry, material) { super(); this.geometry = geometry; this.material = material; } }
 class Shape { moveTo() {} lineTo() {} closePath() {} }
+class PointLight extends Group {
+    constructor(color, intensity) {
+        super();
+        this.intensity = intensity;
+        this.color = { value: color, set(value) { this.value = value; } };
+    }
+}
 const THREE = { Group, Mesh, Shape, ShapeGeometry: Geometry, MeshBasicMaterial: Material,
-    ShaderMaterial: Material, Color: class {}, PointLight: Group, PlaneGeometry: Geometry,
+    ShaderMaterial: Material, Color: class {}, PointLight, PlaneGeometry: Geometry,
     SphereGeometry: Geometry, TorusGeometry: Geometry, CylinderGeometry: Geometry, ConeGeometry: Geometry };
 function setup() {
     const context = { window: { CharacterMotion: { attack() {} } } };
@@ -69,7 +76,29 @@ test('a special reports its first hit and displays a short-lived burst only on i
     assert.ok(second.hits > 1);
     assert.equal(reactions, 1);
     assert.ok(!scene.children.includes(burst));
-    assert.ok(burst.children.every(mesh => mesh.geometry.disposed && mesh.material.disposed));
+    assert.ok(burst.children.every(mesh => mesh.material.disposed && !mesh.geometry.disposed));
+});
+
+test('overlapping specials keep two scene lights and release their slots on reset', () => {
+    const { api, scene, fighter, cast } = setup();
+    api.prepareLighting(THREE, scene);
+    api.prepareLighting(THREE, scene);
+    const lights = scene.children.filter(child => child.name === 'special-move-light');
+    assert.equal(lights.length, 2);
+    const owner = fighter('goku', 300);
+    const target = fighter('naruto', 1500);
+    assert.equal(cast(owner, target, 0), true);
+    assert.equal(cast(owner, target, 1), true);
+    for (let frame = 0; frame < 45; frame++) api.update(1 / 60);
+    assert.ok(lights.every(light => light.intensity > 0));
+    api.reset();
+    assert.deepEqual(scene.children, lights);
+    assert.ok(lights.every(light => light.intensity === 0));
+    owner.specialCooldowns[0] = 0;
+    assert.equal(cast(owner, target, 0), true);
+    for (let frame = 0; frame < 45; frame++) api.update(1 / 60);
+    assert.ok(lights.some(light => light.intensity > 0));
+    api.reset();
 });
 
 test('all 112 moves map to exactly the 56 roster IDs and preserve source names', () => {

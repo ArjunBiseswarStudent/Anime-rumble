@@ -1902,6 +1902,7 @@ function initBattleScene(canvas) {
     });
 
     window.AnimeMaps.buildScenery(THREE, battleScene, document.getElementById('arena-select').value);
+    window.SpecialMoves.prepareLighting(THREE, battleScene);
 
     fighters.forEach((fighter) => {
         fighter.model.traverse(part => {
