@@ -23,7 +23,10 @@ class Group {
     remove(child) { this.children = this.children.filter(item => item !== child); }
     traverse(visit) { visit(this); this.children.forEach(child => child.traverse(visit)); }
 }
-class Resource { dispose() { this.disposed = true; } }
+class Resource {
+    computeBoundingSphere() { this.boundingSphere = { radius: 1 }; }
+    dispose() { this.disposed = true; }
+}
 class Material extends Resource {
     constructor({ color }) {
         super();
@@ -44,6 +47,7 @@ class BufferAttribute {
 }
 const THREE = {
     Group, Mesh, BufferGeometry, BufferAttribute, PointLight: Group, MeshBasicMaterial: Material, MeshStandardMaterial: Material,
+    DataTexture: Resource, MeshToonMaterial: Material, ShaderMaterial: Material,
     SphereGeometry: Resource, ConeGeometry: Resource, TorusGeometry: Resource, BoxGeometry: Resource,
     LatheGeometry: Resource, CylinderGeometry: Resource, Vector2: class { constructor(x, y) { Object.assign(this, { x, y }); } }
 };
@@ -62,6 +66,7 @@ test('the whole roster builds detailed models around the same animated rig and t
         model.traverse(node => nodes.push(node));
         assert.ok(nodes.filter(node => node.geometry).length >= 30, character.id);
         assert.ok(nodes.every(node => !node.geometry || node.material), character.id);
+        assert.ok(nodes.some(node => node.userData.characterOutline), character.id);
         motion.attack(model, 'side');
         motion.update(model, fighter, .02);
         assert.ok(Number.isFinite(limbs[0].shoulder.rotation.x), character.id);

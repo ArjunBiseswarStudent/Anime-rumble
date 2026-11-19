@@ -1,5 +1,44 @@
-/* Rounded, articulated characters. All poses are relative to their joint rest positions. */
+/* Articulated cel-shaded characters. Poses are relative to their joint rest positions. */
 window.CharacterMotion = (() => {
+    let toonRamp;
+    function gradient(THREE) {
+        if (!toonRamp) {
+            const pixels = Uint8Array.from([30, 30, 30, 255, 104, 104, 104, 255, 230, 230, 230, 255]);
+            toonRamp = new THREE.DataTexture(pixels, 3, 1, THREE.RGBAFormat);
+            toonRamp.minFilter = toonRamp.magFilter = THREE.NearestFilter;
+            toonRamp.generateMipmaps = false;
+            toonRamp.needsUpdate = true;
+        }
+        return toonRamp;
+    }
+
+    function inkSilhouette(THREE, rig) {
+        const ink = new THREE.ShaderMaterial({
+            side: THREE.BackSide,
+            vertexShader: `
+                void main() {
+                    vec4 point = modelViewMatrix * vec4(position, 1.0);
+                    point.xyz += normalize(normalMatrix * normal) * 0.012;
+                    gl_Position = projectionMatrix * point;
+                }`,
+            fragmentShader: `
+                void main() {
+                    gl_FragColor = vec4(0.035, 0.028, 0.05, 1.0);
+                }`
+        });
+        const surfaces = [];
+        rig.traverse(part => {
+            if (!part.geometry) return;
+            if (!part.geometry.boundingSphere) part.geometry.computeBoundingSphere();
+            const radius = part.geometry.boundingSphere.radius * Math.max(part.scale.x, part.scale.y, part.scale.z);
+            if (radius >= .105) surfaces.push(part);
+        });
+        for (const surface of surfaces) {
+            const outline = new THREE.Mesh(surface.geometry, ink);
+            outline.userData.characterOutline = true;
+            surface.add(outline);
+        }
+    }
     // Body proportions, hair silhouette and the main piece of clothing for each fighter.
     const looks = {
         gojo: ['lean', 'swept', 'uniform'], sukuna: ['athletic', 'crop', 'robe'], yuji: ['athletic', 'crop', 'hood'],
@@ -40,9 +79,10 @@ window.CharacterMotion = (() => {
         const rig = new THREE.Group();
         rig.scale.set(...builds[build]);
         root.add(rig);
-        const material = (color, roughness = .78) => new THREE.MeshStandardMaterial({ color, roughness });
-        const skin = material(character.skin, .58), suit = material(character.primary);
-        const accent = material(character.secondary), hair = material(character.hair, .55);
+        const ramp = gradient(THREE);
+        const material = color => new THREE.MeshToonMaterial({ color, gradientMap: ramp });
+        const skin = material(character.skin), suit = material(character.primary);
+        const accent = material(character.secondary), hair = material(character.hair);
         root.userData.palette = { skin, suit, accent, hair };
         const dark = material('#182131'), white = material('#f1eee6');
         const sphere = new THREE.SphereGeometry(1, 24, 16);
@@ -446,6 +486,7 @@ window.CharacterMotion = (() => {
         root.add(shield);
         root.userData.shield = shield;
         root.userData.motion = { rig, torso, head, limbs, time: 0, blend: 0, landing: 0, wasGrounded: false, action: '', actionTime: 0 };
+        inkSilhouette(THREE, rig);
         if (window.CombatItems) window.CombatItems.attach(THREE, root, character);
         return root;
     }

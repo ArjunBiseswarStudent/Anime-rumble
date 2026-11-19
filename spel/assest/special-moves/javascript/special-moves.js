@@ -72,6 +72,9 @@ window.SpecialMoves = (() => {
         const glow = (tint, opacity, blending = THREE.AdditiveBlending) =>
             new THREE.MeshBasicMaterial({ color: tint, transparent: true, opacity, depthWrite: false, blending, toneMapped: false });
         const aura = glow(color, .42), streak = glow(color, .79), core = glow(highlight, .86, THREE.NormalBlending);
+        const ink = glow('#191324', .9, THREE.NormalBlending);
+        const paint = glow(color, .92, THREE.NormalBlending);
+        const paper = glow(highlight, .94, THREE.NormalBlending);
         function part(geometry, mat, x = 0, y = 0, z = 0, animate) {
             const object = new THREE.Mesh(geometry, mat);
             object.position.set(x, y, z);
@@ -80,6 +83,13 @@ window.SpecialMoves = (() => {
             return object;
         }
         const radius = move.damage >= 20 ? .64 : .4;
+        function cutout(points) {
+            const shape = new THREE.Shape();
+            shape.moveTo(...points[0]);
+            for (const point of points.slice(1)) shape.lineTo(...point);
+            shape.closePath();
+            return new THREE.ShapeGeometry(shape);
+        }
         if (move.kind === 'beam' || move.kind === 'stream' || move.kind === 'reach') {
             const length = move.range / 65;
             for (const [mat, width] of [[core, .34], [streak, .72], [aura, 1.05]]) {
@@ -108,18 +118,16 @@ window.SpecialMoves = (() => {
                     });
             }
         } else if (move.kind === 'lightning') {
-            const segment = new THREE.CylinderGeometry(.041, .065, 1, 6);
-            for (let i = 0; i < 8; i++) {
-                part(segment, i < 5 ? core : streak, 0, 0, 0, (mesh, t) => {
-                    const branch = i >= 5;
-                    const row = i % 5;
-                    const sway = Math.sin(Math.floor(t * 24) * 2.4 + row) * .13;
-                    mesh.position.set((branch ? .47 + row * .25 : (row % 2) * .16) + sway,
-                        (branch ? 1.52 : 3.12) - row * .7, branch ? -.23 : 0);
-                    mesh.rotation.z = (row % 2 ? -.46 : .49) + (branch ? .62 : sway);
-                    mesh.scale.set(1.1, .81, 1.1);
+            const bolt = cutout([[-.22, 3.2], [.24, 3.2], [-.12, 2.17], [.43, 2.4],
+                [.12, 1.16], [.58, 1.43], [-.18, -.48], [.02, .85], [-.35, .65], [-.07, 1.85], [-.53, 1.59]]);
+            for (const [material, width, depth] of [[ink, 1.38, .65], [paint, 1.12, .67], [paper, .52, .69]]) {
+                part(bolt, material, 0, 0, depth, (mesh, t) => {
+                    mesh.position.x = Math.sin(Math.floor(t * 18) * 2.4) * .17;
+                    mesh.scale.x = width;
                 });
             }
+            const branch = cutout([[-.1, 1.7], [.65, 1.09], [.48, 1.02], [1.14, .21], [.23, .87], [.38, 1]]);
+            part(branch, paint, 0, 0, .68);
         } else if (['volley', 'rain', 'ice', 'freeze'].includes(move.kind)) {
             const falling = move.kind !== 'volley';
             const shard = new THREE.ConeGeometry(.106, 1.05, 5);
@@ -134,12 +142,23 @@ window.SpecialMoves = (() => {
                 blade.rotation.z = falling ? Math.PI - .16 : -facing * Math.PI / 2;
             }
         } else if (move.kind === 'summon') {
-            const smoke = new THREE.SphereGeometry(.34, 14, 10);
-            for (let i = 0; i < 9; i++) part(smoke, i % 2 ? aura : streak, 0, 0, 0, (mesh, t) => {
-                const angle = i * Math.PI * 2 / 9 + t * 1.2;
-                mesh.position.set(Math.cos(angle) * (.28 + t), -.22 + t * .65, Math.sin(angle) * (.28 + t));
-                mesh.scale.setScalar(.4 + Math.min(t, .9));
-            });
+            const smoke = cutout(Array.from({ length: 40 }, (_, index) => {
+                const angle = index * Math.PI * 2 / 40;
+                const edge = .42 + Math.cos(angle * 5) * .069 + Math.sin(angle * 3) * .034;
+                return [Math.cos(angle) * edge, Math.sin(angle) * edge];
+            }));
+            for (let i = 0; i < 7; i++) {
+                for (const [material, size, depth] of [[ink, 1.13, 0], [i % 2 ? paint : paper, .97, .018]]) {
+                    part(smoke, material, 0, 0, 0, (mesh, t) => {
+                        const drift = Math.min(t, 1.6);
+                        const angle = i * Math.PI * 2 / 7 + drift * .6;
+                        mesh.position.set(Math.cos(angle) * (.35 + drift * .85), -.15 + drift * .68 + Math.sin(angle) * .38,
+                            .45 + (i % 3) * .13 + depth);
+                        mesh.scale.setScalar(size * (.64 + drift * .52));
+                        mesh.rotation.z = angle * .45;
+                    });
+                }
+            }
             for (let i = 0; i < 3; i++) {
                 part(new THREE.SphereGeometry(.14, 12, 8), core, (i - 1) * .6, .45);
                 part(new THREE.ConeGeometry(.23, .8, 12), streak, (i - 1) * .6, -.05);
@@ -175,7 +194,16 @@ window.SpecialMoves = (() => {
                 mesh.scale.set(.27 * (1 - phase) + .048, .12 * (1 - phase) + .02, .1 * (1 - phase) + .02);
             });
         }
-        group.userData.materials = [aura, streak, core].filter(mat => {
+        if (move.kind !== 'lightning' && move.kind !== 'summon') {
+            const speedLine = cutout([[0, -.027], [.34, -.043], [1.03, 0], [.27, .04]]);
+            for (let i = 0; i < 5; i++) part(speedLine, i % 2 ? paint : paper, 0, 0, 0, (mesh, t) => {
+                const phase = (t * 2.1 + i * .19) % 1;
+                mesh.position.set(facing * ((phase - .45) * 1.6), (i - 2) * .27, .58);
+                mesh.rotation.z = facing < 0 ? Math.PI : 0;
+                mesh.scale.set(.23 + phase * .77, 1 - phase * .7, 1);
+            });
+        }
+        group.userData.materials = [aura, streak, core, ink, paint, paper].filter(mat => {
             if (group.children.some(mesh => mesh.material === mat)) return true;
             mat.dispose();
             return false;

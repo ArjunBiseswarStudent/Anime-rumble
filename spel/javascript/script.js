@@ -1905,7 +1905,9 @@ function initBattleScene(canvas) {
     window.AnimeMaps.buildScenery(THREE, battleScene, document.getElementById('arena-select').value);
 
     fighters.forEach((fighter) => {
-        fighter.model.traverse(part => { if (part.isMesh) part.castShadow = part.receiveShadow = true; });
+        fighter.model.traverse(part => {
+            if (part.isMesh && !part.userData.characterOutline) part.castShadow = part.receiveShadow = true;
+        });
         battleScene.add(fighter.model);
     });
     window.HealingItems?.init({ THREE, scene: battleScene, platforms: currentArena.platforms, fighters,

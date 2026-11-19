@@ -19,7 +19,8 @@ class Group {
 class Geometry { dispose() { this.disposed = true; } }
 class Material { constructor(options) { Object.assign(this, options); } dispose() { this.disposed = true; } }
 class Mesh extends Group { constructor(geometry, material) { super(); this.geometry = geometry; this.material = material; } }
-const THREE = { Group, Mesh, MeshBasicMaterial: Material, SphereGeometry: Geometry, TorusGeometry: Geometry, CylinderGeometry: Geometry, ConeGeometry: Geometry };
+class Shape { moveTo() {} lineTo() {} closePath() {} }
+const THREE = { Group, Mesh, Shape, ShapeGeometry: Geometry, MeshBasicMaterial: Material, SphereGeometry: Geometry, TorusGeometry: Geometry, CylinderGeometry: Geometry, ConeGeometry: Geometry };
 function setup() {
     const context = { window: { CharacterMotion: { attack() {} } } };
     vm.createContext(context);
