@@ -3,6 +3,7 @@
     margin-inline: auto;
     padding: clamp(12px, 3vw, 32px) 0;
 }
+.match-intro:focus { outline: none; }
 
 .intro-heading { margin-bottom: 16px; text-align: center; }
 .intro-heading p { margin: 0; color: #b9c9e3; }
@@ -22,6 +23,8 @@
     position: relative;
     isolation: isolate;
     overflow: hidden;
+    display: grid;
+    grid-template-rows: auto 1fr;
     border: 1px solid var(--aura);
     border-radius: 14px;
     background: radial-gradient(ellipse at 50% 62%,
@@ -44,13 +47,18 @@
 .intro-fighter canvas {
     display: block;
     width: 100%;
-    height: clamp(155px, 48vh, 440px);
+    height: clamp(155px, 48svh, 440px);
     object-fit: contain;
     filter: drop-shadow(0 0 14px color-mix(in srgb, var(--intro-energy) 60%, transparent));
+    background: radial-gradient(ellipse 30% 7% at 50% 90%,
+        #000a, transparent 76%);
 }
 
 .intro-fighter[data-phase="awakening"]::before {
     animation: intro-awakening .85s ease-out both;
+}
+.intro-fighter[data-phase="awakening"] .intro-nameplate {
+    animation: intro-energy-crest .85s ease-out;
 }
 
 .intro-nameplate {
@@ -118,6 +126,25 @@
     45% { transform: scale(1.05); opacity: .58; }
     100% { transform: scale(1); opacity: .24; }
 }
+@keyframes intro-energy-crest {
+    45% { box-shadow: inset 0 12px 24px -18px var(--intro-energy); }
+}
+@media (max-width: 600px) and (orientation: portrait) {
+    .intro-heading { margin-bottom: 10px; }
+    .intro-fighter canvas { height: clamp(155px, 48vw, 265px); }
+    .intro-tip { margin-top: 10px; }
+}
+@media (max-height: 480px) and (orientation: landscape) {
+    .match-intro { padding-block: 8px; }
+    .intro-heading { margin-bottom: 6px; }
+    .intro-fighter canvas { height: clamp(100px, 39svh, 175px); }
+    .intro-nameplate { padding-block: 4px; }
+    .intro-nameplate h2 { font-size: clamp(15px, 3vw, 23px); }
+    .intro-nameplate .intro-move { min-height: 1.3em; margin-top: 2px; }
+    .intro-tip { min-height: 0; margin-top: 8px; padding-block: 6px; font-size: .88rem; }
+}
 @media (prefers-reduced-motion: reduce) {
-    .intro-fighter::before, .intro-fighter[data-phase="awakening"]::before { animation: none; }
+    .intro-fighter::before,
+    .intro-fighter[data-phase="awakening"]::before,
+    .intro-fighter[data-phase="awakening"] .intro-nameplate { animation: none; }
 }

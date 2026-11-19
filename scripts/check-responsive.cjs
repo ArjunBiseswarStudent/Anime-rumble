@@ -7,7 +7,7 @@ const { spawn } = require('node:child_process');
 const root = path.resolve(__dirname, '..');
 const output = fs.mkdtempSync(path.join(os.tmpdir(), 'anime-rumble-layout-'));
 const chromePath = process.env.CHROME_PATH || 'C:\\Program Files\\Google\\Chrome\\Application\\chrome.exe';
-const sizes = [[1280,720,false], [1366,768,false], [1920,1080,false], [768,1024,true], [1024,768,true], [320,640,true], [360,740,true], [390,844,true], [430,932,true], [844,390,true], [2560,1080,false]];
+const sizes = [[1280,720,false], [1366,768,false], [1920,1080,false], [768,1024,true], [1024,768,true], [320,640,true], [360,740,true], [390,844,true], [430,932,true], [667,375,true], [740,360,true], [844,390,true], [2560,1080,false]];
 const mime = { '.html': 'text/html', '.js': 'text/javascript', '.css': 'text/css', '.png': 'image/png', '.json': 'application/json' };
 const server = http.createServer((req, res) => {
     let file = path.resolve(root, '.' + decodeURIComponent(new URL(req.url, 'http://localhost').pathname));
@@ -58,6 +58,7 @@ async function audit(name) {
                 if (rect.left < -1 || rect.right > innerWidth + 1) problems.push(selector + ': outside viewport');
                 if (el.scrollWidth > el.clientWidth + 2 && !['auto','scroll','hidden','clip'].includes(style.overflowX)) problems.push(selector + ': internal horizontal overflow');
                 if (selector === '.touch-button' && (rect.top < -1 || rect.bottom > innerHeight + 1)) problems.push(el.dataset.touchCode + ': outside viewport vertically');
+                if (selector.startsWith('.intro-') && (rect.top < -1 || rect.bottom > innerHeight + 1)) problems.push(selector + ': outside viewport vertically');
                 if (${JSON.stringify(name)} === 'start' && selector === '.press-start' && (rect.top < 0 || rect.bottom > innerHeight)) problems.push('start button outside viewport vertically');
             }
             const controls = document.querySelector('#touch-controls');
