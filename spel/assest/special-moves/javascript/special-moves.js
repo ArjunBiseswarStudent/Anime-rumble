@@ -358,7 +358,9 @@ window.SpecialMoves = (() => {
         const blocked = isShielded(target);
         const status = prepare(target), ownerStatus = prepare(owner);
         const armor = status.armor > 0 ? 0.65 : 1;
-        target.damage += move.damage * portion * (owner.damageMultiplier ?? 1) * (ownerStatus.buff > 0 ? 1.3 : 1) * (blocked ? 0.25 : 1) * armor;
+        const amount = move.damage * portion * (owner.damageMultiplier ?? 1) * (ownerStatus.buff > 0 ? 1.3 : 1) * (blocked ? 0.25 : 1) * armor;
+        target.damage += amount;
+        window.CombatFeedback?.hit(target, amount, blocked);
         const direction = Math.sign(center(target).x - center(owner).x) || owner.facing;
         const force = (4 + move.damage / 6 + target.damage / 22) / (target.character.weight || 1);
         target.vx = direction * force * (blocked ? 0.3 : 1) * (portion < 1 ? 0.25 : 1) * (pull ? -1 : 1);

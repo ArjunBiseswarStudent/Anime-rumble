@@ -116,6 +116,88 @@ async function benchmarkSpecials(base) {
     console.log(JSON.stringify({ report, errors }));
     if (errors.length) process.exitCode = 1;
 }
+
+async function checkSelectionCue() {
+    const point = await evaluate(`(() => {
+        const create = AudioContext.prototype.createOscillator;
+        window.selectionCueCount = 0;
+        AudioContext.prototype.createOscillator = function () {
+            window.selectionCueCount++;
+            return create.call(this);
+        };
+        window.restoreSelectionAudio = () => { AudioContext.prototype.createOscillator = create; };
+        window.initialSelection = [...selection];
+        const card = [...document.querySelectorAll('.char-card')].find(
+            button => button.dataset.characterId !== selection[0].id);
+        card.scrollIntoView({ block: 'center' });
+        const bounds = card.getBoundingClientRect();
+        return { x: bounds.x + bounds.width / 2, y: bounds.y + bounds.height / 2 };
+    })()`);
+    await page('Input.dispatchMouseEvent', { type: 'mousePressed', button: 'left', clickCount: 1, ...point });
+    await page('Input.dispatchMouseEvent', { type: 'mouseReleased', button: 'left', clickCount: 1, ...point });
+    for (let attempt = 0; attempt < 20; attempt++) {
+        if (await evaluate('window.selectionCueCount === 1')) break;
+        await new Promise(resolve => setTimeout(resolve, 100));
+    }
+    await evaluate(`window.restoreSelectionAudio();
+        if (window.selectionCueCount !== 1 || selection[0] === window.initialSelection[0]) {
+            throw new Error('Character selection did not play its audio cue');
+        }
+        selection.splice(0, 2, ...window.initialSelection);
+        updateSelectionCards();
+        setSelectorTarget(0);
+        window.scrollTo(0, 0);`);
+}
+
+async function checkCombatFeedback() {
+    const point = await evaluate(`(() => {
+        gameRunning = true;
+        const [owner, target] = fighters;
+        owner.attackCooldown = 0;
+        owner.specialCooldowns[0] = 0;
+        owner.specialStatus.stun = 0;
+        owner.facing = 1;
+        owner.x = 445;
+        target.x = 496;
+        owner.y = target.y = 300;
+        target.invulnerable = 0;
+        const rect = document.getElementById('gameCanvas').getBoundingClientRect();
+        return { x: rect.x + rect.width / 2, y: rect.y + rect.height / 2 };
+    })()`);
+    const click = type => page('Input.dispatchMouseEvent', { type, button: 'left', clickCount: 1, ...point });
+    await page('Input.dispatchKeyEvent', { type: 'keyDown', code: 'Space', key: ' ', windowsVirtualKeyCode: 32 });
+    await evaluate("if (!jumpRequests[0] || jumpRequests[1]) throw new Error('Space did not jump for P1');");
+    await page('Input.dispatchKeyEvent', { type: 'keyUp', code: 'Space', key: ' ', windowsVirtualKeyCode: 32 });
+    await click('mousePressed');
+    await click('mouseReleased');
+    await evaluate(`window.CombatActions.update(.16);
+        drawBattle();
+        if (document.querySelectorAll('.fighter-indicator:not([hidden])').length !== 2 ||
+            !document.querySelector('.damage-number:not([hidden])')) throw new Error('Normal click did not show combat feedback');
+        window.CombatActions.reset();`);
+    await click('mousePressed');
+    await new Promise(resolve => setTimeout(resolve, 390));
+    await evaluate(`drawBattle();
+        if (document.querySelector('.fighter-indicator').dataset.charge !== 'ready') {
+            throw new Error('Held attack did not show the Super 1 ready indicator');
+        }`);
+    await click('mouseReleased');
+    const attacks = await evaluate(`if (fighters[0].specialCooldowns[0] <= 0) throw new Error('Charged mouse release did not cast Super 1');
+        window.SpecialMoves.reset();
+        fighters[0].attackCooldown = 0;
+        fighters[0].attacks;`);
+    const touch = type => page('Input.dispatchTouchEvent', { type,
+        touchPoints: type === 'touchStart' ? [{ ...point, id: 1 }] : [] });
+    await touch('touchStart');
+    await touch('touchCancel');
+    await evaluate(`if (fighters[0].attacks !== ${attacks}) throw new Error('Canceled arena touch caused an attack');`);
+    await touch('touchStart');
+    await touch('touchEnd');
+    await evaluate(`if (fighters[0].attacks !== ${attacks + 1}) throw new Error('Arena tap did not attack');
+        window.CombatActions.reset();
+        resetGameInput();
+        gameRunning = false;`);
+}
 async function audit(name) {
     const results = [];
     for (const [width, height, touch] of sizes) {
@@ -176,6 +258,7 @@ async function audit(name) {
     const report = [];
     await navigate(base + '/spel/', '#press-start'); report.push(...await audit('start'));
     await navigate(base + '/spel/game.html', '.char-card');
+    await checkSelectionCue();
     await evaluate("document.querySelector('.selection-settings').open = true"); report.push(...await audit('select'));
     await evaluate('showControlsGuide()'); report.push(...await audit('controls'));
     await evaluate("backFromControlsGuide(); setGameMode('2p'); showControlsGuide()"); report.push(...await audit('controls-2p'));
@@ -223,6 +306,7 @@ async function audit(name) {
         }
         if (fighters.some(fighter => fighter.ultimateForm)) throw new Error('Intro transformation carried into battle');`);
         await evaluate('gameRunning = false; cancelAnimationFrame(animationFrame)');
+        await checkCombatFeedback();
         await evaluate(`const pointLights = () => {
             const lights = [];
             battleScene.traverseVisible(object => { if (object.isPointLight) lights.push(object); });

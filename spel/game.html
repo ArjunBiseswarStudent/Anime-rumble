@@ -11,6 +11,7 @@
   <link rel="stylesheet" href="assest/items/trow-items/css/trow-items.css">
   <link rel="stylesheet" href="css/character-select.css">
   <link rel="stylesheet" href="css/battle-hud.css">
+  <link rel="stylesheet" href="css/combat-feedback.css">
   <link rel="stylesheet" href="css/responsive.css">
   <link rel="stylesheet" href="assest/items/healing-items/css/healing-items.css">
   <link rel="stylesheet" href="css/battle-layout.css">
@@ -30,6 +31,7 @@
   <script defer src="javascript/character-motion.js"></script>
   <script defer src="javascript/ultimate-forms.js"></script>
   <script defer src="javascript/arena-music.js"></script>
+  <script defer src="javascript/combat-feedback.js"></script>
   <script defer src="javascript/battle-rules.js"></script>
   <script defer src="javascript/mobile-gamepad.js"></script>
   <script defer src="javascript/touch-controls.js"></script>
@@ -130,6 +132,7 @@
     </table>
     <p id="controls-numpad" class="controls-tip">Speler 2 kan de cijfers 1 t/m 8 ook op het numerieke toetsenblok gebruiken.</p>
     <p class="controls-tip">Op een touchscreen gebruik je de knoppen in de arena. De knop <strong>Vorm</strong> activeert je ultieme vorm.</p>
+    <p class="controls-tip">Speler 1 kan ook in de arena klikken of tikken. Kort loslaten geeft een gewone aanval. Houd 0,35 seconde vast en laat los zodra Super 1 klaarstaat.</p>
     <div class="controls-footer">
       <button class="back-btn" type="button" onclick="backFromControlsGuide()">← Terug naar selectie</button>
       <button class="start-btn" type="button" onclick="showMatchIntro()">NAAR CONFRONTATIE <span aria-hidden="true">➜</span></button>
@@ -169,7 +172,7 @@
       <span data-music-status>Start bij het gevecht</span>
     </section>
         <h2>Besturing en uitleg</h2>
-        <p><b>P1:</b> A/D lopen · W springen · S beschermen · F aanvallen · H wapen wisselen · X werpen · G/Q en C/E supers · R health-item oppakken · T health-item gebruiken.</p><p><b>P2:</b> ←/→ lopen · ↑ springen · ↓ beschermen · 1 aanvallen · 4 wapen wisselen · 5 werpen · 2/3 supers · 6 health-item oppakken · 7 health-item gebruiken (ook numpad).</p><p>De groene balk toont je gezondheid: elk leven begint op 100%. Bij 0% gezondheid of een val uit de arena verlies je een leven. Elke speler kiest vooraf 3 of 5 levens. De ronde duurt maximaal 3 minuten en stopt eerder als je levens op zijn. Bij tijd om wint de speler met de meeste levens; bij gelijke levens telt de gezondheid. Zijn beide gelijk, dan is het gelijkspel. De twee kleine meters tonen wanneer je supers weer klaar zijn.</p>
+        <p><b>P1:</b> A/D lopen · Spatie/W springen · S blokkeren · F of kort klikken/tikken aanvallen · G/Q en C/E supers · Haal Super 1 ook uit door in de arena 0,35 s ingedrukt te houden en los te laten · H wapen wisselen · X werpen · R health-item oppakken · T gebruiken.</p><p><b>P2:</b> ←/→ lopen · ↑ springen · ↓ blokkeren · 1 aanvallen · 4 wapen wisselen · 5 werpen · 2/3 supers · 6 health-item oppakken · 7 gebruiken (ook numpad).</p><p>De groene balk toont je gezondheid: elk leven begint op 100%. Bij 0% gezondheid of een val uit de arena verlies je een leven. Elke speler kiest vooraf 3 of 5 levens. De ronde duurt maximaal 3 minuten en stopt eerder als je levens op zijn. Bij tijd om wint de speler met de meeste levens; bij gelijke levens telt de gezondheid. Zijn beide gelijk, dan is het gelijkspel. De twee kleine meters tonen wanneer je supers weer klaar zijn.</p>
         <p>Ultieme vorm: druk op B (P1) of 8 (P2, ook numpad). De vorm blijft actief tot je een leven verliest en verandert je uiterlijk.</p>
         <p>Health-items: één draagplek. Pak op met R (P1) of 6 (P2). Gebruik met T (P1) of 7 (P2).</p>
       </div></details>
@@ -177,6 +180,14 @@
     <div class="game-frame">
       <div class="battle-viewport">
         <canvas id="gameCanvas" aria-label="3D-gevechtsarena"></canvas>
+        <div id="battle-feedback" aria-hidden="true">
+          <div class="fighter-indicator" hidden><span>P1</span><i></i><small></small></div>
+          <div class="fighter-indicator fighter-indicator-p2" hidden><span>P2</span></div>
+          <span class="damage-number" hidden></span>
+          <span class="damage-number" hidden></span>
+          <i class="fist-swipe" hidden></i>
+          <i class="fist-swipe" hidden></i>
+        </div>
         <div class="battle-hud battle-hud-overlay" aria-label="Gevechtsinformatie">
           <section class="hud-fighter hud-left" aria-label="Speler 1">
             <canvas id="p1-hud-portrait" class="hud-portrait" width="100" height="100"></canvas>

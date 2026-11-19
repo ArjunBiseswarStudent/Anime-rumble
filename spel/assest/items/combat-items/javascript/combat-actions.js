@@ -36,8 +36,9 @@ window.CombatActions = (() => {
     function burst(THREE, scene, point, color, shield, owner, target) {
         const group = new THREE.Group();
         const material = new THREE.MeshBasicMaterial({ color: shield ? '#79bfff' : color, transparent: true, opacity: 1, depthWrite: false });
+        const sparkShape = new THREE.SphereGeometry(0.052, 6, 4);
         for (let i = 0; i < 8; i++) {
-            const spark = new THREE.Mesh(new THREE.SphereGeometry(0.035, 6, 4), material);
+            const spark = new THREE.Mesh(sparkShape, material);
             spark.userData.angle = i / 8 * Math.PI * 2;
             group.add(spark);
         }
@@ -63,10 +64,15 @@ window.CombatActions = (() => {
             projectile.rotation.z = owner.facing * Math.PI / 2;
             visual.add(projectile);
         } else {
-            const trail = new THREE.Mesh(new THREE.TorusGeometry(stats.range / 100, 0.035, 6, 24, stats.kind === 'thrust' ? 0.35 : Math.PI * 1.1), mat);
-            trail.rotation.z = owner.facing > 0 ? -Math.PI / 2 : Math.PI / 2;
-            visual.add(trail);
-            // The material is owned by the trail; no frame-by-frame geometry allocation.
+            const arc = stats.kind === 'thrust' ? .52 : Math.PI * .92;
+            const radius = stats.range / 100;
+            const glow = new THREE.Mesh(new THREE.TorusGeometry(radius, .075, 6, 24, arc), mat);
+            const edge = new THREE.Mesh(new THREE.TorusGeometry(radius + .018, .026, 6, 24, arc),
+                new THREE.MeshBasicMaterial({ color: '#fff2cd', transparent: true, opacity: .92, depthWrite: false }));
+            glow.rotation.z = edge.rotation.z = owner.facing > 0 ? -arc / 2 : Math.PI - arc / 2;
+            edge.position.z = .035;
+            visual.add(glow);
+            visual.add(edge);
         }
         if (stats.kind === 'projectile' && item.type === 'kunai') mat.dispose();
         scene.add(visual);
@@ -82,6 +88,7 @@ window.CombatActions = (() => {
         const shield = effect.isShielded(target);
         const amount = stats.damage * (owner.damageMultiplier ?? 1) * (combo === 3 ? 1.35 : 1) * (owner.specialStatus?.buff > 0 ? 1.3 : 1) * (target.specialStatus?.armor > 0 ? 0.65 : 1) * (shield ? 0.25 : 1);
         target.damage += amount;
+        window.CombatFeedback?.hit(target, amount, shield);
         target.vx = effect.facing * (3 + target.damage / 22 + (stats.kind === 'heavy' ? 3 : 0)) * (shield ? 0.3 : 1);
         target.vy = shield ? -1 : combo === 3 ? -7 : -3;
         target.grounded = false;
@@ -119,7 +126,7 @@ window.CombatActions = (() => {
                 const inReach = effect.stats.kind === 'projectile'
                     ? point.x >= Math.min(previousX, effect.x) - 15 && point.x <= Math.max(previousX, effect.x) + 15
                     : forward >= -10 && forward <= effect.stats.range + effect.target.width / 2;
-                const ready = effect.stats.kind === 'projectile' || effect.age >= effect.stats.cooldown * 0.25;
+                const ready = effect.stats.kind === 'projectile' || effect.age >= effect.stats.cooldown * .16;
                 if (!effect.hit && ready && inReach && Math.abs(point.y - effect.y) <= 60 && damage(effect)) {
                     effect.hit = true;
                     if (effect.stats.kind === 'projectile') effect.life = 0;

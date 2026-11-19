@@ -1237,11 +1237,11 @@ const pressedKeys = new Set();
 const inputSources = new Map();
 const jumpRequests = [false, false];
 const PLAYER_CONTROLS = [
-    { left: 'KeyA', right: 'KeyD', jump: 'KeyW', shield: 'KeyS', attack: 'KeyF', super1: 'KeyG', super2: 'KeyC', pickup: 'KeyR', heal: 'KeyT', ultimate: 'KeyB', weapon: 'KeyH', throw: 'KeyX' },
+    { left: 'KeyA', right: 'KeyD', jump: 'Space', shield: 'KeyS', attack: 'KeyF', super1: 'KeyG', super2: 'KeyC', pickup: 'KeyR', heal: 'KeyT', ultimate: 'KeyB', weapon: 'KeyH', throw: 'KeyX' },
     { left: 'ArrowLeft', right: 'ArrowRight', jump: 'ArrowUp', shield: 'ArrowDown', attack: 'Digit1', super1: 'Digit2', super2: 'Digit3', pickup: 'Digit6', heal: 'Digit7', ultimate: 'Digit8', weapon: 'Digit4', throw: 'Digit5' }
 ];
 const GAME_KEYS = new Set(PLAYER_CONTROLS.flatMap(controls => Object.values(controls)));
-const GAME_KEY_ALIASES = { KeyQ: 'KeyG', KeyE: 'KeyC' };
+const GAME_KEY_ALIASES = { KeyW: 'Space', KeyQ: 'KeyG', KeyE: 'KeyC' };
 
 const portraitCanvases = [
     document.getElementById('p1-portrait-canvas'),
@@ -1491,6 +1491,7 @@ function setSelectorTarget(target) {
 
 function chooseRandomCharacter(playerIndex) {
     const character = ROSTER[Math.floor(Math.random() * ROSTER.length)];
+    if (selection[playerIndex] !== character) void window.ArenaMusic?.cue('select');
     selection[playerIndex] = character;
     updateSelectionCards();
     setSelectorTarget(playerIndex === 0 ? 1 : 0);
@@ -1545,6 +1546,7 @@ function buildRosterUI() {
         name.textContent = character.name;
         button.append(portrait, name);
         button.addEventListener('click', () => {
+            if (selection[selectionTarget] !== character) void window.ArenaMusic?.cue('select');
             selection[selectionTarget] = character;
             document.getElementById('random-character-status').textContent = '';
             updateSelectionCards();
@@ -1630,7 +1632,7 @@ function showControlsGuide() {
             const keys = [code, ...Object.keys(GAME_KEY_ALIASES).filter(alias => GAME_KEY_ALIASES[alias] === code)];
             keys.forEach(key => {
                 const cap = document.createElement('kbd');
-                cap.textContent = arrowLabels[key] || key.replace(/^(Key|Digit)/, '');
+                cap.textContent = key === 'Space' ? 'Spatie' : arrowLabels[key] || key.replace(/^(Key|Digit)/, '');
                 cell.append(cap);
             });
             if (move) {
@@ -1943,10 +1945,15 @@ function isFighterShielded(fighter) {
     return (fighter.playerIndex === 0 || gameMode === '2p') && pressedKeys.has(PLAYER_CONTROLS[fighter.playerIndex].shield);
 }
 
-function performAttack(attacker, target, isSpecial, specialMove = 'neutral') {
+function performAttack(attacker, target, isSpecial, specialMove = 'neutral', buffer = false) {
     const controls = PLAYER_CONTROLS[attacker.playerIndex];
     const status = window.SpecialMoves.prepare(attacker);
     if (status.stun > 0 || isFighterShielded(attacker)) return;
+    if (!isSpecial && attacker.attackCooldown > 0) {
+        if (buffer && attacker.attackCooldown <= .12) attacker.attackBuffer = .12;
+        return;
+    }
+    if (!isSpecial) attacker.attackBuffer = 0;
     if (pressedKeys.has(controls.left)) attacker.facing = -1;
     if (pressedKeys.has(controls.right)) attacker.facing = 1;
     if (isSpecial) {
@@ -1966,16 +1973,18 @@ function performAttack(attacker, target, isSpecial, specialMove = 'neutral') {
             onNotice: message => { document.getElementById('arena-note').textContent = message; } });
         return;
     }
-    if (attacker.attackCooldown > 0) return;
     attacker.attackCooldown = 0.48;
     attacker.attacks++;
     window.CharacterMotion.attack(attacker.model, 'punch');
+    window.CombatFeedback?.swing(attacker);
     const distanceX = Math.abs(attacker.x + attacker.width / 2 - target.x - target.width / 2);
     const distanceY = Math.abs(attacker.y + attacker.height / 2 - target.y - target.height / 2);
     if (distanceX > (status.buff > 0 ? 110 : 82) || distanceY > 82 || target.invulnerable > 0) return;
     const shielding = isFighterShielded(target);
     const targetStatus = window.SpecialMoves.prepare(target);
-    target.damage += 8 * (attacker.damageMultiplier ?? 1) * (status.buff > 0 ? 1.3 : 1) * (targetStatus.armor > 0 ? 0.65 : 1) * (shielding ? 0.25 : 1);
+    const amount = 8 * (attacker.damageMultiplier ?? 1) * (status.buff > 0 ? 1.3 : 1) * (targetStatus.armor > 0 ? 0.65 : 1) * (shielding ? 0.25 : 1);
+    target.damage += amount;
+    window.CombatFeedback?.hit(target, amount, shielding);
     const direction = Math.sign(target.x - attacker.x) || attacker.facing;
     target.vx = direction * (4.5 + target.damage / 18) * (shielding ? 0.35 : 1);
     target.vy = shielding ? -2 : -4;
@@ -1985,6 +1994,9 @@ function performAttack(attacker, target, isSpecial, specialMove = 'neutral') {
 }
 
 function loseStock(fighter) {
+    if (fighter.playerIndex === 0) window.CombatFeedback?.cancel();
+    fighter.attackBuffer = 0;
+    fighter.hitReaction = 0;
     window.UltimateForms?.clear(fighter);
     window.SpecialMoves.clearFighter(fighter);
     window.CombatActions?.clearFighter(fighter);
@@ -2126,13 +2138,22 @@ function updateFighter(fighter, target, dt) {
     const speed = (fighter.character.speed || 5.5) * (isCpu ? speedFactor : 1) * (specialStatus.buff > 0 ? 1.2 : 1) * (fighter.weaponSlow > 0 ? 0.65 : 1);
     if (specialStatus.stun > 0) fighter.vx *= Math.exp(-dt * 15);
     else if (specialStatus.dash > 0) fighter.vx = specialStatus.dashSpeed;
-    else fighter.vx += (move * speed - fighter.vx) * Math.min(1, dt * 12);
-    if (!move && specialStatus.dash <= 0) fighter.vx *= Math.pow(0.82, dt * 60);
+    else if (!fighter.hitReaction) {
+        const response = fighter.grounded ? (move ? 19 : 24) : 12;
+        fighter.vx += (move * speed - fighter.vx) * (1 - Math.exp(-dt * response));
+    }
     fighter.x += fighter.vx * dt * 18;
     const previousFeet = fighter.y + fighter.height;
     fighter.vy += 23 * dt;
     fighter.y += fighter.vy * dt * 18;
     fighter.attackCooldown = Math.max(0, fighter.attackCooldown - dt);
+    if (fighter.attackBuffer > 0) {
+        if (fighter.attackCooldown === 0) {
+            fighter.attackBuffer = 0;
+            performAttack(fighter, target, false);
+        } else fighter.attackBuffer = Math.max(0, fighter.attackBuffer - dt);
+    }
+    fighter.hitReaction = Math.max(0, (fighter.hitReaction || 0) - dt);
     fighter.invulnerable = Math.max(0, fighter.invulnerable - dt);
     fighter.dropThroughTimer = Math.max(0, fighter.dropThroughTimer - dt);
 
@@ -2173,6 +2194,7 @@ function drawBattle() {
     battleCamera.position.z += (cameraZ - battleCamera.position.z) * 0.08;
     battleCamera.lookAt(midpointX, midpointY, 0);
     battleRenderer.render(battleScene, battleCamera);
+    window.CombatFeedback?.draw(THREE, battleCamera, fighters, gameMode === 'cpu');
 }
 
 function battleLoop(now) {
@@ -2302,7 +2324,7 @@ function pressGameInput(rawCode, source, repeat = false) {
         }
         if (code === controls.throw) performThrow(fighters[index], fighters[1 - index]);
         if (code === controls.jump) jumpRequests[index] = true;
-        if (code === controls.attack) performAttack(fighters[index], fighters[1 - index], false);
+        if (code === controls.attack) performAttack(fighters[index], fighters[1 - index], false, 'neutral', true);
         if (code === controls.super1) performAttack(fighters[index], fighters[1 - index], true, 'neutral');
         if (code === controls.super2) performAttack(fighters[index], fighters[1 - index], true, 'side');
     });
@@ -2316,19 +2338,28 @@ function resetGameInput() {
     inputSources.clear();
     pressedKeys.clear();
     jumpRequests.fill(false);
+    for (const fighter of fighters) fighter.attackBuffer = 0;
     window.TouchControls?.reset();
+    window.CombatFeedback?.reset();
 }
 window.addEventListener('keydown', event => {
-    if (!gameRunning || event.target?.matches('input, select, textarea')) return;
+    if (!gameRunning || event.target?.matches('input, select, textarea') ||
+        (event.code === 'Space' && event.target?.matches('button, a, summary'))) return;
     const code = normalizeGameKey(event.code);
     if (!GAME_KEYS.has(code)) return;
     event.preventDefault();
-    pressGameInput(code, `keyboard:${code}`, event.repeat);
+    pressGameInput(code, `keyboard:${event.code}`, event.repeat);
 });
-window.addEventListener('keyup', event => releaseGameInput(`keyboard:${normalizeGameKey(event.code)}`));
+window.addEventListener('keyup', event => releaseGameInput(`keyboard:${event.code}`));
 window.addEventListener('blur', resetGameInput);
 document.addEventListener('visibilitychange', () => { if (document.hidden) resetGameInput(); });
 document.addEventListener('DOMContentLoaded', () => {
+    window.CombatFeedback?.attach(document.getElementById('gameCanvas'), {
+        running: () => gameRunning,
+        canCharge: () => fighters[0].stocks > 0 && fighters[0].specialCooldowns[0] <= 0 &&
+            !isFighterShielded(fighters[0]) && !(fighters[0].specialStatus?.stun > 0),
+        attack: charged => performAttack(fighters[0], fighters[1], charged, 'neutral', !charged)
+    });
     window.TouchControls?.init({ press: pressGameInput, release: releaseGameInput, isRunning: () => gameRunning });
     window.TouchControls?.updateMode(gameMode === '2p');
     document.getElementById('roster-grid').addEventListener('keydown', event => {
@@ -2340,6 +2371,7 @@ document.addEventListener('DOMContentLoaded', () => {
         const columns = getComputedStyle(event.currentTarget).gridTemplateColumns.split(' ').filter(Boolean).length;
         const offset = { ArrowLeft: -1, ArrowRight: 1, ArrowUp: -columns, ArrowDown: columns }[event.key];
         const next = event.key === 'Home' ? 0 : event.key === 'End' ? cards.length - 1 : Math.max(0, Math.min(cards.length - 1, index + offset));
+        if (next !== index) void window.ArenaMusic?.cue('select');
         cards[next].focus();
     });
     document.querySelectorAll('[data-random-player]').forEach(button => {

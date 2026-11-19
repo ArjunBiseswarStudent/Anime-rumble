@@ -1,0 +1,71 @@
+#gameCanvas { touch-action: none; }
+
+#battle-feedback {
+    position: absolute;
+    inset: 0;
+    z-index: 2;
+    overflow: hidden;
+    pointer-events: none;
+}
+
+.fighter-indicator, .damage-number, .fist-swipe {
+    position: absolute;
+    top: 0;
+    left: 0;
+}
+
+.fighter-indicator {
+    --player-color: #ff8492;
+    min-width: 28px;
+    padding: 2px 4px;
+    border: 1px solid var(--player-color);
+    border-radius: 4px;
+    color: #fff;
+    background: #101828ed;
+    text-align: center;
+    font: 800 10px/1.1 system-ui, sans-serif;
+    white-space: nowrap;
+}
+
+.fighter-indicator::after {
+    content: '';
+    position: absolute;
+    top: 100%;
+    left: 50%;
+    border: 5px solid transparent;
+    border-top-color: var(--player-color);
+    transform: translateX(-50%);
+}
+
+.fighter-indicator-p2 { --player-color: #78baff; }
+.fighter-indicator i, .fighter-indicator small { display: none; }
+.fighter-indicator[data-charge]:not([data-charge=""]) { min-width: 72px; }
+.fighter-indicator[data-charge]:not([data-charge=""]) i {
+    display: block;
+    height: 3px;
+    margin-block: 3px 2px;
+    background: linear-gradient(90deg, #ffd788 var(--charge), #3a4354 var(--charge));
+}
+.fighter-indicator[data-charge]:not([data-charge=""]) small { display: block; font-size: 9px; }
+.fighter-indicator[data-charge="charging"] small::after { content: 'Super laadt'; }
+.fighter-indicator[data-charge="ready"] { --player-color: #ffe18a; box-shadow: 0 0 12px #ffb35eaa; }
+.fighter-indicator[data-charge="ready"] small::after { content: 'Loslaten'; }
+.fighter-indicator[data-charge="waiting"] small::after { content: 'Super bezet'; }
+
+.damage-number {
+    z-index: 1;
+    color: #ffe390;
+    font: 900 clamp(15px, 3vw, 27px)/1 system-ui, sans-serif;
+    text-shadow: -1px -1px #14101d, 1px 1px #14101d, 0 2px 5px #000;
+}
+.damage-number.is-blocked { color: #a8dbff; }
+
+.fist-swipe {
+    width: 32px;
+    height: 17px;
+    border-top: 3px solid #fff5cc;
+    border-radius: 60%;
+    box-shadow: 0 -2px 4px #ffbd6277;
+    rotate: -27deg;
+}
+.fist-swipe[data-direction="-1"] { rotate: 27deg; }

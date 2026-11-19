@@ -31,6 +31,7 @@ window.ArenaMusic = (() => {
         if (settings && typeof settings.muted === 'boolean') muted = settings.muted;
     } catch { /* Storage may be disabled; settings still work for this session. */ }
     let context, master, filter, delay, echo, compressor;
+    let cueVoice, cueRequest = 0;
     let active = null, timer = null, step = 0, nextTime = 0, generation = 0, failed = false;
     const voices = new Set();
     const frequency = midi => 440 * Math.pow(2, (midi - 69) / 12);
@@ -223,11 +224,54 @@ window.ArenaMusic = (() => {
     }
     function setMuted(value) {
         muted = Boolean(value); generation++; halt(); applyVolume(); save(); refresh();
+        if (muted) stopCue();
         if (!muted) void resume();
+    }
+    function stopCue() {
+        cueRequest++;
+        if (cueVoice) cueVoice.stop();
+        cueVoice = null;
+    }
+    async function unlockCue() {
+        if (muted || volume === 0 || document.hidden || failed) return false;
+        try {
+            init();
+            if (context.state !== 'running') await context.resume();
+            return true;
+        } catch {
+            return false;
+        }
+    }
+    async function cue(kind) {
+        const request = ++cueRequest;
+        if (!(await unlockCue()) || request !== cueRequest || muted || document.hidden || cueVoice) return;
+        const oscillator = context.createOscillator();
+        const envelope = context.createGain();
+        const start = context.currentTime;
+        const ready = kind === 'ready';
+        const duration = ready ? .11 : .055;
+        const peak = Math.max(.0002, volume * (ready ? .23 : .17));
+        oscillator.type = ready ? 'triangle' : 'sine';
+        oscillator.frequency.setValueAtTime(ready ? 570 : 800, start);
+        oscillator.frequency.exponentialRampToValueAtTime(ready ? 1060 : 460, start + duration);
+        envelope.gain.setValueAtTime(.0001, start);
+        envelope.gain.linearRampToValueAtTime(peak, start + .006);
+        envelope.gain.exponentialRampToValueAtTime(.0001, start + duration);
+        oscillator.connect(envelope);
+        envelope.connect(compressor);
+        oscillator.onended = () => {
+            if (cueVoice === oscillator) cueVoice = null;
+            oscillator.disconnect();
+            envelope.disconnect();
+        };
+        cueVoice = oscillator;
+        oscillator.start(start);
+        oscillator.stop(start + duration);
     }
     function setVolume(value) {
         if (!Number.isFinite(value)) return;
         volume = Math.max(0, Math.min(1, value)); applyVolume(); save(); refresh();
+        if (volume === 0) stopCue();
     }
     document.addEventListener('DOMContentLoaded', () => {
         document.querySelectorAll('[data-music-toggle]').forEach(button => button.addEventListener('click', () => setMuted(!muted)));
@@ -236,9 +280,10 @@ window.ArenaMusic = (() => {
     });
     document.addEventListener('visibilitychange', () => {
         generation++; halt(); applyVolume();
+        if (document.hidden) stopCue();
         if (document.hidden) { if (context) void context.suspend().catch(() => {}); }
         else void resume();
     });
-    window.addEventListener('pagehide', stop);
-    return { start, stop, setMuted, setVolume };
+    window.addEventListener('pagehide', () => { stopCue(); stop(); });
+    return { start, stop, setMuted, setVolume, cue, unlockCue };
 })();

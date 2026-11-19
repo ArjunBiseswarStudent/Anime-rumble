@@ -567,7 +567,8 @@ window.CharacterMotion = (() => {
         const strike = punch ? Math.sin((1 - m.actionTime / 0.42) * Math.PI) : 0;
         const power = active && !punch ? Math.sin((1 - m.actionTime / 0.7) * Math.PI) : 0;
         m.rig.position.y = Math.sin(m.time * 2.6) * 0.015 + Math.abs(Math.sin(phase)) * m.blend * 0.045 - m.landing * 0.09;
-        m.torso.rotation.x += ((guard ? 0.18 : airborne ? -0.1 : m.blend * 0.18) - m.torso.rotation.x) * follow;
+        const lean = guard ? .18 : fighter.hitReaction ? -.32 : airborne ? -.1 : m.blend * .18;
+        m.torso.rotation.x += (lean - m.torso.rotation.x) * follow;
         m.torso.rotation.y += ((strike * -0.55 + (super2 ? power * -0.8 : 0)) - m.torso.rotation.y) * follow;
         m.head.rotation.x = -m.torso.rotation.x * 0.6;
         m.head.rotation.y = -m.torso.rotation.y * 0.45;
