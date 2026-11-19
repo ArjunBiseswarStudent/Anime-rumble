@@ -15,6 +15,7 @@
   <link rel="stylesheet" href="assest/items/healing-items/css/healing-items.css">
   <link rel="stylesheet" href="css/battle-layout.css">
   <link rel="stylesheet" href="css/mobile-gamepad.css">
+  <link rel="stylesheet" href="css/match-intro.css">
   <script src="https://cdn.jsdelivr.net/npm/three@0.128.0/build/three.min.js"></script>
   <script defer src="assest/maps/gamakichi.js"></script>
   <script defer src="assest/maps/frog-sages.js"></script>
@@ -130,8 +131,36 @@
     <p class="controls-tip">Op een touchscreen gebruik je de knoppen in de arena. De knop <strong>Vorm</strong> activeert je ultieme vorm.</p>
     <div class="controls-footer">
       <button class="back-btn" type="button" onclick="backFromControlsGuide()">← Terug naar selectie</button>
-      <button class="start-btn" type="button" onclick="startMatch()">START GEVECHT <span aria-hidden="true">➜</span></button>
+      <button class="start-btn" type="button" onclick="showMatchIntro()">NAAR CONFRONTATIE <span aria-hidden="true">➜</span></button>
     </div>
+  </main>
+
+  <main id="match-intro" class="screen match-intro hidden" aria-labelledby="match-intro-title">
+    <header class="intro-heading">
+      <h1 id="match-intro-title" tabindex="-1">Confrontatie</h1>
+      <p id="match-intro-arena"></p>
+    </header>
+    <div class="intro-stage">
+      <article class="intro-fighter">
+        <canvas id="p1-intro-portrait-canvas" width="360" height="420" role="img"></canvas>
+        <div class="intro-nameplate"><span>Speler 1</span><h2 id="intro-p1-name"></h2></div>
+      </article>
+      <div class="intro-versus">VS</div>
+      <article class="intro-fighter intro-opponent">
+        <canvas id="p2-intro-portrait-canvas" width="360" height="420" role="img"></canvas>
+        <div class="intro-nameplate"><span id="intro-p2-role"></span><h2 id="intro-p2-name"></h2></div>
+      </article>
+    </div>
+    <div class="intro-tip">
+      <strong>Gevechtstip</strong>
+      <p id="match-intro-tip" aria-live="polite"></p>
+      <button id="intro-tip-toggle" type="button" onclick="toggleMatchTips()">Tips pauzeren</button>
+    </div>
+    <footer class="intro-actions">
+      <button type="button" onclick="backFromMatchIntro()">Terug naar besturing</button>
+      <button data-music-toggle type="button" aria-pressed="true">Muziek aan</button>
+      <button class="start-btn" type="button" onclick="startMatch()">Start gevecht</button>
+    </footer>
   </main>
 
   <main id="arena-screen" class="screen arena-screen hidden">

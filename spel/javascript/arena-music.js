@@ -1,6 +1,9 @@
 /* Original procedural scores. No recordings, samples or third-party melodies. */
 window.ArenaMusic = (() => {
     const tracks = {
+        matchIntro: { title: 'Confrontatie', bpm: 126, root: 43, scale: [0, 2, 3, 5, 7, 8, 11],
+            chords: [0, 0, 5, 4], wave: 'triangle', tone: 2800, beat: 'taiko',
+            motif: [0, null, null, 0, 2, null, 4, null, null, 3, null, 1, 0, null, 6, null] },
         kurukshetra: { title: 'Vaandels in de avondzon', style: 'epic', bpm: 108, root: 57, scale: [0, 2, 3, 5, 7, 8, 11], chords: [0, 5, 3, 4, 0, 3, 1, 4], tone: 3200,
             motif: [0, null, null, 2, 4, null, 3, null, 2, null, 1, 2, 0, null, null, null, 3, null, 4, null, 5, 4, null, 2, 3, null, 1, null, 0, null, null, null],
             answer: [4, null, 5, 7, 6, null, 4, null, 3, 4, null, 2, 1, null, null, null, 5, null, 4, 3, 2, null, 4, null, 3, null, 2, 1, 0, null, null, null] },

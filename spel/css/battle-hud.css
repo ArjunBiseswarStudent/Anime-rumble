@@ -61,3 +61,42 @@
     .hud-super > span { font-size: 6px; }
 }
 @media (prefers-reduced-motion: reduce) { .hud-stock-meter > i { transition: none; } }
+
+.hud-fighter {
+    border: 1px solid #526079;
+    border-top: 2px solid var(--hud-color);
+    background: linear-gradient(110deg, #131d2e, #080f1bed);
+}
+
+.hud-right {
+    background: linear-gradient(250deg, #131d2e, #080f1bed);
+}
+
+.game-frame .hud-portrait {
+    border-color: var(--hud-color);
+    box-shadow: 0 0 12px color-mix(in srgb, var(--hud-color) 25%, transparent);
+}
+
+.hud-stock-meter > i {
+    background: linear-gradient(180deg, #d9ffa1, #77ce63 60%, #469647);
+}
+
+.hud-stock-meter.health-low > i {
+    background: linear-gradient(180deg, #ffe090, #f7804f 60%, #c1423c);
+}
+
+.hud-super > span {
+    text-shadow: 0 1px 2px #000, 0 0 3px #000;
+}
+
+.hud-super.is-ready {
+    border-color: #9cdeeb;
+}
+
+.hud-clock {
+    padding: 5px 2px;
+    border: 1px solid #62718a;
+    border-radius: 6px;
+    background: #080f1bf5;
+    text-shadow: 0 2px 3px #000;
+}

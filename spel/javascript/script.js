@@ -1343,9 +1343,9 @@ function set3DPortrait(canvas, character) {
 }
 
 function animatePortraits() {
-    const selectionVisible = !document.hidden && !document.getElementById('select-screen').classList.contains('hidden');
-    portraitViewers.forEach((viewer) => {
-        if (!viewer.model || !selectionVisible || portraitMotionPreference?.matches) { viewer.lastFrame = 0; return; }
+    portraitViewers.forEach((viewer, canvas) => {
+        const visible = !document.hidden && !canvas.closest('main').classList.contains('hidden');
+        if (!viewer.model || !visible || portraitMotionPreference?.matches) { viewer.lastFrame = 0; return; }
         const now = performance.now();
         const dt = Math.min((now - (viewer.lastFrame || now)) / 1000, 0.04);
         viewer.lastFrame = now;
@@ -1655,12 +1655,75 @@ function backFromControlsGuide() {
     document.getElementById('review-controls-btn').focus();
 }
 
+const introTips = [
+    'Druk op B of tik op Vorm om je ultieme transformatie te gebruiken.',
+    'Blokkeer met S of met de knop Schild om minder schade te krijgen.',
+    'Houd de twee supermeters in de gaten. Zodra een meter vol is, kun je die super opnieuw gebruiken.',
+    'Pak met R of Pak HP een geland health-item op. Gebruik T of Herstel om het in te zetten.',
+    'Blijf op de platforms. Een val uit de arena kost je een leven.'
+];
+let introTipIndex = 0;
+let introTipTimer = null;
+
+function renderMatchTip() {
+    const twoPlayerTip = 'Speler 1: druk op B. Speler 2: druk op 8. Op touch gebruik je Vorm voor je ultieme transformatie.';
+    document.getElementById('match-intro-tip').textContent =
+        introTipIndex === 0 && gameMode === '2p' ? twoPlayerTip : introTips[introTipIndex];
+}
+
+function toggleMatchTips() {
+    if (introTipTimer === null) {
+        introTipTimer = setInterval(() => {
+            introTipIndex = (introTipIndex + 1) % introTips.length;
+            renderMatchTip();
+        }, 5000);
+    } else {
+        clearInterval(introTipTimer);
+        introTipTimer = null;
+    }
+    document.getElementById('intro-tip-toggle').textContent =
+        introTipTimer === null ? 'Tips hervatten' : 'Tips pauzeren';
+}
+
+function showMatchIntro() {
+    const matchIntro = document.getElementById('match-intro');
+    if (!matchIntro.classList.contains('hidden')) return;
+    const arena = ARENAS[document.getElementById('arena-select').value] || ARENAS.dojo;
+    document.getElementById('match-intro-arena').textContent = arena.name;
+    document.getElementById('intro-p2-role').textContent = gameMode === '2p' ? 'Speler 2' : 'CPU';
+    selection.forEach((character, index) => {
+        const player = index + 1;
+        document.getElementById(`intro-p${player}-name`).textContent = character.name;
+        drawPortrait(document.getElementById(`p${player}-intro-portrait-canvas`), character);
+    });
+    introTipIndex = 0;
+    renderMatchTip();
+    toggleMatchTips();
+    document.getElementById('controls-screen').classList.add('hidden');
+    matchIntro.classList.remove('hidden');
+    document.getElementById('match-intro-title').focus();
+    window.scrollTo(0, 0);
+    window.ArenaMusic?.start('matchIntro');
+}
+
+function closeMatchIntro() {
+    if (introTipTimer !== null) toggleMatchTips();
+    document.getElementById('match-intro').classList.add('hidden');
+}
+
+function backFromMatchIntro() {
+    closeMatchIntro();
+    window.ArenaMusic?.stop();
+    showControlsGuide();
+}
+
 function startMatch() {
     window.ArenaMusic?.stop();
     if (typeof THREE === 'undefined') {
         window.alert('De 3D-engine kan niet worden geladen. Controleer je internetverbinding en laad de pagina opnieuw.');
         return;
     }
+    closeMatchIntro();
     cancelAnimationFrame(animationFrame);
     fighters.forEach(fighter => window.UltimateForms?.clear(fighter));
     window.SpecialMoves.reset();
@@ -1925,6 +1988,7 @@ function replayMatch() {
 }
 
 function returnToSelection() {
+    closeMatchIntro();
     fighters.forEach(fighter => window.UltimateForms?.clear(fighter));
     setBattleFocus(false);
     window.ArenaMusic?.stop();

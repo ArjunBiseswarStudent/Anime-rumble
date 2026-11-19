@@ -49,7 +49,7 @@ async function audit(name) {
         await page('Emulation.setTouchEmulationEnabled', { enabled: touch });
         await settle();
         const result = await evaluate(`(() => {
-            const selectors = ${JSON.stringify({ start: ['.press-start', '.start-footer'], select: ['.selection-stage', '.player-card', '.roster-panel', '.mode-panel'], controls: ['.controls-table', '.controls-footer'], battle: ['.battle-hud-overlay', '.hud-fighter', '.touch-player:not([hidden])', '.touch-player-buttons', '.touch-button', '#gameCanvas'], result: ['.result-panel'], maps: ['.maps-gallery', '.map-card'], specials: ['#move-catalog', 'article'] }[name.replace(/-2p$/, '')])};
+            const selectors = ${JSON.stringify({ start: ['.press-start', '.start-footer'], select: ['.selection-stage', '.player-card', '.roster-panel', '.mode-panel'], controls: ['.controls-table', '.controls-footer'], intro: ['.intro-stage', '.intro-fighter', '.intro-tip', '.intro-actions'], battle: ['.battle-hud-overlay', '.hud-fighter', '.touch-player:not([hidden])', '.touch-player-buttons', '.touch-button', '#gameCanvas'], result: ['.result-panel'], maps: ['.maps-gallery', '.map-card'], specials: ['#move-catalog', 'article'] }[name.replace(/-2p$/, '')])};
             const problems = [];
             if (document.documentElement.scrollWidth > innerWidth + 1) problems.push('page horizontal overflow: ' + document.documentElement.scrollWidth);
             for (const selector of selectors) for (const el of document.querySelectorAll(selector)) {
@@ -66,7 +66,7 @@ async function audit(name) {
         })()`);
         const row = { page: name, width, height, ...result };
         results.push(row);
-        if ((width === 390 || width === 1366 || (width === 844 && height === 390)) && ['start','select','battle'].includes(name)) {
+        if ((width === 390 || width === 1366 || (width === 844 && height === 390)) && ['start','select','intro','battle'].includes(name)) {
             const shot = await page('Page.captureScreenshot', { format: 'png', captureBeyondViewport: false });
             fs.writeFileSync(path.join(output, `${name}-${width}x${height}.png`), Buffer.from(shot.data, 'base64'));
         }
@@ -99,11 +99,21 @@ async function audit(name) {
     await evaluate("document.querySelector('.selection-settings').open = true"); report.push(...await audit('select'));
     await evaluate('showControlsGuide()'); report.push(...await audit('controls'));
     await evaluate("backFromControlsGuide(); setGameMode('2p'); showControlsGuide()"); report.push(...await audit('controls-2p'));
-    await evaluate("backFromControlsGuide(); setGameMode('cpu')");
+    await evaluate("backFromControlsGuide(); setGameMode('cpu'); showControlsGuide(); window.ArenaMusic?.setMuted(true); document.querySelector('.controls-footer .start-btn').click()");
+    const firstTip = await evaluate("document.getElementById('match-intro-tip').textContent");
+    report.push(...await audit('intro'));
+    await evaluate(`new Promise((resolve, reject) => {
+        const tip = document.getElementById('match-intro-tip');
+        if (tip.textContent !== ${JSON.stringify(firstTip)}) return resolve(true);
+        const observer = new MutationObserver(() => { observer.disconnect(); clearTimeout(timeout); resolve(true); });
+        const timeout = setTimeout(() => { observer.disconnect(); reject(new Error('Intro tip did not rotate')); }, 5500);
+        observer.observe(tip, { childList: true });
+    })`);
+    await evaluate("backFromMatchIntro(); if (introTipTimer !== null || document.getElementById('controls-screen').classList.contains('hidden')) throw Error('Intro did not return to controls'); showMatchIntro()");
     const engine = await evaluate("typeof THREE !== 'undefined'");
     await page('Emulation.setDeviceMetricsOverride', { width: 1366, height: 768, deviceScaleFactor: 1, mobile: false });
     if (engine) {
-        await evaluate("window.ArenaMusic?.setMuted(true); startMatch()");
+        await evaluate("document.querySelector('.intro-actions .start-btn').click(); if (introTipTimer !== null || !document.getElementById('match-intro').classList.contains('hidden')) throw Error('Intro did not close on start')");
         await new Promise(resolve => setTimeout(resolve, 500));
         await evaluate('gameRunning = false; cancelAnimationFrame(animationFrame)');
     } else await evaluate("document.getElementById('select-screen').classList.add('hidden'); document.getElementById('arena-screen').classList.remove('hidden')");
