@@ -1,6 +1,6 @@
 const test = require('node:test'), assert = require('node:assert/strict');
 const fs = require('node:fs'), path = require('node:path'), vm = require('node:vm');
-class Vector { constructor() { this.set(0, 0, 0); } set(x, y, z) { Object.assign(this, { x, y, z }); } setScalar(v) { this.set(v, v, v); } }
+class Vector { constructor() { this.set(0, 0, 0); } set(x, y, z) { Object.assign(this, { x, y, z }); } setScalar(v) { this.set(v, v, v); } copy({ x, y, z }) { this.set(x, y, z); } }
 class Group {
     constructor() { this.children = []; this.userData = {}; this.position = new Vector(); this.rotation = new Vector(); this.scale = new Vector(); }
     add(child) { child.parent?.remove(child); child.parent = this; this.children.push(child); }
@@ -19,6 +19,13 @@ function setup(index = 0, arenaKey) {
     for (const file of ['healing-models.js', 'supply-plane.js', 'healing-items-data.js', 'healing-items.js']) vm.runInContext(fs.readFileSync(path.join(__dirname, file), 'utf8'), context);
     const api = context.window.HealingItems, scene = new Group(), notices = [];
     const casts = [];
+    context.window.Shenron = { create(three, summoner) {
+        assert.equal(three, THREE);
+        assert.equal(summoner.name, 'Goku');
+        const visual = new Group();
+        visual.name = 'beerus-shenron';
+        return { visual, update() {}, release(age) { casts.push(age); return { x: .35, y: 6.4, z: -2 }; } };
+    } };
     if (arenaKey === 'frog') scene.userData.gamakichi = { userData: {
         cast(time) { casts.push(time); return { x: -4.4, y: 2.2, z: -3.1 }; }
     } };
@@ -26,7 +33,8 @@ function setup(index = 0, arenaKey) {
     let randomStep = 0;
     function init(platforms = [{ x: 200, y: 400, w: 300 }]) {
         randomStep = 0;
-        api.init({ THREE, scene, platforms, fighters, arenaKey, random: () => [index / 11 + 0.00001, 0, .5][randomStep++ % 3], onNotice: text => notices.push(text) });
+        api.init({ THREE, scene, platforms, fighters, arenaKey, createSummoner: () => ({ name: 'Goku' }),
+            random: () => [index / 11 + 0.00001, 0, .5][randomStep++ % 3], onNotice: text => notices.push(text) });
     }
     init();
     const pickups = () => scene.children.filter(child => child.name?.startsWith('healing-pickup-'));
@@ -131,11 +139,36 @@ test('only the four requested maps receive aircraft every 15 seconds instead of 
         api.update(0, 30); assert.equal(scene.children.filter(o => o.name === 'anime-supply-plane').length, 1);
         api.reset();
     }
-    for (const key of ['namek', 'beerus', 'arlong', 'kurukshetra']) {
+    for (const key of ['namek', 'arlong', 'kurukshetra']) {
         const { api, pickups, scene } = setup(0, key);
         api.update(0, 10); assert.equal(pickups().length, 1);
         assert.equal(scene.children.filter(o => o.name === 'anime-supply-plane').length, 0);
     }
+});
+
+test('Beerus Palace summons Shenron once and drops items at 15-second intervals', () => {
+    const { api, scene, pickups, fighters, casts, init } = setup(0, 'beerus');
+    api.update(0, 11.99);
+    assert.equal(scene.children.length, 0);
+    api.update(0, 12);
+    assert.equal(scene.children[0].name, 'beerus-shenron');
+    api.update(0, 14.99);
+    assert.equal(pickups().length, 0);
+    api.update(0, 15);
+    assert.equal(pickups().length, 1);
+    assert.equal(api.pickup(fighters[0]), false);
+    api.update(0, 17);
+    assert.equal(api.pickup(fighters[0]), true);
+    api.update(0, 30);
+    api.update(0, 30);
+    assert.equal(scene.children.filter(child => child.name === 'beerus-shenron').length, 1);
+    assert.deepEqual(casts, [3, 18]);
+    assert.equal(pickups().length, 1);
+    api.reset();
+    assert.equal(scene.children.length, 0);
+    init();
+    api.update(0, 11.99);
+    assert.equal(scene.children.length, 0);
 });
 
 test('Frog Island casts every 20 seconds and makes its platform drops collectible after landing', () => {

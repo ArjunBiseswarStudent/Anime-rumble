@@ -150,6 +150,27 @@ async function audit(name) {
     if (engine) await evaluate('finishMatch(fighters[0])');
     else await evaluate("document.getElementById('result-overlay').classList.remove('hidden')");
     report.push(...await audit('result'));
+    if (engine) {
+        await page('Emulation.setDeviceMetricsOverride', { width: 1366, height: 768, deviceScaleFactor: 1, mobile: false });
+        await evaluate(`returnToSelection();
+            document.getElementById('arena-select').value = 'beerus';
+            startMatch();
+            gameRunning = false;
+            cancelAnimationFrame(animationFrame);
+            window.HealingItems.update(0, 12);
+            window.HealingItems.update(0, 15);
+            window.HealingItems.update(0, 15.15);
+            const pickup = battleScene.children.find(child => child.name.startsWith('healing-pickup-'));
+            if (!battleScene.getObjectByName('beerus-shenron') ||
+                !pickup || pickup.position.y < 4 || pickup.position.z > -.8) {
+                throw new Error('Beerus Palace summon or airborne health item is missing');
+            }
+            battleRenderer.render(battleScene, battleCamera);`);
+        const shot = await page('Page.captureScreenshot', { format: 'png', captureBeyondViewport: false });
+        fs.writeFileSync(path.join(output, 'beerus-shenron.png'), Buffer.from(shot.data, 'base64'));
+        await evaluate(`returnToSelection();
+            if (battleScene.getObjectByName('beerus-shenron')) throw new Error('Shenron persisted after leaving the match');`);
+    }
     await navigate(base + '/spel/assest/maps/', '.map-card'); report.push(...await audit('maps'));
     await navigate(base + '/spel/assest/special-moves/', '#move-catalog article'); report.push(...await audit('specials'));
     fs.writeFileSync(path.join(output, 'report.json'), JSON.stringify({ engine, errors, results: report }, null, 2));

@@ -1910,6 +1910,7 @@ function initBattleScene(canvas) {
     });
     window.HealingItems?.init({ THREE, scene: battleScene, platforms: currentArena.platforms, fighters,
         arenaKey: document.getElementById('arena-select').value,
+        createSummoner: () => createCharacterModel(ROSTER.find(character => character.id === 'goku')),
         onNotice: message => { document.getElementById('arena-note').textContent = message; } });
     resizeBattleRenderer();
 }

@@ -5,6 +5,7 @@ window.HealingItems = (() => {
     const AIR_MAPS = new Set(['dojo', 'castle', 'island', 'neon']);
     const FLIGHT_INTERVAL = 15, RELEASE_AT = 3, FLIGHT_DURATION = 6.4, FALL_TIME = 3.4;
     const SYRUP_INTERVAL = 20, SYRUP_FLIGHT = .85;
+    const DRAGON_INTERVAL = 15, SUMMON_LEAD = 3, DRAGON_FALL = 1.8;
     let state = null, drops = [], effects = [], nextSpawn = INTERVAL;
     function dispose(root) {
         if (!root) return;
@@ -19,6 +20,7 @@ window.HealingItems = (() => {
     }
     function reset() {
         if (state?.flight) dispose(state.flight.model.visual);
+        if (state?.dragon) dispose(state.dragon.visual);
         drops.forEach(drop => dispose(drop.visual)); effects.forEach(effect => dispose(effect.visual));
         if (state) state.fighters.forEach(fighter => { fighter.healingItem = null; });
         drops = []; effects = []; state = null; nextSpawn = INTERVAL;
@@ -26,8 +28,10 @@ window.HealingItems = (() => {
     function init(options) {
         reset(); state = { random: Math.random, onNotice() {}, ...options };
         state.aerial = AIR_MAPS.has(state.arenaKey);
+        state.dragonMap = state.arenaKey === 'beerus';
         state.gamakichi = state.arenaKey === 'frog' ? state.scene.userData.gamakichi : null;
-        state.interval = state.gamakichi ? SYRUP_INTERVAL : state.aerial ? FLIGHT_INTERVAL : INTERVAL;
+        state.interval = state.gamakichi ? SYRUP_INTERVAL
+            : state.dragonMap ? DRAGON_INTERVAL : state.aerial ? FLIGHT_INTERVAL : INTERVAL;
         nextSpawn = state.interval;
     }
     function randomIndex(length) { return Math.min(length - 1, Math.max(0, Math.floor(state.random() * length))); }
@@ -37,11 +41,11 @@ window.HealingItems = (() => {
         let platform = platforms[randomIndex(platforms.length)];
         const x = platform.x + 25 + Math.max(0, platform.w - 50) * Math.max(0, Math.min(1, state.random()));
         // A descending parcel lands on the first roof below it, never through one.
-        if (state.aerial) for (const roof of platforms)
+        if (state.aerial || state.dragonMap) for (const roof of platforms)
             if (roof.y < platform.y && x >= roof.x + 10 && x <= roof.x + roof.w - 10) platform = roof;
         return { item, platform, x };
     }
-    function spawn(elapsed, destination = chooseDrop(), aerial = false, altitude = 0, origin = null) {
+    function spawn(elapsed, destination = chooseDrop(), aerial = false, altitude = 0, origin = null, dragonOrigin = null) {
         if (!destination) return;
         while (drops.length >= MAX_DROPS) dispose(drops.shift().visual);
         const { item, platform, x } = destination;
@@ -74,10 +78,58 @@ window.HealingItems = (() => {
             halo.visible = false;
             model.visible = false;
         }
+        if (dragonOrigin) {
+            drop.falling = true;
+            drop.releasedAt = elapsed;
+            drop.born = elapsed + DRAGON_FALL;
+            drop.dragonOrigin = dragonOrigin;
+            visual.position.copy(dragonOrigin);
+            if (!window.matchMedia?.('(prefers-reduced-motion: reduce)').matches) {
+                drop.dragonTrail = new THREE.Group();
+                const spark = new THREE.SphereGeometry(.075, 8, 6);
+                const glow = new THREE.MeshBasicMaterial({ color: '#ffd478', transparent: true, opacity: .72,
+                    blending: THREE.AdditiveBlending, depthWrite: false });
+                for (let index = 0; index < 9; index++) drop.dragonTrail.add(new THREE.Mesh(spark, glow));
+                visual.add(drop.dragonTrail);
+            }
+        }
         scene.add(visual); drops.push(drop);
         if (origin) return;
-        state.onNotice(aerial ? `Het vliegtuig dropt ${item.name} (+${item.heal} HP). Wacht tot het item landt.`
+        state.onNotice(dragonOrigin ? `Shenron laat ${item.name} (+${item.heal} HP) vallen.`
+            : aerial ? `Het vliegtuig dropt ${item.name} (+${item.heal} HP). Wacht tot het item landt.`
             : `${item.name} (+${item.heal} HP) is verschenen. P1: R ophalen · P2: 6 ophalen.`);
+    }
+    function updateDragon(elapsed) {
+        if (!state.dragon && elapsed >= DRAGON_INTERVAL - SUMMON_LEAD && elapsed < 180 && state.createSummoner) {
+            state.dragon = window.Shenron.create(state.THREE, state.createSummoner(),
+                window.matchMedia?.('(prefers-reduced-motion: reduce)').matches);
+            state.dragonStarted = DRAGON_INTERVAL - SUMMON_LEAD;
+            state.scene.add(state.dragon.visual);
+            state.onNotice('Goku heeft de zeven Dragon Balls verzameld en roept Shenron op!');
+        }
+        state.dragon?.update(elapsed - state.dragonStarted);
+    }
+    function updateDragonDrop(drop, elapsed) {
+        const progress = Math.min(1, (elapsed - drop.releasedAt) / DRAGON_FALL);
+        const { x, y, z } = drop.dragonOrigin;
+        const endX = (drop.x - 480) / 65;
+        const descent = progress ** 1.6;
+        drop.visual.position.set(x + (endX - x) * progress, y + (drop.baseY - y) * descent, z * (1 - progress));
+        drop.dragonTrail?.children.forEach((spark, index) => {
+            const age = (index + 1) * .021;
+            const sample = Math.max(0, progress - age);
+            const offset = sample - progress;
+            spark.visible = progress >= age;
+            spark.position.set((endX - x) * offset + Math.sin(progress * 26 + index) * age,
+                (drop.baseY - y) * (sample ** 1.6 - descent), -z * offset);
+            spark.scale.setScalar(1 - index * .09);
+        });
+        if (progress < 1) return;
+        dispose(drop.dragonTrail);
+        drop.dragonTrail = null;
+        drop.falling = false;
+        drop.dragonOrigin = null;
+        state.onNotice(`${drop.item.name} is geland. P1: R ophalen · P2: 6 ophalen.`);
     }
     function castSyrup(elapsed) {
         const platforms = state.platforms.filter(p => p.w >= 70);
@@ -208,13 +260,20 @@ window.HealingItems = (() => {
         if (!state) return;
         drops = drops.filter(drop => { if (elapsed - drop.born < LIFETIME) return true; dispose(drop.visual); return false; });
         updateFlight(elapsed);
+        if (state.dragonMap) updateDragon(elapsed);
         if (elapsed >= nextSpawn && elapsed < 180) {
             if (state.gamakichi) castSyrup(elapsed);
+            else if (state.dragon) spawn(elapsed, chooseDrop(), false, 0, null,
+                state.dragon.release(elapsed - state.dragonStarted));
             else if (state.aerial) beginFlight(elapsed);
             else spawn(elapsed);
             nextSpawn = (Math.floor(elapsed / state.interval) + 1) * state.interval;
         }
         for (const drop of drops) {
+            if (drop.dragonOrigin) {
+                updateDragonDrop(drop, elapsed);
+                if (drop.falling) continue;
+            }
             if (drop.syrup && drop.falling) {
                 updateSyrup(drop, elapsed);
                 if (drop.falling) continue;
