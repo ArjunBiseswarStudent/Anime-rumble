@@ -15,10 +15,15 @@
 <body class="maps-page">
   <main class="maps-container">
     <a class="maps-link" href="../../game.html">← Terug naar het spel</a>
-    <header class="maps-header"><p>ANIME RUMBLE · ARENA SELECT</p><h1>Negen werelden.<br>Jouw gevecht.</h1><p>Kies je arena, selecteer je vechter en duw je tegenstander van de platforms.</p></header>
-    <section id="maps-gallery" class="maps-gallery" aria-label="Speelbare anime-maps"></section>
-    <noscript>Schakel JavaScript in om de maps te bekijken en te spelen.</noscript>
-    <p class="maps-help">P1: A/D lopen | W springen | S beschermen | F slaan | G/C supers. P2: pijltjes lopen/springen/beschermen | 1 slaan | 2/3 supers. Kies CPU of twee spelers.</p>
+    <header class="maps-header"><h1>Kies je arena</h1></header>
+    <nav class="maps-picker" aria-label="Door arena’s bladeren" hidden>
+      <button type="button" id="maps-previous" aria-label="Vorige arena">←</button>
+      <select id="maps-picker" aria-label="Arena"></select>
+      <button type="button" id="maps-next" aria-label="Volgende arena">→</button>
+    </nav>
+    <section id="maps-gallery" class="maps-gallery" aria-label="Speelbare anime-maps">
+      <noscript>Schakel JavaScript in om de maps te bekijken en te spelen.</noscript>
+    </section>
   </main>
 </body>
 </html>

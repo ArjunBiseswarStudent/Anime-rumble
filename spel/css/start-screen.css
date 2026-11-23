@@ -1,7 +1,7 @@
 * { box-sizing: border-box; }
 :root { color-scheme: dark; font-family: Arial, sans-serif; background: #050615; color: white; }
-body { margin: 0; min-width: 280px; overflow-x: hidden; }
-.start-screen { position: relative; isolation: isolate; display: flex; align-items: center; justify-content: center; width: 100%; height: 100svh; min-height: 100svh; overflow: hidden; background: #050615; }
+body { margin: 0; min-width: 280px; overflow: hidden; overscroll-behavior: none; }
+.start-screen { position: relative; isolation: isolate; display: flex; align-items: center; justify-content: center; width: 100%; height: 100dvh; overflow: hidden; background: #050615; }
 .ambient { position: absolute; z-index: -1; width: 60vw; height: 80vh; border-radius: 50%; filter: blur(70px); opacity: .3; animation: ambient-breath 7s ease-in-out infinite alternate; }
 .ambient-blue { left: -25%; background: #007cfa; }
 .ambient-pink { right: -25%; background: #f000a8; animation-delay: -3s; }
@@ -45,7 +45,6 @@ body { margin: 0; min-width: 280px; overflow-x: hidden; }
 @keyframes petal-fall { 0% { opacity: 0; transform: translate3d(0, 0, 0) rotate(0); } 12% { opacity: .8; } 85% { opacity: .7; } 100% { opacity: 0; transform: translate3d(var(--drift), 110vh, 0) rotate(390deg); } }
 @media (orientation: portrait) {
     .start-screen {
-        height: 100dvh;
         padding: env(safe-area-inset-top, 0px) env(safe-area-inset-right, 0px)
             calc(64px + env(safe-area-inset-bottom, 0px)) env(safe-area-inset-left, 0px);
     }

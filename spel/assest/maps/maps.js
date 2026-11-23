@@ -10,7 +10,7 @@ window.AnimeMaps = (() => {
         namek: { name: 'Planet Namek', series: 'Dragon Ball', description: 'Gelaagde rotsplateaus, blauw water en het ruimteschip van Frieza onder een groene hemel.', bgTop: '#6eaa78', bgBottom: '#c1cc66', horizon: '#c1cc66', cloud: '#b2ca8b', waterColor: '#2799b6', accentColor: '#d2be67', surface: '#369fba', platforms: [platform(160, 430, 640, true), platform(245, 320, 155), platform(560, 285, 155)] },
         beerus: { name: 'Beerus Palace', series: 'Dragon Ball Super', description: 'Een paarse paleisarena met turquoise begroeiing, een oude boom en een perzikkleurige hemel.', bgTop: '#d77d86', bgBottom: '#ffce8d', horizon: '#ffce8d', cloud: '#ffe0aa', waterColor: '#279eaa', accentColor: '#b279eb', surface: '#7436bb', platforms: [platform(140, 430, 680, true), platform(210, 315, 170), platform(580, 315, 170), platform(410, 225, 140)] },
         arlong: { name: 'Arlong Park', series: 'One Piece', description: 'Tropische palmen, een haaienpoort en het zwembad van de Arlong Pirates.', bgTop: '#208de0', bgBottom: '#a4dcf4', horizon: '#b4e4f7', cloud: '#ffffff', waterColor: '#087ed0', accentColor: '#d3bd72', surface: '#ac7159', platforms: [platform(140, 430, 270, true), platform(550, 430, 270, true), platform(350, 330, 260), platform(130, 240, 145), platform(685, 240, 145)] },
-        kurukshetra: { name: 'Kurukshetra Slagveld', series: 'Episch slagveld · Zonsondergang', description: 'Een stoffig slagveld onder een vurige avondhemel, met strijdwagens, olifanten en vechtende legers op de achtergrond.', bgTop: '#34303e', bgBottom: '#dc8d43', horizon: '#df9a50', cloud: '#50414a', accentColor: '#bf8c43', surface: '#9b7045', surfaceType: 'earth', sunColor: '#ffc177', ambientColor: '#837062', platforms: [platform(110, 440, 740, true), platform(185, 325, 165), platform(610, 325, 165), platform(405, 230, 150)] },
+        kurukshetra: { name: 'Kurukshetra Slagveld', series: 'Episch slagveld · Zonsondergang', description: 'Onder een vurige avondhemel kruisen paardengespannen met strijdwagens elkaars pad. Olifanten en soldaten bewegen door het stof op de achtergrond.', bgTop: '#34303e', bgBottom: '#dc8d43', horizon: '#df9a50', cloud: '#50414a', accentColor: '#bf8c43', surface: '#9b7045', surfaceType: 'earth', sunColor: '#ffc177', ambientColor: '#837062', platforms: [platform(110, 440, 740, true), platform(185, 325, 165), platform(610, 325, 165), platform(405, 230, 150)] },
     };
 
     // Reuse generated surface maps between rounds; no external texture downloads.
@@ -706,9 +706,13 @@ window.AnimeMaps = (() => {
             if (arenas[requested]) select.value = requested;
         }
         const gallery = document.getElementById('maps-gallery');
-        if (gallery) Object.entries(arenas).forEach(([key, arena], index) => {
+        if (!gallery) return;
+        const picker = document.getElementById('maps-picker');
+        const cards = Object.entries(arenas).map(([key, arena], index) => {
             const card = document.createElement('article');
             card.className = `map-card map-${key}`;
+            card.hidden = index !== 0;
+            picker.add(new Option(arena.name, key));
             card.style.setProperty('--sky', arena.bgTop);
             card.style.setProperty('--land', arena.surface);
             card.style.setProperty('--accent', arena.accentColor);
@@ -748,7 +752,17 @@ window.AnimeMaps = (() => {
                     console.warn('Map preview unavailable:', key, error);
                 }
             }
+            return card;
         });
+        function showCard(index) {
+            const selected = (index + cards.length) % cards.length;
+            cards.forEach((card, position) => { card.hidden = position !== selected; });
+            picker.selectedIndex = selected;
+        }
+        picker.addEventListener('change', () => showCard(picker.selectedIndex));
+        document.getElementById('maps-previous').addEventListener('click', () => showCard(picker.selectedIndex - 1));
+        document.getElementById('maps-next').addEventListener('click', () => showCard(picker.selectedIndex + 1));
+        picker.closest('nav').hidden = false;
     });
     function updateScenery(scene, time) {
         if (scene && scene.userData.updateMap) scene.userData.updateMap(time);

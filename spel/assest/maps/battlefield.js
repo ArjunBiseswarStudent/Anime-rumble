@@ -10,6 +10,14 @@ window.BattlefieldScenery = (() => {
         }
         function steel(object) { object.material.metalness = 0.65; object.material.roughness = 0.38; return object; }
         function attach(parent, object) { parent.add(object); return object; }
+        function joint(parent, x, y, z) {
+            const pivot = attach(parent, new THREE.Group());
+            pivot.position.set(x, y, z);
+            return pivot;
+        }
+        function groundHeight(x, z) {
+            return -0.75 + Math.sin(x * 0.7) * Math.cos((z + 32) * 0.6) * 0.12 + Math.sin(x * 2.3 + z + 32) * 0.035;
+        }
         function warBanner(x, y, z, color, size = 1) {
             banner(x, y, z, color);
             const flag = group.children[group.children.length - 1];
@@ -29,7 +37,7 @@ window.BattlefieldScenery = (() => {
         const vertices = groundGeometry.attributes.position;
         for (let i = 0; i < vertices.count; i++) {
             const x = vertices.getX(i), z = vertices.getZ(i);
-            vertices.setY(i, Math.sin(x * 0.7) * Math.cos(z * 0.6) * 0.12 + Math.sin(x * 2.3 + z) * 0.035);
+            vertices.setY(i, groundHeight(x, z - 32) + 0.75);
         }
         groundGeometry.computeVertexNormals();
         const ground = rough(mesh(groundGeometry, '#85613e', 0, -0.75, -32));
@@ -63,14 +71,14 @@ window.BattlefieldScenery = (() => {
             }
         });
         function wheel(parent, x, y, z, r) {
-            const rim = steel(mesh(new THREE.TorusGeometry(r, r * 0.1, 6, 20), metal, x, y, z));
-            attach(parent, rim);
-            attach(parent, steel(ball(metal, x, y, z, r * 0.18, 1, 1, 0.65)));
+            const hub = joint(parent, x, y, z);
+            attach(hub, steel(mesh(new THREE.TorusGeometry(r, r * 0.085, 6, 20), metal, 0, 0, 0)));
+            attach(hub, steel(ball(metal, 0, 0, 0, r * 0.19, 1, 1, 0.8)));
             for (let spoke = 0; spoke < 8; spoke++) {
                 const angle = spoke * Math.PI / 4;
-                attach(parent, branch('#786044', [x, y, z], [x + Math.cos(angle) * r, y + Math.sin(angle) * r, z], r * 0.035));
+                attach(hub, branch('#786044', [0, 0, 0], [Math.cos(angle) * r, Math.sin(angle) * r, 0], r * 0.036));
             }
-            return rim;
+            return hub;
         }
         function shield(x, y, z, radius) {
             const disk = steel(ball(metal, x, y, z, radius, 1, 1, 0.14));
@@ -91,17 +99,109 @@ window.BattlefieldScenery = (() => {
                 steel(mesh(new THREE.ConeGeometry(0.08, 0.38, 4), metal, x + side * 0.4, 1 + i % 3 * 0.2, z));
             }
         }
-        function chariot(x, z, phase) {
-            const cart = new THREE.Group(); cart.name = 'battlefield-chariot'; group.add(cart);
-            attach(cart, rough(box('#664a32', 0, 0.65, 0, 2, 0.3, 1.6), 'bark'));
-            attach(cart, box('#96734a', 0, 1.2, -0.7, 2, 0.8, 0.13));
-            wheel(cart, -0.7, 0.5, 0.85, 0.6); wheel(cart, 0.7, 0.5, 0.85, 0.6);
-            for (const side of [-1, 1]) attach(cart, pillar(metal, side * 0.85, 2.05, -0.5, 0.055, 0.065, 2.1));
-            const canopy = attach(cart, pillar(red, 0, 3.2, -0.5, 0.25, 1.45, 0.6, 4)); canopy.rotation.y = Math.PI / 4;
-            cart.position.set(x, -0.55, z);
-            animations.push(t => { cart.position.x = x + Math.sin(t * 0.13 + phase) * 0.6; cart.rotation.z = Math.sin(t * 1.5 + phase) * 0.008; });
+        function horse(parent, lane, coat) {
+            const mount = joint(parent, 2.35, 0, lane);
+            mount.name = 'battlefield-horse';
+            const belly = '#422d27', mane = '#251d1a', leather = '#3b2822';
+            attach(mount, ball(coat, 0, 1.24, 0, 0.51, 1.52, 0.85, 0.72));
+            attach(mount, ball(coat, -0.51, 1.28, 0, 0.38, 0.94, 1, 0.88));
+            attach(mount, ball(coat, 0.48, 1.30, 0, 0.37, 0.86, 1.17, 0.88));
+            const neck = joint(mount, 0.44, 1.34, 0);
+            attach(neck, branch(coat, [0, 0, 0], [0.43, 0.65, 0], 0.3, 0.19));
+            attach(neck, branch(mane, [-0.18, 0.11, 0], [0.29, 0.73, 0], 0.14, 0.06));
+            const head = attach(neck, ball(coat, 0.55, 0.66, 0, 0.27, 1.32, 0.72, 0.65));
+            head.rotation.z = -0.38;
+            attach(neck, ball(belly, 0.77, 0.52, 0, 0.17, 1.06, 0.76, 0.92));
+            for (const side of [-1, 1]) {
+                attach(neck, branch(coat, [0.39, 0.78, side * 0.09], [0.43, 1.01, side * 0.14], 0.071, 0.015));
+                attach(neck, ball('#100e0e', 0.57, 0.72, side * 0.15, 0.035));
+                attach(neck, branch(leather, [0.42, 0.55, side * 0.14], [0.72, 0.57, side * 0.15], 0.021));
+            }
+            const breastcollar = attach(mount, steel(mesh(new THREE.TorusGeometry(0.28, 0.028, 5, 14), metal, 0.53, 1.33, 0)));
+            breastcollar.rotation.y = Math.PI / 2;
+            const tail = joint(mount, -0.71, 1.45, 0);
+            attach(tail, branch(mane, [0, 0, 0], [-0.57, -0.30, 0], 0.10, 0.032));
+            const legs = [];
+            for (const end of [-1, 1]) for (const side of [-1, 1]) {
+                const upper = joint(mount, end * 0.49, 1.13, side * 0.23);
+                attach(upper, branch(coat, [0, 0, 0], [end * 0.07, -0.48, 0], 0.105, 0.06));
+                const knee = joint(upper, end * 0.07, -0.48, 0);
+                attach(knee, branch(belly, [0, 0, 0], [-end * 0.09, -0.47, 0], 0.059, 0.037));
+                attach(knee, box(mane, -end * 0.09 + 0.035, -0.49, 0, 0.16, 0.15, 0.13));
+                legs.push({ upper, knee, offset: (end === 1 ? 2.55 : 0) + (side === 1 ? 0.85 : 0) });
+            }
+            return { mount, neck, tail, legs };
         }
-        chariot(-10, -18, 0); chariot(11, -23, 2);
+        function chariot(color, coats) {
+            const rig = joint(group, 0, 0, 0);
+            rig.name = 'battlefield-chariot';
+            const cart = joint(rig, 0, 0, 0);
+            attach(cart, rough(box('#513625', 0, 0.71, 0, 1.9, 0.24, 1.5), 'bark'));
+            attach(cart, rough(box(color, 0.72, 1.04, 0, 0.16, 0.52, 1.46), 'bark', 0.055));
+            const wheels = [];
+            for (const side of [-1, 1]) {
+                wheels.push(wheel(rig, -0.19, 0.63, side * 0.82, 0.58));
+                attach(cart, rough(box(color, 0.2, 0.99, side * 0.68, 1.15, 0.39, 0.095), 'bark', 0.06));
+                attach(cart, steel(box(metal, 0.2, 1.2, side * 0.68, 1.2, 0.055, 0.10)));
+                attach(rig, branch('#765233', [0.62, 0.81, side * 0.43], [2.93, 1.25, side * 0.43], 0.065, 0.042));
+                attach(rig, branch(dark, [0.14, 1.83, side * 0.32], [3.45, 1.91, side * 0.54], 0.023, 0.018));
+            }
+            const pennant = joint(cart, -0.76, 1.02, -0.44);
+            attach(pennant, pillar(metal, 0, 0.98, 0, 0.025, 0.041, 1.96, 8));
+            const flag = attach(pennant, rough(mesh(new THREE.PlaneGeometry(0.65, 0.38), color, -0.32, 1.74, 0), 'bark', 0.02));
+            flag.material.side = THREE.DoubleSide;
+            const driver = warrior(color, 1);
+            attach(cart, driver.actor);
+            driver.actor.position.set(0.08, 0.8, 0);
+            driver.actor.scale.setScalar(0.95);
+            const horses = coats.map((coat, index) => horse(rig, index ? 0.51 : -0.51, coat));
+            return { rig, cart, flag, wheels, driver, horses };
+        }
+        const teams = [
+            chariot('#733732', ['#694936', '#52382d']),
+            chariot('#35474c', ['#564235', '#7a5c47'])
+        ];
+        const clash = glow(ball('#ffe1a8', 0, 0, 0, 0.1), '#ffb365', 1.4);
+        clash.castShadow = false;
+        animations.push(t => {
+            const orbit = t * 0.47 + 0.75;
+            const passing = Math.pow(Math.abs(Math.sin(orbit)), 16);
+            teams.forEach(({ rig, cart, wheels, flag, driver, horses }, index) => {
+                const angle = orbit + index * Math.PI;
+                const x = Math.cos(angle) * 9.4;
+                const z = -9.4 + Math.sin(angle) * 1.45;
+                const dx = -Math.sin(angle) * 9.4, dz = Math.cos(angle) * 1.45;
+                rig.position.set(x, groundHeight(x, z), z);
+                rig.rotation.y = Math.atan2(-dz, dx);
+                const stride = t * 13.5 + index * 0.8;
+                cart.position.y = Math.sin(stride) * 0.045;
+                cart.rotation.x = Math.cos(stride * 0.5) * 0.055;
+                flag.rotation.y = Math.sin(t * 8 + index) * 0.32;
+                wheels.forEach(w => { w.rotation.z = -t * 6.2 - Math.sin(2 * angle) * 1.8; });
+                horses.forEach(({ mount, neck, tail, legs }, horseIndex) => {
+                    const gait = stride + horseIndex * 1.22;
+                    mount.position.y = 0.045 + Math.sin(gait) * 0.078;
+                    mount.rotation.z = Math.sin(gait + 0.7) * 0.065;
+                    neck.rotation.z = Math.cos(gait + 0.4) * 0.12;
+                    tail.rotation.y = Math.sin(gait * 0.55) * 0.32;
+                    legs.forEach(({ upper, knee, offset }) => {
+                        const phase = gait + offset;
+                        upper.rotation.z = Math.sin(phase) * 0.72;
+                        knee.rotation.z = -0.15 - Math.max(0, Math.cos(phase)) * 0.85;
+                    });
+                });
+                driver.actor.rotation.y = Math.PI / 2 - passing * 0.95;
+                driver.actor.rotation.z = Math.sin(stride) * 0.04;
+                driver.limbs.forEach(({ arm, leg, side }) => {
+                    arm.rotation.x = side === 1 ? -0.75 - passing * (0.95 + Math.sin(orbit * 11 + index) * 0.66) : -1.05;
+                    arm.rotation.z = side === 1 ? -passing * 0.4 : 0.12;
+                    leg.rotation.x = 0.08;
+                });
+            });
+            clash.visible = passing > 0.98;
+            clash.position.set(0, 1.58, -9.4);
+            clash.scale.set(1.6, 0.7 + passing, 0.8);
+        });
         function elephant(x, z, phase) {
             const actor = new THREE.Group(); actor.name = 'battlefield-elephant'; group.add(actor);
             attach(actor, ball('#5b5049', 0, 1.7, 0, 1, 1.5, 1, 0.7));
@@ -194,6 +294,28 @@ window.BattlefieldScenery = (() => {
             gradient.addColorStop(0, 'rgba(255,255,255,0.3)'); gradient.addColorStop(0.4, 'rgba(255,255,255,0.15)');
             gradient.addColorStop(1, 'rgba(255,255,255,0)'); ctx.fillStyle = gradient; ctx.fillRect(0, 0, 64, 64);
             hazeTexture = new THREE.CanvasTexture(canvas);
+        }
+        for (const { rig } of teams) {
+            const wake = Array.from({ length: 4 }, () => {
+                const material = new THREE.SpriteMaterial({
+                    map: hazeTexture, color: '#c49766', transparent: true, depthWrite: false
+                });
+                const sprite = attach(group, new THREE.Sprite(material));
+                sprite.name = 'battlefield-chariot-dust';
+                return sprite;
+            });
+            animations.push(t => {
+                const forwardX = Math.cos(rig.rotation.y), forwardZ = -Math.sin(rig.rotation.y);
+                wake.forEach((sprite, index) => {
+                    const age = (t * 1.4 + index / wake.length) % 1;
+                    const trail = 0.85 + age * 2.8;
+                    const x = rig.position.x - forwardX * trail;
+                    const z = rig.position.z - forwardZ * trail;
+                    sprite.position.set(x, groundHeight(x, z) + 0.13 + age * 0.34, z);
+                    sprite.scale.set(0.9 + age * 1.8, 0.4 + age * 0.55, 1);
+                    sprite.material.opacity = Math.sin(age * Math.PI) * 0.63;
+                });
+            });
         }
         for (let i = 0; i < 16; i++) {
             const dust = new THREE.Sprite(new THREE.SpriteMaterial({ map: hazeTexture, color: '#d5aa7b', transparent: true, opacity: 0.42, depthWrite: false }));

@@ -90,6 +90,44 @@ test('resizing keeps the horizontal battlefield visible on phone and tablet disp
     }
 });
 
+test('the map picker shows one arena at a time and wraps in both directions', () => {
+    const events = new Map();
+    const button = id => ({ addEventListener: (name, fn) => events.set(id, fn) });
+    const nav = { hidden: true };
+    const picker = { ...button('picker'), options: [], selectedIndex: 0,
+        add(option) { this.options.push(option); }, closest() { return nav; } };
+    const cards = [];
+    const app = vm.createContext({
+        window: {},
+        Option: class { constructor(label, value) { Object.assign(this, { label, value }); } },
+        document: {
+            addEventListener(name, fn) { events.set(name, fn); },
+            createElement() { return { style: { setProperty() {} } }; },
+            getElementById(id) {
+                return {
+                    'maps-gallery': { append: card => cards.push(card) },
+                    'maps-picker': picker, 'maps-previous': button('previous'), 'maps-next': button('next')
+                }[id];
+            }
+        }
+    });
+    vm.runInContext(fs.readFileSync(path.join(__dirname, '../assest/maps/maps.js'), 'utf8'), app);
+    events.get('DOMContentLoaded')();
+    assert.equal(nav.hidden, false);
+    assert.equal(cards.length, 9);
+    assert.equal(picker.options.length, cards.length);
+    for (let index = 0; index < cards.length; index++) {
+        assert.deepEqual(cards.filter(card => !card.hidden), [cards[index]]);
+        events.get('next')();
+    }
+    assert.equal(picker.selectedIndex, 0);
+    events.get('previous')();
+    assert.equal(picker.selectedIndex, 8);
+    picker.selectedIndex = 3;
+    events.get('picker')();
+    assert.deepEqual(cards.filter(card => !card.hidden), [cards[3]]);
+});
+
 test('the controls guide shows the actual bindings for the selected mode and can return to selection', () => {
     const elements = new Map();
     function element() {
