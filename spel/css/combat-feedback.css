@@ -8,7 +8,7 @@
     pointer-events: none;
 }
 
-.fighter-indicator, .damage-number, .fist-swipe {
+.fighter-indicator, .damage-number, .fist-swipe, .hit-impact {
     position: absolute;
     top: 0;
     left: 0;
@@ -23,7 +23,7 @@
     color: #fff;
     background: #101828ed;
     text-align: center;
-    font: 800 10px/1.1 system-ui, sans-serif;
+    font: 800 11px/1.1 system-ui, sans-serif;
     white-space: nowrap;
 }
 
@@ -32,7 +32,7 @@
     position: absolute;
     top: 100%;
     left: 50%;
-    border: 5px solid transparent;
+    border: 6px solid transparent;
     border-top-color: var(--player-color);
     transform: translateX(-50%);
 }
@@ -54,18 +54,37 @@
 
 .damage-number {
     z-index: 1;
+    padding: 3px 6px;
+    border-radius: 5px;
+    background: #171423e8;
     color: #ffe390;
     font: 900 clamp(15px, 3vw, 27px)/1 system-ui, sans-serif;
     text-shadow: -1px -1px #14101d, 1px 1px #14101d, 0 2px 5px #000;
 }
 .damage-number.is-blocked { color: #a8dbff; }
 
-.fist-swipe {
+.hit-impact {
     width: 32px;
-    height: 17px;
-    border-top: 3px solid #fff5cc;
-    border-radius: 60%;
-    box-shadow: 0 -2px 4px #ffbd6277;
-    rotate: -27deg;
+    height: 32px;
+    border: 3px solid #ffe390;
+    border-radius: 50%;
+    box-shadow: 0 0 12px #ffae52;
 }
-.fist-swipe[data-direction="-1"] { rotate: 27deg; }
+
+.hit-impact.is-blocked {
+    border-color: #a8dbff;
+    box-shadow: 0 0 12px #78baff;
+}
+
+.fist-swipe {
+    width: clamp(25px, 4vw, 52px);
+    height: 22px;
+    border-right: 4px solid #ffbd62;
+    border-top: 4px solid #fff5cc;
+    border-radius: 50%;
+    filter: drop-shadow(0 0 4px #ff9f48);
+}
+.fist-swipe[data-direction="-1"] {
+    border-right: 0;
+    border-left: 4px solid #ffbd62;
+}

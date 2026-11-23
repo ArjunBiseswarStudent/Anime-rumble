@@ -1,6 +1,7 @@
 window.CombatFeedback = (() => {
     const HOLD_MS = 350;
-    const DAMAGE_MS = 700;
+    const DAMAGE_MS = 850;
+    const IMPACT_MS = 220;
     const NUMBER = new Intl.NumberFormat('nl-NL', { maximumFractionDigits: 1 });
     let canvas, overlay, options, hold, point;
     let markers = [], damage = [], slashes = [];
@@ -12,7 +13,11 @@ window.CombatFeedback = (() => {
         overlay = document.getElementById('battle-feedback');
         options = handlers;
         markers = [...overlay.querySelectorAll('.fighter-indicator')];
-        damage = [...overlay.querySelectorAll('.damage-number')].map(node => ({ node, until: 0 }));
+        damage = [...overlay.querySelectorAll('.hit-feedback')].map(group => ({
+            node: group.querySelector('.damage-number'),
+            impact: group.querySelector('.hit-impact'),
+            until: 0
+        }));
         slashes = [...overlay.querySelectorAll('.fist-swipe')];
         const header = overlay.parentElement.querySelector('.battle-hud-overlay');
         const measure = () => {
@@ -26,13 +31,13 @@ window.CombatFeedback = (() => {
         canvas.addEventListener('pointerdown', event => {
             if (!options.running() || hold || event.button !== 0 || (event.pointerType === 'mouse' && !event.isPrimary)) return;
             event.preventDefault();
-            hold = { pointer: event.pointerId, started: performance.now(), signalled: false };
+            hold = { pointer: event.pointerId, started: event.timeStamp, signalled: false };
             canvas.setPointerCapture(event.pointerId);
             void window.ArenaMusic?.unlockCue();
         });
         canvas.addEventListener('pointerup', event => {
             if (event.pointerId !== hold?.pointer) return;
-            const charged = performance.now() - hold.started >= HOLD_MS;
+            const charged = event.timeStamp - hold.started >= HOLD_MS;
             cancel();
             if (options.running() && (!charged || options.canCharge())) options.attack(charged);
         });
@@ -58,6 +63,7 @@ window.CombatFeedback = (() => {
             info.until = 0;
             info.lastHit = -Infinity;
             info.node.hidden = true;
+            info.impact.hidden = true;
         }
         for (const slash of slashes) slash.hidden = true;
     }
@@ -65,7 +71,7 @@ window.CombatFeedback = (() => {
     function hit(fighter, amount, blocked = false) {
         const info = damage[fighter.playerIndex];
         if (!info || !options.running() || amount <= 0) return;
-        if (!blocked) fighter.hitReaction = .085;
+        if (!blocked) fighter.hitReaction = .13;
         const now = performance.now();
         info.amount = now - (info.lastHit ?? -Infinity) < 150 ? info.amount + amount : amount;
         info.lastHit = now;
@@ -74,13 +80,14 @@ window.CombatFeedback = (() => {
         info.y = (540 - fighter.y - fighter.height) / 65 + 1.25;
         info.node.textContent = `−${NUMBER.format(info.amount)}`;
         info.node.classList.toggle('is-blocked', blocked);
+        info.impact.classList.toggle('is-blocked', blocked);
         info.node.hidden = false;
     }
 
-    function swing(fighter) {
+    function swing(fighter, facing = fighter.facing) {
         const slash = slashes[fighter.playerIndex];
         if (!slash || !options.running()) return;
-        slash.dataset.direction = fighter.facing;
+        slash.dataset.direction = facing;
         slash.hidden = false;
         slash.start = performance.now();
     }
@@ -89,12 +96,12 @@ window.CombatFeedback = (() => {
         if (!width || !height) return;
         const now = performance.now();
         point ||= new THREE.Vector3();
-        function move(node, x, y, lift = 0, shift = 0) {
+        function move(node, x, y, lift = 0, shift = 0, scale = 1) {
             point.set(x, y, .12).project(camera);
             const padding = node === markers[0] && hold ? 42 : 19;
             const left = Math.min(width - padding, Math.max(padding, (point.x + 1) * width / 2 + shift));
             const up = Math.min(height - 14, Math.max(top, (1 - point.y) * height / 2 - lift));
-            node.style.transform = `translate3d(${left}px, ${up}px, 0) translate(-50%, -50%)`;
+            node.style.transform = `translate3d(${left}px, ${up}px, 0) translate(-50%, -50%) scale(${scale})`;
         }
         const [first, second] = fighters;
         const close = Math.abs(first.model.position.x - second.model.position.x) < .7 &&
@@ -105,15 +112,21 @@ window.CombatFeedback = (() => {
             if (!marker.hidden) {
                 const label = index === 1 && cpu ? 'CPU' : `P${index + 1}`;
                 if (marker.firstElementChild.textContent !== label) marker.firstElementChild.textContent = label;
-                const shift = close ? (index === 0 ? (hold ? -35 : -18) : 18) : 0;
+                const shift = close ? (index === 0 ? (hold ? -42 : -23) : 23) : 0;
                 move(marker, fighter.model.position.x, fighter.model.position.y + 2.35 * fighter.model.scale.y, 0, shift);
             }
             const info = damage[index];
             info.node.hidden = now >= info.until;
             if (!info.node.hidden) {
                 const progress = 1 - (info.until - now) / DAMAGE_MS;
-                move(info.node, info.x, info.y, reducedMotion?.matches ? 0 : progress * 34);
+                move(info.node, info.x, info.y + .5, reducedMotion?.matches ? 0 : progress * 34, index === 0 ? -32 : 32);
                 info.node.style.opacity = String(Math.min(1, (1 - progress) * 3));
+            }
+            const impactAge = (now - (info.lastHit ?? -Infinity)) / IMPACT_MS;
+            info.impact.hidden = impactAge >= 1;
+            if (!info.impact.hidden) {
+                move(info.impact, info.x, info.y, 0, 0, reducedMotion?.matches ? 1 : .65 + impactAge * 1.15);
+                info.impact.style.opacity = String(1 - impactAge);
             }
         });
         slashes.forEach((slash, index) => {
@@ -123,7 +136,7 @@ window.CombatFeedback = (() => {
             slash.hidden = age >= 1;
             if (!slash.hidden) {
                 move(slash, fighter.model.position.x + Number(slash.dataset.direction) * 1.05, fighter.model.position.y + 1.05);
-                slash.style.opacity = String(1 - age);
+                slash.style.opacity = String(Math.min(1, (1 - age) * 2));
             }
         });
         if (hold) {

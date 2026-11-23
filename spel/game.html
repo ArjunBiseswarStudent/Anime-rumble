@@ -124,7 +124,7 @@
       <h1 id="controls-title" tabindex="-1">Besturing</h1>
       <p id="controls-matchup"></p>
     </header>
-    <table class="controls-table" aria-label="Toetsen voor het gevecht">
+    <table class="controls-table" aria-label="Besturing tijdens het gevecht">
       <thead>
         <tr><th scope="col">Actie</th><th scope="col">Speler 1</th><th scope="col" id="controls-player-two">Speler 2</th></tr>
       </thead>
@@ -132,7 +132,6 @@
     </table>
     <p id="controls-numpad" class="controls-tip">Speler 2 kan de cijfers 1 t/m 8 ook op het numerieke toetsenblok gebruiken.</p>
     <p class="controls-tip">Op een touchscreen gebruik je de knoppen in de arena. De knop <strong>Vorm</strong> activeert je ultieme vorm.</p>
-    <p class="controls-tip">Speler 1 kan ook in de arena klikken of tikken. Kort loslaten geeft een gewone aanval. Houd 0,35 seconde vast en laat los zodra Super 1 klaarstaat.</p>
     <div class="controls-footer">
       <button class="back-btn" type="button" onclick="backFromControlsGuide()">← Terug naar selectie</button>
       <button class="start-btn" type="button" onclick="showMatchIntro()">NAAR CONFRONTATIE <span aria-hidden="true">➜</span></button>
@@ -183,8 +182,8 @@
         <div id="battle-feedback" aria-hidden="true">
           <div class="fighter-indicator" hidden><span>P1</span><i></i><small></small></div>
           <div class="fighter-indicator fighter-indicator-p2" hidden><span>P2</span></div>
-          <span class="damage-number" hidden></span>
-          <span class="damage-number" hidden></span>
+          <div class="hit-feedback"><span class="damage-number" hidden></span><i class="hit-impact" hidden></i></div>
+          <div class="hit-feedback"><span class="damage-number" hidden></span><i class="hit-impact" hidden></i></div>
           <i class="fist-swipe" hidden></i>
           <i class="fist-swipe" hidden></i>
         </div>

@@ -17,7 +17,7 @@ function setup(stockValues = [3, 5]) {
         finishMatch(winner, reason = 'time') { app.result = { winner, reason }; app.gameRunning = false; }
     };
     vm.createContext(app);
-    for (const [name, next] of [['makeFighter', 'startMatch'], ['loseStock', 'finishMatch'], ['battleLoop', 'updateBattleHud']])
+    for (const [name, next] of [['makeFighter', 'startMatch'], ['performAttack', 'loseStock'], ['loseStock', 'finishMatch'], ['battleLoop', 'updateBattleHud']])
         vm.runInContext(source.slice(source.indexOf(`function ${name}(`), source.indexOf(`function ${next}(`)), app);
     app.fighters = [0, 1].map(index => app.makeFighter({ id: String(index), name: `Vechter ${index}` }, index));
     return app;
@@ -57,9 +57,12 @@ test('unarmed CPU attacks deal 6.4 damage while player attacks still deal 8', ()
         app.window.SpecialMoves.prepare = () => ({ stun: 0, buff: 0, armor: 0 });
         app.window.CharacterMotion = { attack() {} };
         app.fighters.forEach(f => { f.x = 300; f.invulnerable = 0; });
-        vm.runInContext(source.slice(source.indexOf('function performAttack('), source.indexOf('function loseStock(')), app);
-        app.performAttack(app.fighters[index], app.fighters[1 - index], false);
-        assert.equal(app.fighters[1 - index].damage, index === 0 ? 8 : 6.4);
+        const attacker = app.fighters[index], target = app.fighters[1 - index];
+        app.performAttack(attacker, target, false);
+        app.updatePunch(attacker, target, .05);
+        assert.equal(target.damage, 0);
+        app.updatePunch(attacker, target, .05);
+        assert.equal(target.damage, index === 0 ? 8 : 6.4);
     }
 });
 

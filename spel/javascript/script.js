@@ -1598,6 +1598,7 @@ function makeFighter(character, playerIndex) {
         specialCooldowns: [0, 0],
         blocking: false,
         invulnerable: 1.2,
+        spawnProtection: 1.2,
         attacks: 0,
         hits: 0,
         knockouts: 0
@@ -1640,6 +1641,14 @@ function showControlsGuide() {
                 name.className = 'controls-move';
                 name.textContent = selection[index].moves[move].name;
                 cell.append(name);
+            }
+            if (index === 0 && (action === 'attack' || action === 'super1')) {
+                const pointer = document.createElement('span');
+                pointer.className = 'controls-move';
+                pointer.textContent = action === 'attack'
+                    ? 'Of kort links klikken of tikken in de arena'
+                    : 'Of houd de linkermuisknop of je vinger minstens 0,35 s ingedrukt in de arena. Laat los bij ‘Loslaten’ boven P1.';
+                cell.append(pointer);
             }
             row.append(cell);
         });
@@ -1954,10 +1963,13 @@ function performAttack(attacker, target, isSpecial, specialMove = 'neutral', buf
         return;
     }
     if (!isSpecial) attacker.attackBuffer = 0;
-    if (pressedKeys.has(controls.left)) attacker.facing = -1;
-    if (pressedKeys.has(controls.right)) attacker.facing = 1;
+    const offset = target.x + target.width / 2 - attacker.x - attacker.width / 2;
+    const isCpu = gameMode === 'cpu' && attacker.playerIndex === 1;
+    const input = isCpu ? 0 : Number(pressedKeys.has(controls.right)) - Number(pressedKeys.has(controls.left));
+    if (input) attacker.facing = input;
+    else if ((!isSpecial || isCpu) && offset) attacker.facing = Math.sign(offset);
     if (isSpecial) {
-        window.SpecialMoves.cast({
+        const cast = window.SpecialMoves.cast({
             THREE, scene: battleScene, owner: attacker, target, slot: specialMove === 'side' ? 1 : 0,
             isShielded: isFighterShielded,
             onNotice: message => { document.getElementById('arena-note').textContent = message; },
@@ -1966,6 +1978,7 @@ function performAttack(attacker, target, isSpecial, specialMove = 'neutral', buf
                 document.getElementById('arena-note').textContent = 'Fukasaku en Shima: “Bagga!”';
             })
         });
+        if (cast) attacker.punch = null;
         return;
     }
     if (window.CombatActions && window.CombatItems.list(attacker.character.id).length) {
@@ -1973,22 +1986,37 @@ function performAttack(attacker, target, isSpecial, specialMove = 'neutral', buf
             onNotice: message => { document.getElementById('arena-note').textContent = message; } });
         return;
     }
-    attacker.attackCooldown = 0.48;
+    attacker.attackCooldown = 0.38;
+    attacker.punch = { remaining: .09, facing: attacker.facing };
     attacker.attacks++;
     window.CharacterMotion.attack(attacker.model, 'punch');
-    window.CombatFeedback?.swing(attacker);
-    const distanceX = Math.abs(attacker.x + attacker.width / 2 - target.x - target.width / 2);
+}
+
+function updatePunch(attacker, target, dt) {
+    const punch = attacker.punch;
+    if (!punch) return;
+    const status = window.SpecialMoves.prepare(attacker);
+    if (status.stun > 0 || isFighterShielded(attacker)) {
+        attacker.punch = null;
+        return;
+    }
+    punch.remaining -= dt;
+    if (punch.remaining > 0) return;
+    attacker.punch = null;
+    window.CombatFeedback?.swing(attacker, punch.facing);
+    const offset = target.x + target.width / 2 - attacker.x - attacker.width / 2;
+    const forward = offset * punch.facing;
     const distanceY = Math.abs(attacker.y + attacker.height / 2 - target.y - target.height / 2);
-    if (distanceX > (status.buff > 0 ? 110 : 82) || distanceY > 82 || target.invulnerable > 0) return;
+    if (forward < -10 || forward > (status.buff > 0 ? 110 : 82) || distanceY > 82 || target.invulnerable > 0) return;
     const shielding = isFighterShielded(target);
     const targetStatus = window.SpecialMoves.prepare(target);
     const amount = 8 * (attacker.damageMultiplier ?? 1) * (status.buff > 0 ? 1.3 : 1) * (targetStatus.armor > 0 ? 0.65 : 1) * (shielding ? 0.25 : 1);
     target.damage += amount;
     window.CombatFeedback?.hit(target, amount, shielding);
-    const direction = Math.sign(target.x - attacker.x) || attacker.facing;
-    target.vx = direction * (4.5 + target.damage / 18) * (shielding ? 0.35 : 1);
+    target.vx = punch.facing * (4.5 + target.damage / 18) * (shielding ? 0.35 : 1);
     target.vy = shielding ? -2 : -4;
-    target.invulnerable = 0.5;
+    target.grounded = false;
+    target.invulnerable = .2;
     attacker.hits++;
     updateBattleHud();
 }
@@ -1996,6 +2024,7 @@ function performAttack(attacker, target, isSpecial, specialMove = 'neutral', buf
 function loseStock(fighter) {
     if (fighter.playerIndex === 0) window.CombatFeedback?.cancel();
     fighter.attackBuffer = 0;
+    fighter.punch = null;
     fighter.hitReaction = 0;
     window.UltimateForms?.clear(fighter);
     window.SpecialMoves.clearFighter(fighter);
@@ -2022,6 +2051,7 @@ function loseStock(fighter) {
     fighter.coyoteTime = 0;
     fighter.jumpBuffer = 0;
     fighter.invulnerable = 2;
+    fighter.spawnProtection = 2;
     fighter.blocking = false;
     fighter.attackCooldown = 0;
     fighter.specialCooldowns.fill(0);
@@ -2132,14 +2162,14 @@ function updateFighter(fighter, target, dt) {
         }
     }
 
-    if (move) fighter.facing = move;
+    if (move && !fighter.punch) fighter.facing = move;
     const difficulty = isCpu ? document.getElementById('cpu-diff-select').value : 'normal';
     const speedFactor = difficulty === 'hard' ? 1 : difficulty === 'easy' ? 0.75 : 0.9;
     const speed = (fighter.character.speed || 5.5) * (isCpu ? speedFactor : 1) * (specialStatus.buff > 0 ? 1.2 : 1) * (fighter.weaponSlow > 0 ? 0.65 : 1);
     if (specialStatus.stun > 0) fighter.vx *= Math.exp(-dt * 15);
     else if (specialStatus.dash > 0) fighter.vx = specialStatus.dashSpeed;
     else if (!fighter.hitReaction) {
-        const response = fighter.grounded ? (move ? 19 : 24) : 12;
+        const response = fighter.grounded ? (move ? 25 : 32) : (move ? 15 : 8);
         fighter.vx += (move * speed - fighter.vx) * (1 - Math.exp(-dt * response));
     }
     fighter.x += fighter.vx * dt * 18;
@@ -2155,6 +2185,7 @@ function updateFighter(fighter, target, dt) {
     }
     fighter.hitReaction = Math.max(0, (fighter.hitReaction || 0) - dt);
     fighter.invulnerable = Math.max(0, fighter.invulnerable - dt);
+    fighter.spawnProtection = Math.max(0, (fighter.spawnProtection || 0) - dt);
     fighter.dropThroughTimer = Math.max(0, fighter.dropThroughTimer - dt);
 
     fighter.grounded = false;
@@ -2180,18 +2211,19 @@ function updateFighter(fighter, target, dt) {
     window.CharacterMotion.update(fighter.model, fighter, dt);
     window.UltimateForms?.update(fighter, dt);
     if (fighter.model.userData.shield) fighter.model.userData.shield.visible = fighter.blocking;
-    fighter.model.visible = fighter.invulnerable <= 0 || Math.floor(performance.now() / 90) % 2 === 0;
+    fighter.model.visible = fighter.spawnProtection <= 0 || Math.floor(performance.now() / 90) % 2 === 0;
 }
 
-function drawBattle() {
+function drawBattle(dt = 1 / 60) {
     if (!battleRenderer || !battleScene || !battleCamera) return;
     const midpointX = (fighters[0].model.position.x + fighters[1].model.position.x) / 2;
     const midpointY = Math.max(2.2, (fighters[0].model.position.y + fighters[1].model.position.y) / 2 + 1.4);
     const distance = Math.abs(fighters[0].model.position.x - fighters[1].model.position.x);
     const cameraZ = Math.min(20, Math.max(13, 12 + distance * 0.55));
-    battleCamera.position.x += (midpointX - battleCamera.position.x) * 0.08;
-    battleCamera.position.y += (midpointY + 2.8 - battleCamera.position.y) * 0.08;
-    battleCamera.position.z += (cameraZ - battleCamera.position.z) * 0.08;
+    const follow = 1 - Math.exp(-dt * 5);
+    battleCamera.position.x += (midpointX - battleCamera.position.x) * follow;
+    battleCamera.position.y += (midpointY + 2.8 - battleCamera.position.y) * follow;
+    battleCamera.position.z += (cameraZ - battleCamera.position.z) * follow;
     battleCamera.lookAt(midpointX, midpointY, 0);
     battleRenderer.render(battleScene, battleCamera);
     window.CombatFeedback?.draw(THREE, battleCamera, fighters, gameMode === 'cpu');
@@ -2207,6 +2239,8 @@ function battleLoop(now) {
     if (gameRunning) updateFighter(fighters[1], fighters[0], dt);
     jumpRequests[1] = false;
     if (gameRunning) {
+        updatePunch(fighters[0], fighters[1], dt);
+        updatePunch(fighters[1], fighters[0], dt);
         window.SpecialMoves.update(dt);
         window.CombatActions?.update(dt);
         window.TrowItems?.update(dt);
@@ -2216,7 +2250,7 @@ function battleLoop(now) {
         const defeated = fighters.filter(fighter => window.BattleRules.isDefeated(fighter));
         defeated.forEach(loseStock);
         window.AnimeMaps.updateScenery(battleScene, (now - matchStartedAt) / 1000);
-        drawBattle();
+        drawBattle(dt);
         updateBattleHud();
         if (fighters.some(fighter => fighter.stocks === 0)) {
             finishMatch(window.BattleRules.chooseWinner(fighters), 'elimination');
@@ -2338,7 +2372,10 @@ function resetGameInput() {
     inputSources.clear();
     pressedKeys.clear();
     jumpRequests.fill(false);
-    for (const fighter of fighters) fighter.attackBuffer = 0;
+    for (const fighter of fighters) {
+        fighter.attackBuffer = 0;
+        fighter.punch = null;
+    }
     window.TouchControls?.reset();
     window.CombatFeedback?.reset();
 }

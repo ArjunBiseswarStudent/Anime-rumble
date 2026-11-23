@@ -1,5 +1,6 @@
 /* Articulated cel-shaded characters. Poses are relative to their joint rest positions. */
 window.CharacterMotion = (() => {
+    const PUNCH_DURATION = .30;
     const surfaces = {
         skin: { roughness: .63, metalness: 0, relief: .06, frequency: [37, 31] },
         fabric: { roughness: .86, metalness: 0, relief: .21, frequency: [68, 82] },
@@ -540,7 +541,7 @@ window.CharacterMotion = (() => {
 
     function attack(root, action) {
         const motion = root.userData.motion;
-        if (motion) { motion.action = action; motion.actionTime = action === 'punch' ? 0.42 : 0.7; }
+        if (motion) { motion.action = action; motion.actionTime = action === 'punch' ? PUNCH_DURATION : 0.7; }
     }
 
     function update(root, fighter, dt) {
@@ -563,8 +564,10 @@ window.CharacterMotion = (() => {
         const super1 = active && m.action === 'neutral';
         const super2 = active && m.action === 'side';
         const throwing = active && m.action === 'throw';
-        const phase = m.time * (9 + moving * 5);
-        const strike = punch ? Math.sin((1 - m.actionTime / 0.42) * Math.PI) : 0;
+        m.stepPhase = (m.stepPhase || 0) + dt * (9 + m.blend * 5);
+        const phase = m.stepPhase;
+        const punchAge = PUNCH_DURATION - m.actionTime;
+        const strike = punch ? Math.min(punchAge / .085, m.actionTime / (PUNCH_DURATION - .085)) : 0;
         const power = active && !punch ? Math.sin((1 - m.actionTime / 0.7) * Math.PI) : 0;
         m.rig.position.y = Math.sin(m.time * 2.6) * 0.015 + Math.abs(Math.sin(phase)) * m.blend * 0.045 - m.landing * 0.09;
         const lean = guard ? .18 : fighter.hitReaction ? -.32 : airborne ? -.1 : m.blend * .18;
@@ -592,9 +595,10 @@ window.CharacterMotion = (() => {
                     bend = weaponAnimation.kind === 'thrust' ? -0.9 + swing * 0.85 : -0.45;
                 }
             }
-            shoulder.rotation.x += (arm - shoulder.rotation.x) * follow;
+            const armFollow = punch && side === 1 ? 1 - Math.exp(-dt * 35) : follow;
+            shoulder.rotation.x += (arm - shoulder.rotation.x) * armFollow;
             shoulder.rotation.z += ((-side * (guard ? 0.2 : 0.08)) - shoulder.rotation.z) * follow;
-            elbow.rotation.x += (bend - elbow.rotation.x) * follow;
+            elbow.rotation.x += (bend - elbow.rotation.x) * armFollow;
             hip.rotation.x += (leg - hip.rotation.x) * follow;
             knee.rotation.x += (kneel - knee.rotation.x) * follow;
         });

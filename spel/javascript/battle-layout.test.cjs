@@ -77,7 +77,9 @@ test('the controls guide shows the actual bindings for the selected mode and can
     assert.ok(getElementById('controls-title').focused);
     assert.equal(table.children.length, 12);
     assert.ok(table.children.every(row => row.children.length === 2));
-    assert.deepEqual(table.children[5].children[1].children.map(node => node.textContent), ['G', 'Q', 'Gojo 1']);
+    assert.deepEqual(table.children[4].children[1].children.map(node => node.textContent), ['F', 'Of kort links klikken of tikken in de arena']);
+    assert.deepEqual(table.children[5].children[1].children.slice(0, 3).map(node => node.textContent), ['G', 'Q', 'Gojo 1']);
+    assert.match(table.children[5].children[1].children[3].textContent, /0,35 s.*Loslaten/);
     app.backFromControlsGuide();
     assert.ok(getElementById('controls-screen').classList.has('hidden'));
     assert.ok(getElementById('review-controls-btn').focused);
@@ -85,5 +87,7 @@ test('the controls guide shows the actual bindings for the selected mode and can
     app.showControlsGuide();
     assert.equal(getElementById('controls-player-two').hidden, false);
     assert.ok(table.children.every(row => row.children.length === 3));
+    assert.deepEqual(table.children[4].children[2].children.map(node => node.textContent), ['1']);
+    assert.deepEqual(table.children[5].children[2].children.map(node => node.textContent), ['2', 'Sukuna 1']);
     assert.equal(table.children[7].children[2].children[0].textContent, '8');
 });
