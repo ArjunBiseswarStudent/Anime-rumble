@@ -119,6 +119,30 @@ async function benchmarkSpecials(base) {
 
 async function checkSelectionCue() {
     const point = await evaluate(`(() => {
+        const createCompressor = AudioContext.prototype.createDynamicsCompressor;
+        AudioContext.prototype.createDynamicsCompressor = function () {
+            const compressor = createCompressor.call(this);
+            const analyser = this.createAnalyser();
+            analyser.fftSize = 4096;
+            compressor.connect(analyser);
+            const samples = new Float32Array(analyser.fftSize);
+            window.readGameAudioPeak = () => {
+                analyser.getFloatTimeDomainData(samples);
+                return samples.reduce((peak, sample) => Math.max(peak, Math.abs(sample)), 0);
+            };
+            AudioContext.prototype.createDynamicsCompressor = createCompressor;
+            return compressor;
+        };
+        window.measureGameAudio = async (action, milliseconds = 210) => {
+            let peak = 0;
+            const startedAt = performance.now();
+            await action();
+            do {
+                peak = Math.max(peak, window.readGameAudioPeak());
+                await new Promise(resolve => setTimeout(resolve, 12));
+            } while (performance.now() - startedAt < milliseconds);
+            return peak;
+        };
         const create = AudioContext.prototype.createOscillator;
         window.selectionCueCount = 0;
         AudioContext.prototype.createOscillator = function () {
@@ -147,6 +171,35 @@ async function checkSelectionCue() {
         updateSelectionCards();
         setSelectorTarget(0);
         window.scrollTo(0, 0);`);
+}
+
+async function checkAudioOutput() {
+    return evaluate(`(async () => {
+        const audio = window.ArenaMusic;
+        const pause = milliseconds => new Promise(resolve => setTimeout(resolve, milliseconds));
+        const audible = (peak, source) => {
+            if (!(peak > .002)) throw new Error(source + ' produced no audible signal');
+            return Number(peak.toFixed(4));
+        };
+        const silent = (peak, source) => {
+            if (peak > .0002) throw new Error(source + ' did not mute the output');
+        };
+        await pause(180);
+        const results = { selection: audible(await window.measureGameAudio(() => audio.cue('select')), 'Selection cue') };
+        for (const key of ['matchIntro', ...Object.keys(window.AnimeMaps.arenas)]) {
+            await pause(220);
+            results[key] = audible(await window.measureGameAudio(() => audio.start(key), 430), key);
+            audio.stop();
+        }
+        await pause(700);
+        silent(await window.measureGameAudio(() => audio.setMuted(true)), 'Music toggle');
+        silent(await window.measureGameAudio(() => audio.cue('select')), 'Muted selection cue');
+        audio.setMuted(false);
+        audio.setVolume(0);
+        silent(await window.measureGameAudio(() => audio.cue('ready')), 'Zero volume');
+        audio.setVolume(.28);
+        return results;
+    })()`);
 }
 
 async function checkCombatFeedback() {
@@ -178,10 +231,16 @@ async function checkCombatFeedback() {
         window.CombatActions.reset();`);
     await click('mousePressed');
     await new Promise(resolve => setTimeout(resolve, 390));
-    await evaluate(`drawBattle();
+    const readyPeak = await evaluate(`(async () => {
+        window.ArenaMusic.stop();
+        window.ArenaMusic.setMuted(false);
+        const peak = await window.measureGameAudio(() => drawBattle());
         if (document.querySelector('.fighter-indicator').dataset.charge !== 'ready') {
             throw new Error('Held attack did not show the Super 1 ready indicator');
-        }`);
+        }
+        if (!(peak > .002)) throw new Error('Super 1 ready cue produced no audible signal');
+        return Number(peak.toFixed(4));
+    })()`);
     await click('mouseReleased');
     const attacks = await evaluate(`if (fighters[0].specialCooldowns[0] <= 0) throw new Error('Charged mouse release did not cast Super 1');
         window.SpecialMoves.reset();
@@ -198,6 +257,7 @@ async function checkCombatFeedback() {
         window.CombatActions.reset();
         resetGameInput();
         gameRunning = false;`);
+    return readyPeak;
 }
 async function audit(name) {
     const results = [];
@@ -261,6 +321,7 @@ async function audit(name) {
     await navigate(base + '/spel/', '#press-start'); report.push(...await audit('start'));
     await navigate(base + '/spel/game.html', '.char-card');
     await checkSelectionCue();
+    const audio = await checkAudioOutput();
     await evaluate("document.querySelector('.selection-settings').open = true"); report.push(...await audit('select'));
     await evaluate('showControlsGuide()'); report.push(...await audit('controls'));
     await evaluate("backFromControlsGuide(); setGameMode('2p'); showControlsGuide()"); report.push(...await audit('controls-2p'));
@@ -307,7 +368,7 @@ async function audit(name) {
         }
         if (fighters.some(fighter => fighter.ultimateForm)) throw new Error('Intro transformation carried into battle');`);
         await evaluate('gameRunning = false; cancelAnimationFrame(animationFrame)');
-        await checkCombatFeedback();
+        audio.ready = await checkCombatFeedback();
         await evaluate(`const pointLights = () => {
             const lights = [];
             battleScene.traverseVisible(object => { if (object.isPointLight) lights.push(object); });
@@ -382,8 +443,8 @@ async function audit(name) {
     }`);
     report.push(...await audit('maps'));
     await navigate(base + '/spel/assest/special-moves/', '#move-catalog article'); report.push(...await audit('specials'));
-    fs.writeFileSync(path.join(output, 'report.json'), JSON.stringify({ engine, errors, results: report }, null, 2));
-    console.log(JSON.stringify({ output, engine, errors, checks: report.length, failures: report.filter(r => r.problems.length).length }));
+    fs.writeFileSync(path.join(output, 'report.json'), JSON.stringify({ engine, errors, audio, results: report }, null, 2));
+    console.log(JSON.stringify({ output, engine, errors, audio, checks: report.length, failures: report.filter(r => r.problems.length).length }));
     if (!engine || errors.length || report.some(row => row.problems.length)) process.exitCode = 1;
 })().catch(error => { console.error(error.stack); process.exitCode = 1; }).finally(() => {
     chrome?.kill();
