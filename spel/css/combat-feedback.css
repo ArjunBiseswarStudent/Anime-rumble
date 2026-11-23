@@ -62,6 +62,23 @@
     text-shadow: -1px -1px #14101d, 1px 1px #14101d, 0 2px 5px #000;
 }
 .damage-number.is-blocked { color: #a8dbff; }
+.damage-number[data-source]:not([data-source=""]) {
+    z-index: 2;
+    min-width: 76px;
+    border: 1px solid #ff9275;
+    background: #351821f5;
+    color: #ffe6df;
+    text-align: center;
+}
+.damage-number[data-source]:not([data-source=""])::after {
+    content: attr(data-source);
+    display: block;
+    margin-top: 3px;
+    color: #ffb59e;
+    font: 800 10px/1.1 system-ui, sans-serif;
+    letter-spacing: .04em;
+    text-transform: uppercase;
+}
 
 .hit-impact {
     width: 32px;
@@ -74,6 +91,10 @@
 .hit-impact.is-blocked {
     border-color: #a8dbff;
     box-shadow: 0 0 12px #78baff;
+}
+.hit-impact.is-flight-hit {
+    border: 4px double #ffb7a2;
+    box-shadow: 0 0 15px #ff6349, inset 0 0 10px #ff6349;
 }
 
 .fist-swipe {

@@ -1,6 +1,7 @@
 window.CombatFeedback = (() => {
     const HOLD_MS = 350;
     const DAMAGE_MS = 850;
+    const SOURCE_DAMAGE_MS = 1450;
     const IMPACT_MS = 220;
     const NUMBER = new Intl.NumberFormat('nl-NL', { maximumFractionDigits: 1 });
     let canvas, overlay, options, hold, point;
@@ -68,19 +69,23 @@ window.CombatFeedback = (() => {
         for (const slash of slashes) slash.hidden = true;
     }
 
-    function hit(fighter, amount, blocked = false) {
+    function hit(fighter, amount, blocked = false, source = '') {
         const info = damage[fighter.playerIndex];
         if (!info || !options.running() || amount <= 0) return;
         if (!blocked) fighter.hitReaction = .13;
         const now = performance.now();
-        info.amount = now - (info.lastHit ?? -Infinity) < 150 ? info.amount + amount : amount;
+        const sameSource = source === info.node.dataset.source;
+        info.amount = sameSource && now - (info.lastHit ?? -Infinity) < 150 ? info.amount + amount : amount;
         info.lastHit = now;
-        info.until = now + DAMAGE_MS;
+        info.duration = source ? SOURCE_DAMAGE_MS : DAMAGE_MS;
+        info.until = now + info.duration;
         info.x = (fighter.x + fighter.width / 2 - 480) / 65;
         info.y = (540 - fighter.y - fighter.height) / 65 + 1.25;
         info.node.textContent = `−${NUMBER.format(info.amount)}`;
+        info.node.dataset.source = source;
         info.node.classList.toggle('is-blocked', blocked);
         info.impact.classList.toggle('is-blocked', blocked);
+        info.impact.classList.toggle('is-flight-hit', Boolean(source));
         info.node.hidden = false;
     }
 
@@ -98,9 +103,9 @@ window.CombatFeedback = (() => {
         point ||= new THREE.Vector3();
         function move(node, x, y, lift = 0, shift = 0, scale = 1) {
             point.set(x, y, .12).project(camera);
-            const padding = node === markers[0] && hold ? 42 : 19;
+            const padding = node.dataset.source ? 50 : node === markers[0] && hold ? 42 : 19;
             const left = Math.min(width - padding, Math.max(padding, (point.x + 1) * width / 2 + shift));
-            const up = Math.min(height - 14, Math.max(top, (1 - point.y) * height / 2 - lift));
+            const up = Math.min(height - (node.dataset.source ? 26 : 14), Math.max(top, (1 - point.y) * height / 2 - lift));
             node.style.transform = `translate3d(${left}px, ${up}px, 0) translate(-50%, -50%) scale(${scale})`;
         }
         const [first, second] = fighters;
@@ -118,7 +123,7 @@ window.CombatFeedback = (() => {
             const info = damage[index];
             info.node.hidden = now >= info.until;
             if (!info.node.hidden) {
-                const progress = 1 - (info.until - now) / DAMAGE_MS;
+                const progress = 1 - (info.until - now) / info.duration;
                 move(info.node, info.x, info.y + .5, reducedMotion?.matches ? 0 : progress * 34, index === 0 ? -32 : 32);
                 info.node.style.opacity = String(Math.min(1, (1 - progress) * 3));
             }

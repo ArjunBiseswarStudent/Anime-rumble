@@ -75,4 +75,14 @@ test('arena input distinguishes clicks, charged releases and canceled gestures',
     assert.equal(markers[1].firstElementChild.textContent, 'P2');
     assert.equal(numbers[1].hidden, true);
     assert.equal(impacts[1].hidden, true);
+    feedback.hit(fighters[1], 5, false, 'Jatayu');
+    feedback.draw(THREE, {}, fighters, false);
+    assert.equal(numbers[1].dataset.source, 'Jatayu');
+    assert.equal(numbers[1].textContent, '−5');
+    now += 1000;
+    feedback.draw(THREE, {}, fighters, false);
+    assert.equal(numbers[1].hidden, false);
+    feedback.hit(fighters[1], 8);
+    assert.equal(numbers[1].dataset.source, '');
+    assert.equal(numbers[1].textContent, '−8');
 });

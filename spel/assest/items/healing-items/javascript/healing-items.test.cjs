@@ -179,6 +179,55 @@ test('Jatayu flies over Kurukshetra and drops one random parcel every 15 seconds
     api.reset();
 });
 
+test('contact with either flying carrier deals 5 damage per fighter until they separate', () => {
+    for (const [key, name, start] of [
+        ['dojo', 'anime-supply-plane', 15],
+        ['kurukshetra', 'kurukshetra-jatayu', 12]
+    ]) {
+        const { api, scene, fighters, context, notices } = setup(0, key);
+        const hits = [];
+        context.window.CombatFeedback = { hit: (fighter, amount, blocked, source) => hits.push([fighter.playerIndex, amount, source]) };
+        api.update(0, start);
+        api.update(0, start + 2.5);
+        const carrier = scene.children.find(child => child.name === name);
+        for (const fighter of fighters) {
+            fighter.x = carrier.position.x * 65 + 480 - fighter.width / 2;
+            fighter.y = 540 - carrier.position.y * 65 - fighter.height / 2;
+        }
+        fighters[1].invulnerable = 1;
+        api.update(0, start + 2.5);
+        api.update(0, start + 2.5);
+        assert.deepEqual(fighters.map(fighter => fighter.damage), [80, 75]);
+        const effectName = key === 'dojo' ? 'plane-electric-impact' : 'jatayu-feather-impact';
+        const impacts = () => scene.children.filter(child => child.name === effectName);
+        assert.equal(impacts().length, 1);
+        const effect = impacts()[0];
+        assert.ok(effect.position.z > carrier.position.z);
+        api.update(.16, start + 2.5);
+        assert.notEqual(effect.children[0].position.x, 0);
+        fighters[1].invulnerable = 0;
+        api.update(0, start + 2.5);
+        assert.deepEqual(fighters.map(fighter => fighter.damage), [80, 80]);
+        const originalY = fighters[0].y;
+        fighters[0].y = 400;
+        api.update(0, start + 2.5);
+        fighters[0].y = originalY;
+        api.update(0, start + 2.5);
+        assert.deepEqual(fighters.map(fighter => fighter.damage), [85, 80]);
+        const source = key === 'dojo' ? 'Vliegtuig' : 'Jatayu';
+        assert.deepEqual(hits, [[0, 5, source], [1, 5, source], [0, 5, source]]);
+        assert.ok(notices.at(-1).includes(key === 'dojo' ? 'geraakt door het vliegtuig' : 'geraakt door Jatayu'));
+        assert.equal(impacts().length, 3);
+        api.update(1.25, start + 3.75);
+        assert.equal(impacts().length, 0);
+        effect.traverse(part => {
+            if (part.material) assert.equal(part.material.disposed, true);
+            if (part.geometry) assert.equal(part.geometry.disposed, true);
+        });
+        api.reset();
+    }
+});
+
 test('Beerus Palace summons Shenron once and drops items at 15-second intervals', () => {
     const { api, scene, pickups, fighters, casts, init } = setup(0, 'beerus');
     api.update(0, 11.99);

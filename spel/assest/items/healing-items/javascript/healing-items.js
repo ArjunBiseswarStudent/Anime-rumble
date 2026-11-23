@@ -4,6 +4,7 @@ window.HealingItems = (() => {
     const INTERVAL = 10, LIFETIME = 35, MAX_DROPS = 2;
     const AIR_MAPS = new Set(['dojo', 'castle', 'island', 'neon']);
     const FLIGHT_INTERVAL = 15, RELEASE_AT = 3, FLIGHT_DURATION = 6.4, FALL_TIME = 3.4;
+    const FLIGHT_CONTACT_DAMAGE = 5;
     const SYRUP_INTERVAL = 20, SYRUP_FLIGHT = .85;
     const DRAGON_INTERVAL = 15, SUMMON_LEAD = 3, DRAGON_FALL = 1.8;
     let state = null, drops = [], effects = [], nextSpawn = INTERVAL;
@@ -203,7 +204,7 @@ window.HealingItems = (() => {
         const model = (state.jatayu ? window.Jatayu : window.SupplyPlane).create(state.THREE, direction);
         model.visual.position.set((target.x - 480) / 65 - direction * RELEASE_AT * 4.5, altitude, -2.8);
         state.scene.add(model.visual);
-        state.flight = { target, model, direction, altitude, started: elapsed, released: false };
+        state.flight = { target, model, direction, altitude, started: elapsed, released: false, contacts: new Set() };
         state.onNotice(state.jatayu ? 'Jatayu vliegt over het slagveld met een health-item.'
             : 'Bevoorradingsvliegtuig onderweg! Er wordt een health-item gedropt.');
     }
@@ -219,6 +220,104 @@ window.HealingItems = (() => {
             flight.released = true; spawn(elapsed, flight.target, true, state.jatayu ? y - .65 : flight.altitude);
         }
         flight.model.update(age, flight.released);
+        checkFlightContacts(flight);
+    }
+    function checkFlightContacts(flight) {
+        // Fighters move on a 2D plane. Match the visible body and ignore glowing trails and wing tips.
+        const position = flight.model.visual.position;
+        const x = position.x * 65 + 480;
+        const y = 540 - position.y * 65;
+        const halfWidth = (state.jatayu ? 1.55 : 1.9) * 65;
+        const halfHeight = (state.jatayu ? .78 : .42) * 65;
+        for (const fighter of state.fighters) {
+            const overlaps = available(fighter)
+                && fighter.x < x + halfWidth && fighter.x + fighter.width > x - halfWidth
+                && fighter.y < y + halfHeight && fighter.y + fighter.height > y - halfHeight;
+            if (!overlaps) {
+                flight.contacts.delete(fighter);
+                continue;
+            }
+            if (flight.contacts.has(fighter) || fighter.invulnerable > 0) continue;
+            flight.contacts.add(fighter);
+            fighter.damage += FLIGHT_CONTACT_DAMAGE;
+            const source = state.jatayu ? 'Jatayu' : 'Vliegtuig';
+            window.CombatFeedback?.hit(fighter, FLIGHT_CONTACT_DAMAGE, false, source);
+            const contactX = fighter.x + fighter.width / 2;
+            const contactY = fighter.y + fighter.height / 2;
+            flightImpact(flight, Math.max(x - halfWidth, Math.min(x + halfWidth, contactX)),
+                Math.max(y - halfHeight, Math.min(y + halfHeight, contactY)));
+            state.onNotice(`${fighter.character.name} is geraakt door ${state.jatayu ? 'Jatayu' : 'het vliegtuig'} (−5 HP).`);
+        }
+    }
+    function flightImpact(flight, x, y) {
+        const { THREE, scene, jatayu: feathers } = state;
+        const reducedMotion = window.matchMedia?.('(prefers-reduced-motion: reduce)').matches;
+        const visual = new THREE.Group();
+        visual.name = feathers ? 'jatayu-feather-impact' : 'plane-electric-impact';
+        visual.position.set((x - 480) / 65, (540 - y) / 65, flight.model.visual.position.z + .46);
+        const duration = feathers ? 1.2 : .46;
+        const geometry = feathers ? featherGeometry(THREE) : new THREE.BoxGeometry(1, .026, .026);
+        const material = new THREE.MeshBasicMaterial({
+            color: feathers ? '#ffa447' : '#cdfaff', transparent: true, depthWrite: false,
+            blending: THREE.AdditiveBlending
+        });
+        const accent = new THREE.MeshBasicMaterial({
+            color: feathers ? '#ff4621' : '#4daeff', transparent: true, depthWrite: false,
+            blending: THREE.AdditiveBlending
+        });
+        const count = reducedMotion ? 4 : feathers ? 9 : 12;
+        const particles = Array.from({ length: count }, (_, index) => {
+            const pivot = new THREE.Group();
+            visual.add(pivot);
+            if (feathers) {
+                const feather = new THREE.Mesh(geometry, index % 3 ? material : accent);
+                feather.scale.setScalar(.68 + index % 4 * .15);
+                pivot.add(feather);
+            } else {
+                const points = [[0, 0], [.12, .05], [.20, -.042], [.32, .011]];
+                for (let segment = 0; segment < points.length - 1; segment++) {
+                    const [fromX, fromY] = points[segment], [toX, toY] = points[segment + 1];
+                    const bolt = new THREE.Mesh(geometry, segment === 1 ? material : accent);
+                    bolt.position.set((fromX + toX) / 2, (fromY + toY) / 2, 0);
+                    bolt.rotation.z = Math.atan2(toY - fromY, toX - fromX);
+                    bolt.scale.x = Math.hypot(toX - fromX, toY - fromY) + .012;
+                    pivot.add(bolt);
+                }
+            }
+            return pivot;
+        });
+        scene.add(visual);
+        effects.push({ visual, age: 0, duration, particles, feathers, direction: flight.direction, material, accent });
+    }
+    function featherGeometry(THREE) {
+        const outline = new THREE.Shape();
+        outline.moveTo(0, -.21);
+        outline.quadraticCurveTo(-.13, -.02, -.056, .14);
+        outline.quadraticCurveTo(-.026, .19, .064, .23);
+        outline.lineTo(.05, .10);
+        outline.lineTo(.09, .115);
+        outline.quadraticCurveTo(.13, -.035, 0, -.21);
+        outline.closePath();
+        return new THREE.ExtrudeGeometry(outline, { depth: .025, bevelEnabled: false });
+    }
+    function animateFlightImpact(effect) {
+        const { age, duration, particles, feathers, direction } = effect;
+        const fade = 1 - age / duration;
+        effect.material.opacity = fade;
+        effect.accent.opacity = fade * .76;
+        particles.forEach((particle, index) => {
+            const angle = index * Math.PI * 2 / particles.length;
+            if (feathers) {
+                particle.position.set((Math.cos(angle) * 1.1 - direction * .72) * age + Math.sin(age * 7 + index) * age * .12,
+                    (.55 + index % 4 * .2) * age - 1.75 * age * age, Math.sin(angle) * age * 1.3);
+                particle.rotation.set(index + age * 3.9, index * .6 + age * 4.1, angle + age * 2.7);
+            } else {
+                const distance = age * (2.5 + index % 4 * .45);
+                particle.position.set(Math.cos(angle) * distance, Math.sin(angle) * distance - age * age, Math.sin(index * 2.4) * distance);
+                particle.rotation.set(0, Math.sin(index * 2.4) * .7, angle + age * 2);
+                particle.scale.setScalar(.72 + fade * .45);
+            }
+        });
     }
     function available(fighter) { return fighter.stocks > 0 && fighter.damage < 100; }
     function nearby(fighter) {
@@ -313,7 +412,11 @@ window.HealingItems = (() => {
         }
         effects = effects.filter(effect => {
             effect.age += dt;
-            if (effect.age >= 1.1) { dispose(effect.visual); return false; }
+            if (effect.age >= (effect.duration ?? 1.1)) { dispose(effect.visual); return false; }
+            if (effect.particles) {
+                animateFlightImpact(effect);
+                return true;
+            }
             const f = effect.owner;
             effect.visual.position.set((f.x + f.width / 2 - 480) / 65, (540 - f.y - f.height) / 65, .1);
             for (let i = 0; i < 12; i++) {
