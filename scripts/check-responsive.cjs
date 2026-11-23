@@ -205,7 +205,7 @@ async function audit(name) {
         await page('Emulation.setTouchEmulationEnabled', { enabled: touch });
         await settle();
         const result = await evaluate(`(() => {
-            const selectors = ${JSON.stringify({ start: ['.press-start', '.start-footer'], select: ['.selection-stage', '.player-card', '.roster-panel', '.mode-panel'], controls: ['.controls-table', '.controls-footer'], intro: ['.intro-stage', '.intro-fighter', '.intro-tip'], battle: ['.battle-hud-overlay', '.hud-fighter', '.touch-player:not([hidden])', '.touch-player-buttons', '.touch-button', '#gameCanvas'], result: ['.result-panel'], maps: ['.maps-gallery', '.map-card'], specials: ['#move-catalog', 'article'] }[name.replace(/-2p$/, '')])};
+            const selectors = ${JSON.stringify({ start: ['.press-start', '.start-footer'], select: ['.selection-stage', '.player-card', '.roster-panel', '.mode-panel'], controls: ['.controls-table', '.controls-footer'], intro: ['.intro-stage', '.intro-fighter', '.intro-tip', '.intro-loader', '.intro-load-track'], battle: ['.battle-hud-overlay', '.hud-fighter', '.touch-player:not([hidden])', '.touch-player-buttons', '.touch-button', '#gameCanvas'], result: ['.result-panel'], maps: ['.maps-gallery', '.map-card'], specials: ['#move-catalog', 'article'] }[name.replace(/-2p$/, '')])};
             const problems = [];
             if (document.documentElement.scrollWidth > innerWidth + 1) problems.push('page horizontal overflow: ' + document.documentElement.scrollWidth);
             for (const selector of selectors) for (const el of document.querySelectorAll(selector)) {

@@ -157,6 +157,51 @@
       <strong>Gevechtstip</strong>
       <p id="match-intro-tip" aria-live="polite"></p>
     </div>
+    <section class="intro-loader" id="intro-loader" aria-label="Voortgang naar het gevecht" data-shadow="0">
+      <div class="intro-loader-main">
+        <div class="intro-loader-header">
+          <span id="intro-load-status">Gevecht voorbereiden</span>
+          <span id="intro-load-percent" aria-hidden="true">0%</span>
+        </div>
+        <div class="intro-load-track" id="intro-load-progress" role="progressbar" aria-label="Gevecht voorbereiden" aria-valuemin="0" aria-valuemax="100" aria-valuenow="0">
+          <div class="intro-load-fill"></div>
+          <i class="intro-load-spark" aria-hidden="true"></i>
+        </div>
+      </div>
+      <div class="intro-shadow" aria-hidden="true">
+        <i class="intro-shadow-floor"></i>
+        <i class="intro-shadow-ring"></i>
+        <div class="intro-shadow-art">
+          <span class="intro-shadow-puppet intro-shadow-beru">
+            <i class="intro-shadow-prop"></i>
+            <img class="intro-shadow-body" src="assest/img/match-intro/beru.png" alt="" width="320" height="320">
+            <span class="intro-shadow-head">
+              <img src="assest/img/match-intro/beru.png" alt="" width="320" height="320">
+              <i class="intro-shadow-eyes"></i>
+            </span>
+            <i class="intro-shadow-strike"></i>
+          </span>
+          <span class="intro-shadow-puppet intro-shadow-iron">
+            <img class="intro-shadow-body" src="assest/img/match-intro/iron-transparent.png" alt="" width="384" height="384">
+            <span class="intro-shadow-head"><img src="assest/img/match-intro/iron-transparent.png" alt="" width="384" height="384"></span>
+            <i class="intro-shadow-prop"></i>
+            <i class="intro-shadow-strike"></i>
+          </span>
+          <span class="intro-shadow-puppet intro-shadow-tusk">
+            <img class="intro-shadow-body" src="assest/img/match-intro/tusk-transparent.png" alt="" width="384" height="384">
+            <span class="intro-shadow-head"><img src="assest/img/match-intro/tusk-transparent.png" alt="" width="384" height="384"></span>
+            <i class="intro-shadow-strike"></i>
+          </span>
+          <span class="intro-shadow-puppet intro-shadow-igris">
+            <img class="intro-shadow-body" src="assest/img/match-intro/igris-transparent.png" alt="" width="384" height="384">
+            <span class="intro-shadow-head"><img src="assest/img/match-intro/igris-transparent.png" alt="" width="384" height="384"></span>
+            <i class="intro-shadow-prop"></i>
+            <i class="intro-shadow-strike"></i>
+          </span>
+        </div>
+        <i class="intro-shadow-embers"></i>
+      </div>
+    </section>
   </main>
 
   <main id="arena-screen" class="screen arena-screen hidden">

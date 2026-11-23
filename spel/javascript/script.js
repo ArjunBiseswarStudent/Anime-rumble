@@ -1303,6 +1303,7 @@ function set3DPortrait(canvas, character) {
     let viewer = portraitViewers.get(canvas);
     if (!viewer) {
         try {
+            const isIntro = !!canvas.closest('#match-intro');
             const renderer = new THREE.WebGLRenderer({ canvas, alpha: true, antialias: true });
             renderer.outputEncoding = THREE.sRGBEncoding;
             renderer.toneMapping = THREE.ACESFilmicToneMapping;
@@ -1312,16 +1313,32 @@ function set3DPortrait(canvas, character) {
             const camera = new THREE.PerspectiveCamera(36, canvas.width / canvas.height, 0.1, 20);
             camera.position.set(0, 1.25, 4.2);
             camera.lookAt(0, 1.15, 0);
-            scene.add(new THREE.HemisphereLight(0xe4edff, 0x383043, .89));
-            const light = new THREE.DirectionalLight(0xffebd9, 1.48);
+            scene.add(new THREE.HemisphereLight(0xe4edff, isIntro ? 0x272342 : 0x383043, isIntro ? .72 : .89));
+            const light = new THREE.DirectionalLight(0xffebd9, isIntro ? 1.65 : 1.48);
             light.position.set(2, 4, 3);
             scene.add(light);
-            const rim = new THREE.DirectionalLight(canvas.id.startsWith('p1') ? '#ff6977' : '#65b1ff', 1.5);
+            const rim = new THREE.DirectionalLight(canvas.id.startsWith('p1') ? '#ff6977' : '#65b1ff', isIntro ? 1.9 : 1.5);
             rim.position.set(-3, 2, -2);
             scene.add(rim);
-            viewer = { renderer, scene, camera, model: null, facing: canvas.id.startsWith('p1') ? 1 : -1 };
+            if (isIntro) {
+                renderer.shadowMap.enabled = true;
+                renderer.shadowMap.type = THREE.PCFSoftShadowMap;
+                light.castShadow = true;
+                light.shadow.mapSize.set(512, 512);
+                Object.assign(light.shadow.camera, { left: -2, right: 2, top: 2, bottom: -2, near: .1, far: 12 });
+                light.shadow.normalBias = .025;
+                const floor = new THREE.Mesh(new THREE.PlaneGeometry(6, 6), new THREE.ShadowMaterial({ opacity: .44 }));
+                floor.rotation.x = -Math.PI / 2;
+                floor.position.y = .005;
+                floor.receiveShadow = true;
+                scene.add(floor);
+                const fill = new THREE.DirectionalLight(0x939bff, .65);
+                fill.position.set(-3, 1, 2);
+                scene.add(fill);
+            }
+            viewer = { renderer, scene, camera, isIntro, model: null, facing: canvas.id.startsWith('p1') ? 1 : -1 };
             portraitViewers.set(canvas, viewer);
-            if (!canvas.closest('#match-intro')) enablePortraitRotation(canvas, viewer);
+            if (!isIntro) enablePortraitRotation(canvas, viewer);
         } catch (error) {
             console.warn('3D-portret is niet beschikbaar; er wordt een getekend portret getoond.', error);
             return false;
@@ -1333,6 +1350,9 @@ function set3DPortrait(canvas, character) {
         disposePortraitModel(viewer.model);
     }
     viewer.model = createCharacterModel(character);
+    if (viewer.isIntro) viewer.model.traverse(part => {
+        if (part.isMesh && part.material.isMeshStandardMaterial) part.castShadow = part.receiveShadow = true;
+    });
     viewer.characterId = character.id;
     viewer.yaw = viewer.facing * .3;
     viewer.manuallyRotated = false;
@@ -1681,6 +1701,30 @@ const introTips = [
 let introTipIndex = 0;
 let introTipTimer = null;
 let introStartTimer = null;
+let introProgressFrame = null;
+const MATCH_INTRO_MS = 10000;
+
+function renderIntroProgress(percent, status) {
+    const track = document.getElementById('intro-load-progress');
+    track.style.setProperty('--load-progress', percent + '%');
+    const value = String(Math.floor(percent));
+    if (track.getAttribute('aria-valuenow') !== value) {
+        track.setAttribute('aria-valuenow', value);
+        document.getElementById('intro-load-percent').textContent = value + '%';
+    }
+    const caption = document.getElementById('intro-load-status');
+    if (caption.textContent !== status) caption.textContent = status;
+    const loader = document.getElementById('intro-loader');
+    const shadow = String(Math.min(3, Math.floor(percent / 25)));
+    if (loader.dataset.shadow !== shadow) loader.dataset.shadow = shadow;
+}
+
+function animateIntroProgress(startedAt) {
+    const remaining = Math.max(0, MATCH_INTRO_MS - (performance.now() - startedAt));
+    const seconds = Math.ceil(remaining / 1000);
+    renderIntroProgress(99 * (1 - remaining / MATCH_INTRO_MS), seconds ? `Gevecht begint over ${seconds} s` : 'Arena laden…');
+    introProgressFrame = remaining > 0 ? requestAnimationFrame(() => animateIntroProgress(startedAt)) : null;
+}
 
 function updateIntroPortrait(viewer, now, dt) {
     const { intro, model, facing } = viewer;
@@ -1695,6 +1739,7 @@ function updateIntroPortrait(viewer, now, dt) {
         if (phase >= 1 && !intro.fighter.ultimateForm) {
             const formName = window.UltimateForms?.activate(THREE, intro.fighter);
             if (formName) {
+                intro.formName = formName;
                 intro.label.textContent = formName;
                 intro.card.style.setProperty('--intro-energy', intro.fighter.ultimateForm.color);
             }
@@ -1703,7 +1748,8 @@ function updateIntroPortrait(viewer, now, dt) {
             const slot = phase - 2;
             const direction = slot === 0 ? 'neutral' : 'side';
             intro.move = window.SpecialMoves.createPreview(THREE, viewer.scene, intro.fighter.character, slot, facing);
-            intro.label.textContent = intro.fighter.character.moves[direction].name;
+            const moveName = intro.fighter.character.moves[direction].name;
+            intro.label.textContent = intro.formName ? `${intro.formName} · ${moveName}` : moveName;
             if (intro.move) intro.card.style.setProperty('--intro-energy', intro.move.color);
             if (!reducedMotion) window.CharacterMotion.attack(model, direction);
         }
@@ -1764,14 +1810,17 @@ function showMatchIntro() {
         introTipIndex = (introTipIndex + 1) % introTips.length;
         renderMatchTip();
     }, 5000);
-    introStartTimer = setTimeout(startMatch, 10000);
+    animateIntroProgress(startedAt);
+    introStartTimer = setTimeout(startMatch, Math.max(0, MATCH_INTRO_MS - (performance.now() - startedAt)));
 }
 
 function closeMatchIntro() {
     if (introTipTimer !== null) clearInterval(introTipTimer);
     if (introStartTimer !== null) clearTimeout(introStartTimer);
+    if (introProgressFrame !== null) cancelAnimationFrame(introProgressFrame);
     introTipTimer = null;
     introStartTimer = null;
+    introProgressFrame = null;
     portraitViewers.forEach(viewer => {
         if (!viewer.intro) return;
         const { fighter, move, card, label } = viewer.intro;
@@ -1790,13 +1839,18 @@ function closeMatchIntro() {
 
 function startMatch() {
     const introVisible = !document.getElementById('match-intro').classList.contains('hidden');
-    closeMatchIntro();
-    window.ArenaMusic?.stop();
     if (typeof THREE === 'undefined') {
+        closeMatchIntro();
+        window.ArenaMusic?.stop();
         if (introVisible) showControlsGuide();
         window.alert('De 3D-engine kan niet worden geladen. Controleer je internetverbinding en laad de pagina opnieuw.');
         return;
     }
+    if (introVisible) {
+        if (introProgressFrame !== null) cancelAnimationFrame(introProgressFrame);
+        introProgressFrame = null;
+        renderIntroProgress(99, 'Arena laden…');
+    } else window.ArenaMusic?.stop();
     cancelAnimationFrame(animationFrame);
     fighters.forEach(fighter => window.UltimateForms?.clear(fighter));
     window.SpecialMoves.reset();
@@ -1806,12 +1860,10 @@ function startMatch() {
     resetGameInput();
     currentArena = ARENAS[document.getElementById('arena-select').value] || ARENAS.dojo;
     fighters = [makeFighter(selection[0], 0), makeFighter(selection[1], 1)];
-    gameRunning = true;
+    gameRunning = false;
     matchElapsed = 0;
     document.getElementById('select-screen').classList.add('hidden');
     document.getElementById('controls-screen').classList.add('hidden');
-    document.getElementById('arena-screen').classList.remove('hidden');
-    setBattleFocus(true);
     document.getElementById('result-overlay').classList.add('hidden');
     document.getElementById('arena-note').textContent =
         `${currentArena.name} · Maximaal 3 minuten · 100% gezondheid per leven · Geen levens meer? Dan is het gevecht voorbij.`;
@@ -1825,7 +1877,8 @@ function startMatch() {
     try {
         initBattleScene(canvas);
     } catch (error) {
-        gameRunning = false;
+        closeMatchIntro();
+        window.ArenaMusic?.stop();
         console.error('De 3D-arena kon niet worden gestart.', error);
         setBattleFocus(false);
         document.getElementById('arena-screen').classList.add('hidden');
@@ -1833,6 +1886,18 @@ function startMatch() {
         window.alert('De 3D-arena kon niet starten. Controleer of WebGL in je browser is ingeschakeld.');
         return;
     }
+    if (introVisible) {
+        renderIntroProgress(100, 'Arena gereed');
+        introStartTimer = setTimeout(revealMatch, 250);
+    } else revealMatch();
+}
+
+function revealMatch() {
+    closeMatchIntro();
+    document.getElementById('arena-screen').classList.remove('hidden');
+    setBattleFocus(true);
+    resizeBattleRenderer();
+    gameRunning = true;
     matchStartedAt = performance.now();
     lastFrameTime = matchStartedAt;
     updateBattleHud();

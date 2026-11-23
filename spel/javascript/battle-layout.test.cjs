@@ -29,6 +29,50 @@ test('combat focus locks the page during battle and restores selection scrolling
     app.setBattleFocus(false); assert.equal(root.size, 0); assert.equal(body.size, 0);
 });
 
+test('intro shows the remaining time, cycles four local portraits, and reserves 100% for readiness', () => {
+    const assets = new Set([...html.matchAll(/src="(assest\/img\/match-intro\/[^"]+)"/g)].map(match => match[1]));
+    assert.equal(assets.size, 4);
+    for (const asset of assets) assert.ok(fs.existsSync(path.join(__dirname, '..', asset)));
+
+    let now = 100;
+    const nodes = new Map();
+    const app = {
+        performance: { now: () => now },
+        requestAnimationFrame: callback => { app.frame = callback; return 1; },
+        document: { getElementById(id) {
+            if (!nodes.has(id)) {
+                const attributes = new Map();
+                const style = new Map();
+                nodes.set(id, {
+                    dataset: {}, style: { setProperty: (key, value) => style.set(key, value), values: style },
+                    getAttribute: name => attributes.get(name),
+                    setAttribute: (name, value) => attributes.set(name, value)
+                });
+            }
+            return nodes.get(id);
+        } }
+    };
+    vm.createContext(app);
+    vm.runInContext(source.slice(source.indexOf('let introTipIndex'), source.indexOf('function updateIntroPortrait(')), app);
+    app.animateIntroProgress(now);
+    const track = nodes.get('intro-load-progress');
+    assert.equal(track.getAttribute('aria-valuenow'), '0');
+    assert.equal(nodes.get('intro-load-status').textContent, 'Gevecht begint over 10 s');
+    for (const [elapsed, portrait] of [[2600, '1'], [5100, '2'], [7600, '3']]) {
+        now = 100 + elapsed;
+        app.frame();
+        assert.equal(nodes.get('intro-loader').dataset.shadow, portrait);
+    }
+    now = 10100;
+    app.frame();
+    assert.equal(track.getAttribute('aria-valuenow'), '99');
+    assert.equal(nodes.get('intro-load-status').textContent, 'Arena laden…');
+    app.renderIntroProgress(100, 'Arena gereed');
+    assert.equal(track.getAttribute('aria-valuenow'), '100');
+    assert.equal(track.style.values.get('--load-progress'), '100%');
+    assert.equal(nodes.get('intro-load-percent').textContent, '100%');
+});
+
 test('resizing keeps the horizontal battlefield visible on phone and tablet displays', () => {
     for (const [width, height] of [[304,408],[374,640],[752,800],[828,220],[1350,680],[1904,992]]) {
         let resized;
