@@ -27,12 +27,14 @@ window.HealingItems = (() => {
     }
     function init(options) {
         reset(); state = { random: Math.random, onNotice() {}, ...options };
-        state.aerial = AIR_MAPS.has(state.arenaKey);
+        state.jatayu = state.arenaKey === 'kurukshetra';
+        state.aerial = state.jatayu || AIR_MAPS.has(state.arenaKey);
+        state.flightLead = state.jatayu ? RELEASE_AT : 0;
         state.dragonMap = state.arenaKey === 'beerus';
         state.gamakichi = state.arenaKey === 'frog' ? state.scene.userData.gamakichi : null;
         state.interval = state.gamakichi ? SYRUP_INTERVAL
             : state.dragonMap ? DRAGON_INTERVAL : state.aerial ? FLIGHT_INTERVAL : INTERVAL;
-        nextSpawn = state.interval;
+        nextSpawn = state.interval - state.flightLead;
     }
     function randomIndex(length) { return Math.min(length - 1, Math.max(0, Math.floor(state.random() * length))); }
     function chooseDrop(platforms = state.platforms.filter(p => p.w >= 70)) {
@@ -96,6 +98,7 @@ window.HealingItems = (() => {
         scene.add(visual); drops.push(drop);
         if (origin) return;
         state.onNotice(dragonOrigin ? `Shenron laat ${item.name} (+${item.heal} HP) vallen.`
+            : aerial && state.jatayu ? `Jatayu dropt ${item.name} (+${item.heal} HP). Wacht tot het item landt.`
             : aerial ? `Het vliegtuig dropt ${item.name} (+${item.heal} HP). Wacht tot het item landt.`
             : `${item.name} (+${item.heal} HP) is verschenen. P1: R ophalen · P2: 6 ophalen.`);
     }
@@ -197,23 +200,25 @@ window.HealingItems = (() => {
         if (!target) return;
         const direction = state.random() < .5 ? 1 : -1;
         const altitude = Math.max(6.2, ...state.platforms.map(p => (540 - p.y) / 65 + 1.4));
-        const model = window.SupplyPlane.create(state.THREE, direction);
+        const model = (state.jatayu ? window.Jatayu : window.SupplyPlane).create(state.THREE, direction);
         model.visual.position.set((target.x - 480) / 65 - direction * RELEASE_AT * 4.5, altitude, -2.8);
         state.scene.add(model.visual);
         state.flight = { target, model, direction, altitude, started: elapsed, released: false };
-        state.onNotice('Bevoorradingsvliegtuig onderweg! Er wordt een health-item gedropt.');
+        state.onNotice(state.jatayu ? 'Jatayu vliegt over het slagveld met een health-item.'
+            : 'Bevoorradingsvliegtuig onderweg! Er wordt een health-item gedropt.');
     }
     function updateFlight(elapsed) {
         const flight = state.flight;
         if (!flight) return;
         const age = elapsed - flight.started;
         if (age >= FLIGHT_DURATION) { dispose(flight.model.visual); state.flight = null; return; }
-        flight.model.visual.position.set((flight.target.x - 480) / 65 + (age - RELEASE_AT) * 4.5 * flight.direction,
-            flight.altitude + Math.sin(age * 1.3) * .04, -2.8);
-        flight.model.update(age);
+        const dropApproach = state.jatayu ? Math.exp(-((age - RELEASE_AT) ** 2) * 1.2) * .48 : 0;
+        const y = flight.altitude + Math.sin(age * 1.3) * .04 - dropApproach;
+        flight.model.visual.position.set((flight.target.x - 480) / 65 + (age - RELEASE_AT) * 4.5 * flight.direction, y, -2.8);
         if (!flight.released && age >= RELEASE_AT && elapsed < 180) {
-            flight.released = true; spawn(elapsed, flight.target, true, flight.altitude);
+            flight.released = true; spawn(elapsed, flight.target, true, state.jatayu ? y - .65 : flight.altitude);
         }
+        flight.model.update(age, flight.released);
     }
     function available(fighter) { return fighter.stocks > 0 && fighter.damage < 100; }
     function nearby(fighter) {
@@ -261,13 +266,21 @@ window.HealingItems = (() => {
         drops = drops.filter(drop => { if (elapsed - drop.born < LIFETIME) return true; dispose(drop.visual); return false; });
         updateFlight(elapsed);
         if (state.dragonMap) updateDragon(elapsed);
-        if (elapsed >= nextSpawn && elapsed < 180) {
+        if (elapsed >= nextSpawn && elapsed < 180 - state.flightLead) {
             if (state.gamakichi) castSyrup(elapsed);
             else if (state.dragon) spawn(elapsed, chooseDrop(), false, 0, null,
                 state.dragon.release(elapsed - state.dragonStarted));
-            else if (state.aerial) beginFlight(elapsed);
+            else if (state.aerial) {
+                const start = state.jatayu
+                    ? Math.floor((elapsed + state.flightLead) / state.interval) * state.interval - state.flightLead
+                    : elapsed;
+                if (elapsed - start < FLIGHT_DURATION) {
+                    beginFlight(start);
+                    if (state.jatayu) updateFlight(elapsed);
+                }
+            }
             else spawn(elapsed);
-            nextSpawn = (Math.floor(elapsed / state.interval) + 1) * state.interval;
+            nextSpawn = (Math.floor((elapsed + state.flightLead) / state.interval) + 1) * state.interval - state.flightLead;
         }
         for (const drop of drops) {
             if (drop.dragonOrigin) {

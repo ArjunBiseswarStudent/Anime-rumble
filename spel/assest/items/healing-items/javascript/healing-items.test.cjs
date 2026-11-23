@@ -16,6 +16,7 @@ function setup(index = 0, arenaKey) {
     const THREE = { Group, Mesh, Shape, MeshStandardMaterial: Material, MeshBasicMaterial: Material, MeshPhysicalMaterial: Material };
     for (const name of ['SphereGeometry', 'CylinderGeometry', 'TorusGeometry', 'BoxGeometry', 'ExtrudeGeometry', 'CircleGeometry']) THREE[name] = Geometry;
     const context = { window: {}, document: {}, console }; vm.createContext(context);
+    vm.runInContext(fs.readFileSync(path.join(__dirname, '../../../../assest/maps/jatayu.js'), 'utf8'), context);
     for (const file of ['healing-models.js', 'supply-plane.js', 'healing-items-data.js', 'healing-items.js']) vm.runInContext(fs.readFileSync(path.join(__dirname, file), 'utf8'), context);
     const api = context.window.HealingItems, scene = new Group(), notices = [];
     const casts = [];
@@ -139,11 +140,43 @@ test('only the four requested maps receive aircraft every 15 seconds instead of 
         api.update(0, 30); assert.equal(scene.children.filter(o => o.name === 'anime-supply-plane').length, 1);
         api.reset();
     }
-    for (const key of ['namek', 'arlong', 'kurukshetra']) {
+    for (const key of ['namek', 'arlong']) {
         const { api, pickups, scene } = setup(0, key);
         api.update(0, 10); assert.equal(pickups().length, 1);
         assert.equal(scene.children.filter(o => o.name === 'anime-supply-plane').length, 0);
     }
+});
+
+test('Jatayu flies over Kurukshetra and drops one random parcel every 15 seconds', () => {
+    const { api, scene, pickups, fighters, notices, resources, init } = setup(7, 'kurukshetra');
+    const bird = () => scene.children.find(child => child.name === 'kurukshetra-jatayu');
+    api.update(0, 11.999);
+    assert.equal(scene.children.length, 0);
+    api.update(0, 12);
+    const entryX = bird().position.x;
+    api.update(0, 13.5);
+    assert.notEqual(bird().position.x, entryX);
+    assert.equal(pickups().length, 0);
+    api.update(0, 15);
+    api.update(0, 15);
+    assert.equal(pickups().length, 1);
+    assert.equal(pickups()[0].name, 'healing-pickup-' + api.items[7].id);
+    assert.ok(notices.some(text => text.includes('Jatayu dropt')));
+    assert.equal(api.pickup(fighters[0]), false);
+    api.update(0, 18.5);
+    assert.equal(bird(), undefined);
+    assert.equal(api.pickup(fighters[0]), true);
+    api.update(0, 27);
+    assert.ok(bird());
+    api.update(0, 30);
+    assert.equal(pickups().length, 1);
+    api.reset();
+    assert.equal(scene.children.length, 0);
+    assert.ok(resources.every(resource => resource.disposed));
+    init();
+    api.update(0, 15.04);
+    assert.equal(pickups().length, 1, 'A late frame still releases the scheduled parcel');
+    api.reset();
 });
 
 test('Beerus Palace summons Shenron once and drops items at 15-second intervals', () => {
