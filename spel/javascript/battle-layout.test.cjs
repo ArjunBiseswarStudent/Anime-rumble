@@ -29,10 +29,11 @@ test('combat focus locks the page during battle and restores selection scrolling
     app.setBattleFocus(false); assert.equal(root.size, 0); assert.equal(body.size, 0);
 });
 
-test('intro shows the remaining time, cycles four local portraits, and reserves 100% for readiness', () => {
+test('intro shows the remaining time, cycles six local portraits, and reserves 100% for readiness', () => {
     const assets = new Set([...html.matchAll(/src="(assest\/img\/match-intro\/[^"]+)"/g)].map(match => match[1]));
-    assert.equal(assets.size, 4);
+    assert.equal(assets.size, 6);
     for (const asset of assets) assert.ok(fs.existsSync(path.join(__dirname, '..', asset)));
+    assert.deepEqual([...assets].slice(-2).map(asset => path.basename(asset)), ['tank-transparent.png', 'dragon-transparent.png']);
 
     let now = 100;
     const nodes = new Map();
@@ -58,7 +59,7 @@ test('intro shows the remaining time, cycles four local portraits, and reserves 
     const track = nodes.get('intro-load-progress');
     assert.equal(track.getAttribute('aria-valuenow'), '0');
     assert.equal(nodes.get('intro-load-status').textContent, 'Gevecht begint over 10 s');
-    for (const [elapsed, portrait] of [[2600, '1'], [5100, '2'], [7600, '3']]) {
+    for (const [elapsed, portrait] of [[1800, '1'], [3500, '2'], [5200, '3'], [6900, '4'], [8600, '5']]) {
         now = 100 + elapsed;
         app.frame();
         assert.equal(nodes.get('intro-loader').dataset.shadow, portrait);

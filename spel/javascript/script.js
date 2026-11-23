@@ -1703,6 +1703,7 @@ let introTipTimer = null;
 let introStartTimer = null;
 let introProgressFrame = null;
 const MATCH_INTRO_MS = 10000;
+const INTRO_MASCOT_COUNT = 6;
 
 function renderIntroProgress(percent, status) {
     const track = document.getElementById('intro-load-progress');
@@ -1715,7 +1716,7 @@ function renderIntroProgress(percent, status) {
     const caption = document.getElementById('intro-load-status');
     if (caption.textContent !== status) caption.textContent = status;
     const loader = document.getElementById('intro-loader');
-    const shadow = String(Math.min(3, Math.floor(percent / 25)));
+    const shadow = String(Math.min(INTRO_MASCOT_COUNT - 1, Math.floor(percent * INTRO_MASCOT_COUNT / 100)));
     if (loader.dataset.shadow !== shadow) loader.dataset.shadow = shadow;
 }
 
